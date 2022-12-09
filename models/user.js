@@ -19,6 +19,25 @@ const walletSchema = new mongoose.Schema({
   // TODO: primary
 });
 
+const discordSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    required: true,
+  },
+  username: String,
+  discriminator: String,
+  email: String,
+  access_token: {
+    type: String,
+    required: true,
+  },
+  refresh_token: {
+    type: String,
+    required: true,
+  },
+  token_expiry: Date,
+});
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -67,7 +86,6 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // [ {type: "DISCORD", username: } ]
 });
 
 // to encrypt password before save

@@ -1,5 +1,10 @@
 const User = require("../models/user");
 const cookieToken = require("../utils/cookieToken");
+const {
+  getAccessTokenResponse,
+  getUserDetails,
+  refreshToken,
+} = require("../utils/discordHelper");
 
 exports.signup = async (req, res) => {
   try {
@@ -65,7 +70,34 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.loginViaDiscord = async (req, res) => {
+  try {
+    const code = req.query.code;
+
+    const accessResponse = await getAccessTokenResponse(code);
+    // use access token to get user info - user ID n all (need to figure out)
+    const discordUser = await getUserDetails(accessResponse.access_token);
+
+    // if new user : store details
+    const user = User.findOne();
+    if (!user) {
+    }
+
+    // return jwt token
+    return res.status(200).json({ accessResponse, discordUser });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      msg: "internal server error",
+      error: error,
+    });
+  }
+};
+
 exports.update = () => {};
+
+// -----  LOGOUT MANAGEMENT  --------
 
 exports.logout = (req, res) => {
   // Delete the prexisting cookie of user by sending a Stale cookie
