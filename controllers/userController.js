@@ -1,3 +1,4 @@
+const { create } = require("../models/user");
 const User = require("../models/user");
 const cookieToken = require("../utils/cookieToken");
 const {
@@ -78,13 +79,35 @@ exports.loginViaDiscord = async (req, res) => {
     // use access token to get user info - user ID n all (need to figure out)
     const discordUser = await getUserDetails(accessResponse.access_token);
 
-    // if new user : store details
-    const user = User.findOne();
-    if (!user) {
-    }
+    // update/insert user's discord details
+    const options = {
+      upsert: true, // Perform an upsert operation
+      new: true, // Return the updated document, instead of the original
+      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+    };
+    const user = new User(
+      await User.updateOne(
+        { "discord.id": discordUser.id },
+        {
+          discord: {
+            id: discordUser.id,
+            username: discordUser.username,
+            discriminator: discordUser.discriminator,
+            email: discordUser.email,
+            access_token: accessResponse.access_token,
+            refresh_token: accessResponse.refresh_token,
+            // TODO: add expiry to current
+            token_expiry: new Date(
+              Date.now() + accessResponse.expires_in / 1000
+            ), // expires_in is in seconds
+          },
+        },
+        options
+      )
+    );
 
     // return jwt token
-    return res.status(200).json({ accessResponse, discordUser });
+    cookieToken(user, res);
   } catch (error) {
     console.log(error);
     return res.status(500).json({

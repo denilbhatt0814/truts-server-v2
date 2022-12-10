@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const validator = require("validator");
+const { JWT_SECRET, JWT_EXPIRY } = require("../config/config");
 
 const walletSchema = new mongoose.Schema({
   chain: {
@@ -16,13 +18,14 @@ const walletSchema = new mongoose.Schema({
   },
   token: String,
   tokenExpiry: Date,
-  // TODO: primary
+  // TODO: primary -flag
 });
 
 const discordSchema = new mongoose.Schema({
   id: {
     type: String,
     required: true,
+    unique: true,
   },
   username: String,
   discriminator: String,
@@ -30,10 +33,12 @@ const discordSchema = new mongoose.Schema({
   access_token: {
     type: String,
     required: true,
+    select: false,
   },
   refresh_token: {
     type: String,
     required: true,
+    select: false,
   },
   token_expiry: Date,
 });
@@ -41,17 +46,16 @@ const discordSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
-    required: [true, "Please provide a username"],
+    // required: [true, "Please provide a username"],
     maxLength: [40, "UserName should be under 40 charc"],
   },
   name: {
     type: String,
-    required: [true, "Please provide a name"],
+    // required: [true, "Please provide a name"],
     maxLength: [40, "Name should be under 40 charc"],
   },
   wallets: {
     type: [walletSchema],
-    default: [],
   },
   email: {
     type: String,
@@ -59,28 +63,13 @@ const userSchema = new mongoose.Schema({
     validator: [validator.isEmail, "Please provide email in correct format"],
     unique: true,
   },
-  isEmailVerified: {
-    type: Boolean,
-    default: false,
-  },
-  emailToken: String,
-  emailTokenExpiry: Date,
-  password: {
-    type: String,
-    // required: [true, "Please provide a password"],
-    minLength: [8, "Password should be atleast 8 char"],
-    select: false, // to restrict unecessary fetching of pass -> on require just use select tag and specify
-  },
-  forgotPasswordToken: String,
-  forgotPasswordExpiry: Date,
   photo: {
     id: { type: String },
     secure_url: { type: String },
   },
+  discord: discordSchema,
   tags: {
-    /* TODO: seperate model */
     type: [String],
-    default: [],
   },
   createdAt: {
     type: Date,
@@ -88,41 +77,10 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// to encrypt password before save
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-  this.password = await bcrypt.hash(this.password, 10);
-});
-
-// validate the password with userSent password
-userSchema.methods.isValidPassword = async function (userSentPassword) {
-  return await bcrypt.compare(userSentPassword, this.password);
-};
-
-// create and return jwt token
 userSchema.methods.getJWTToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
+  return jwt.sign({ id: this._id }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRY,
   });
-};
-
-// generate forget password token (string)
-userSchema.methods.getForgotPasswordToken = async function () {
-  // generate a long and random string
-  const forgotToken = crypto.randomBytes(20).toString("hex");
-
-  // getting a hash -make sure to get a hash on backend as well
-  this.forgotPasswordToken = crypto
-    .createHash("sha256")
-    .update(forgotToken)
-    .digest();
-
-  // time of token
-  this.forgotPasswordExpiry = Date.now() + 20 * 60 * 1000; // 20 mins
-
-  return forgotToken;
 };
 
 module.exports = mongoose.model("User", userSchema);
