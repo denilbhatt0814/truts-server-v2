@@ -18,7 +18,7 @@ const walletSchema = new mongoose.Schema({
   },
   token: String,
   tokenExpiry: Date,
-  // TODO: primary -flag
+  // TODO: primary - flag
 });
 
 const discordSchema = new mongoose.Schema({

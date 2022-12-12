@@ -85,26 +85,33 @@ exports.loginViaDiscord = async (req, res) => {
       new: true, // Return the updated document, instead of the original
       setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
     };
-    const user = new User(
-      await User.updateOne(
-        { "discord.id": discordUser.id },
-        {
-          discord: {
-            id: discordUser.id,
-            username: discordUser.username,
-            discriminator: discordUser.discriminator,
-            email: discordUser.email,
-            access_token: accessResponse.access_token,
-            refresh_token: accessResponse.refresh_token,
-            // TODO: add expiry to current
-            token_expiry: new Date(
-              Date.now() + accessResponse.expires_in / 1000
-            ), // expires_in is in seconds
-          },
+    let user = await User.findOneAndUpdate(
+      { "discord.id": discordUser.id },
+      {
+        discord: {
+          id: discordUser.id,
+          username: discordUser.username,
+          discriminator: discordUser.discriminator,
+          email: discordUser.email,
+          access_token: accessResponse.access_token,
+          refresh_token: accessResponse.refresh_token,
+          // TODO: add expiry to current
+          token_expiry: new Date(Date.now() + accessResponse.expires_in / 1000), // expires_in is in seconds
         },
-        options
-      )
+      },
+      options
     );
+
+    // add name if missing or if new user
+    if (!user.name) {
+      user = await User.findOneAndUpdate(
+        { _id: user._id },
+        { name: user.discord.username },
+        {
+          new: true,
+        }
+      );
+    }
 
     // return jwt token
     cookieToken(user, res);
