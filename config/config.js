@@ -18,8 +18,8 @@ module.exports = {
     process.env.DISCORD_CLIENT_SECRET || "BfhRr1UABOUmGH9TzbB97mzysQVXUxJ6",
   DISCORD_REDIRECT_URI:
     process.env.DISCORD_REDIRECT_URI ||
-    "http://localhost:3000/api/v1/user/login/discord/callback",
+    "http://localhost:3000/api/v1/login/discord/callback",
   DISCORD_OAUTH_URL:
     process.env.DISCORD_OAUTH_URL ||
-    `https://discord.com/oauth2/authorize?client_id=782120524956434432&redirect_uri=http://localhost:3000/api/v1/user/login/discord/callback&response_type=code&scope=identify%20email`,
+    `https://discord.com/oauth2/authorize?client_id=782120524956434432&redirect_uri=http://localhost:3000/api/v1/login/discord/callback&response_type=code&scope=identify%20email`,
 };

@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
 const app = express();
@@ -6,6 +7,7 @@ const app = express();
 // BASIC SERVER CONFIGS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 // Logging
 app.use(morgan("tiny"));
 
