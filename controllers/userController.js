@@ -125,7 +125,7 @@ exports.loginViaDiscord = async (req, res) => {
   }
 };
 
-exports.update = () => {};
+exports.updateUserDeatils = async (req, res) => {};
 
 // -----  LOGOUT MANAGEMENT  --------
 
