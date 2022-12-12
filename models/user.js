@@ -43,39 +43,44 @@ const discordSchema = new mongoose.Schema({
   token_expiry: Date,
 });
 
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    // required: [true, "Please provide a username"],
-    maxLength: [40, "UserName should be under 40 charc"],
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      maxLength: [40, "UserName should be under 40 charc"],
+    },
+    name: {
+      type: String,
+      maxLength: [40, "Name should be under 40 charc"],
+    },
+    bio: {
+      type: String,
+      maxLength: [300, "Bio should be under 300 charc"],
+    },
+    wallets: {
+      type: [walletSchema],
+    },
+    email: {
+      type: String,
+      // required: [true, "Please provide an email"],
+      validator: [validator.isEmail, "Please provide email in correct format"],
+      unique: true,
+    },
+    photo: {
+      id: { type: String },
+      secure_url: { type: String },
+    },
+    discord: discordSchema,
+    tags: {
+      type: [String],
+    },
   },
-  name: {
-    type: String,
-    // required: [true, "Please provide a name"],
-    maxLength: [40, "Name should be under 40 charc"],
-  },
-  wallets: {
-    type: [walletSchema],
-  },
-  email: {
-    type: String,
-    // required: [true, "Please provide an email"],
-    validator: [validator.isEmail, "Please provide email in correct format"],
-    unique: true,
-  },
-  photo: {
-    id: { type: String },
-    secure_url: { type: String },
-  },
-  discord: discordSchema,
-  tags: {
-    type: [String],
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+// METHODS on User model
 
 userSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, JWT_SECRET, {

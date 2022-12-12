@@ -6,6 +6,8 @@ const {
   getUserDetails,
   refreshToken,
 } = require("../utils/discordHelper");
+const HTTPError = require("../utils/httpError");
+const { HTTPResponse } = require("../utils/httpResponse");
 
 exports.signup = async (req, res) => {
   try {
@@ -125,7 +127,35 @@ exports.loginViaDiscord = async (req, res) => {
   }
 };
 
-exports.updateUserDeatils = async (req, res) => {};
+// ------ USER CONTROLLER ------
+exports.getLoggedInUserDetails = async (req, res) => {};
+
+exports.updateUserDeatils = async (req, res) => {
+  try {
+    // get new data
+    const newData = {
+      name: req.body.name,
+      bio: req.body.bio,
+    };
+
+    // update the document w/ new data
+    const user = await User.findByIdAndUpdate(req.user.id, newData, {
+      new: true,
+      runValidators: true,
+    });
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "resource updated successfully",
+      null,
+      { user }
+    );
+  } catch (error) {
+    return new HTTPError(res, 500, error, "Internal server error");
+  }
+};
 
 // -----  LOGOUT MANAGEMENT  --------
 

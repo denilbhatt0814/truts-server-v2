@@ -1,10 +1,10 @@
 const express = require("express");
 const { DISCORD_OAUTH_URL } = require("../config/config");
-const { home } = require("../controllers/home");
 const {
   signup,
   loginViaDiscord,
   logout,
+  updateUserDeatils,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -21,6 +21,6 @@ router
 router.route("/logout").get(logout);
 
 // ------ USER ROUTES ------
-router.route("/user/update").get(isLoggedIn, home);
+router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 
 module.exports = router;
