@@ -6,6 +6,7 @@ const {
   loginViaDiscord,
   logout,
   updateUserDeatils,
+  getLoggedInUserDetails,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -26,6 +27,7 @@ router
 router.route("/logout").get(logout);
 
 // ------ USER ROUTES ------
+router.route("/user").get(isLoggedIn, getLoggedInUserDetails);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 
 module.exports = router;

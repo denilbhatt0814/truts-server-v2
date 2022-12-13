@@ -128,7 +128,9 @@ exports.loginViaDiscord = async (req, res) => {
 };
 
 // ------ USER CONTROLLER ------
-exports.getLoggedInUserDetails = async (req, res) => {};
+exports.getLoggedInUserDetails = async (req, res) => {
+  return new HTTPResponse(res, true, 200, null, null, { user: req.user });
+};
 
 exports.updateUserDeatils = async (req, res) => {
   try {
