@@ -1,13 +1,13 @@
-const { create } = require("../models/user");
+const sharp = require("sharp");
 const User = require("../models/user");
 const cookieToken = require("../utils/cookieToken");
 const {
   getAccessTokenResponse,
   getUserDetails,
-  refreshToken,
 } = require("../utils/discordHelper");
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
+const uploadToS3 = require("../utils/uploadToS3");
 
 exports.signup = async (req, res) => {
   try {
@@ -138,6 +138,17 @@ exports.updateUserDeatils = async (req, res) => {
       bio: req.body.bio,
     };
 
+    // if asked for photo update
+    if (req.files.photo != "") {
+      const saveResp = await updateProfileImage(req.user, req.files.photo);
+
+      // save link and id for the new image
+      newData.photo = {
+        id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
+        secure_url: saveResp.object_url,
+      };
+    }
+
     // update the document w/ new data
     const user = await User.findByIdAndUpdate(req.user.id, newData, {
       new: true,
@@ -153,6 +164,7 @@ exports.updateUserDeatils = async (req, res) => {
       { user }
     );
   } catch (error) {
+    console.log(error);
     return new HTTPError(res, 500, error, "Internal server error");
   }
 };
@@ -169,4 +181,20 @@ exports.logout = (req, res) => {
     success: true,
     message: "Logout success",
   });
+};
+
+// ----- HELPER METHODS ------
+
+const updateProfileImage = async (user, photo) => {
+  try {
+    const convertedBuffer = await sharp(photo.data).toFormat("webp").toBuffer();
+    let data = await uploadToS3(
+      "truts-users",
+      user._id + ".webp",
+      convertedBuffer
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
 };

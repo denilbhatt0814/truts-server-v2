@@ -1,4 +1,5 @@
 const express = require("express");
+const router = express.Router();
 const { DISCORD_OAUTH_URL } = require("../config/config");
 const {
   signup,
@@ -8,7 +9,11 @@ const {
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
-const router = express.Router();
+// for handling file uploads
+// const multer = require("multer");
+// const uploads = multer({
+//   storage: multer.memoryStorage(),
+// });
 
 router.route("/signup").post(signup);
 
