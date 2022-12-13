@@ -21,7 +21,7 @@ exports.isLoggedIn = async (req, res, next) => {
     }
     const decoded = jwt.verify(token, JWT_SECRET);
     // find the user
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).populate("tags");
     // if no such user found
     if (!user) {
       req.user = {};

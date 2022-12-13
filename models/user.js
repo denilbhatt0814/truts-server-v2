@@ -71,9 +71,12 @@ const userSchema = new mongoose.Schema(
       secure_url: { type: String },
     },
     discord: discordSchema,
-    tags: {
-      type: [String],
-    },
+    tags: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "UserIntrestTag",
+      },
+    ],
   },
   {
     timestamps: true,

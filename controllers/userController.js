@@ -1,5 +1,6 @@
 const sharp = require("sharp");
 const User = require("../models/user");
+const UserIntrestTag = require("../models/userIntrestTag");
 const cookieToken = require("../utils/cookieToken");
 const {
   getAccessTokenResponse,
@@ -138,10 +139,11 @@ exports.updateUserDeatils = async (req, res) => {
     const newData = {
       name: req.body.name,
       bio: req.body.bio,
+      tags: JSON.parse(req.body.tags),
     };
 
     // if asked for photo update
-    if (req.files.photo != "") {
+    if ("photo" in req.files) {
       const saveResp = await updateProfileImage(req.user, req.files.photo);
 
       // save link and id for the new image
@@ -155,7 +157,7 @@ exports.updateUserDeatils = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user.id, newData, {
       new: true,
       runValidators: true,
-    });
+    }).populate("tags");
 
     return new HTTPResponse(
       res,
@@ -183,6 +185,34 @@ exports.logout = (req, res) => {
     success: true,
     message: "Logout success",
   });
+};
+
+// ----- USER INTREST TAGS ------
+exports.createUserIntrestTag = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    const tag = await UserIntrestTag.create({ name });
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      "user intrest tag created succesfully",
+      null,
+      { tag }
+    );
+  } catch (error) {
+    return new HTTPError(res, 401, "invalid input", error);
+  }
+};
+
+exports.getAllUserIntrestTags = async (req, res) => {
+  try {
+    const tags = await UserIntrestTag.find({});
+    return new HTTPResponse(res, true, 200, null, null, { tags });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
 };
 
 // ----- HELPER METHODS ------

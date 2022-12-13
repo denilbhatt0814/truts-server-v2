@@ -7,6 +7,8 @@ const {
   logout,
   updateUserDeatils,
   getLoggedInUserDetails,
+  getAllUserIntrestTags,
+  createUserIntrestTag,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -29,5 +31,10 @@ router.route("/logout").get(logout);
 // ------ USER ROUTES ------
 router.route("/user").get(isLoggedIn, getLoggedInUserDetails);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
+
+router
+  .route("/user/intrest-tag")
+  .get(isLoggedIn, getAllUserIntrestTags)
+  .post(isLoggedIn, createUserIntrestTag);
 
 module.exports = router;
