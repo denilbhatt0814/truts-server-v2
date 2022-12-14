@@ -1,4 +1,5 @@
 const express = require("express");
+const passport = require("passport");
 const router = express.Router();
 const { DISCORD_OAUTH_URL } = require("../config/config");
 const {
@@ -11,20 +12,30 @@ const {
   createUserIntrestTag,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
-
-// for handling file uploads
-// const multer = require("multer");
-// const uploads = multer({
-//   storage: multer.memoryStorage(),
-// });
+const cookieToken = require("../utils/cookieToken");
 
 router.route("/signup").post(signup);
 
 // ------ LOGIN ROUTES ------
-router.route("/login/discord/callback").get(loginViaDiscord);
 router
   .route("/login/discord")
   .get((req, res) => res.redirect(DISCORD_OAUTH_URL));
+router.route("/login/discord/callback").get(loginViaDiscord);
+
+router.route("/login/google").get(
+  passport.authenticate("google", {
+    scope: ["email", "profile"],
+    session: false,
+  }),
+  (req, res) => {
+    res.send("login with google");
+  }
+);
+router
+  .route("/login/google/callback")
+  .get(passport.authenticate("google", { session: false }), (req, res) => {
+    cookieToken(req.user, res);
+  });
 
 router.route("/logout").get(logout);
 

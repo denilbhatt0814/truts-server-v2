@@ -12,6 +12,16 @@ module.exports = {
   JWT_EXPIRY: "3d",
   COOKIE_TIME: process.env.COOKIE_TIME || 3,
 
+  /* GOOGLE OUTH CONFIGS */
+  GOOGLE_CLIENT_ID:
+    process.env.GOOGLE_CLIENT_ID ||
+    "800331731915-6bit3f6t6uuknh8svo5n4hvtaa54sll5.apps.googleusercontent.com",
+  GOOGLE_CLIENT_SECRET:
+    process.env.GOOGLE_CLIENT_SECRET || "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",
+  GOOGLE_CALLBACK_URI:
+    process.env.GOOGLE_CALLBACK_URI ||
+    "http://localhost:3000/api/v1/login/google/callback",
+
   /* DISCORD CONFIGS */
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || "782120524956434432",
   DISCORD_CLIENT_SECRET:
@@ -23,6 +33,7 @@ module.exports = {
     process.env.DISCORD_OAUTH_URL ||
     `https://discord.com/oauth2/authorize?client_id=782120524956434432&redirect_uri=http://localhost:3000/api/v1/login/discord/callback&response_type=code&scope=identify%20email`,
 
+  /* AWS CONFIGS */
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
   AWS_REGION: process.env.AWS_REGION || "",

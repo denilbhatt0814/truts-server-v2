@@ -14,6 +14,11 @@ app.use(fileUpload());
 // Logging
 app.use(morgan("tiny"));
 
+// Passportjs setup - for google OAuth
+const passportConfig = require("./passport/googleStrategy");
+const passport = require("passport");
+app.use(passport.initialize());
+
 // route imports
 const home = require("./routes/home");
 const user = require("./routes/user");

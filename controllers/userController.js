@@ -115,7 +115,10 @@ exports.loginViaDiscord = async (req, res) => {
         }
       );
     }
-
+    // TODO: for connect additional social
+    // if ("token" in req.cookies) {
+    //   console.log("token ", req.cookies.token);
+    // }
     // return jwt token
     cookieToken(user, res);
   } catch (error) {
