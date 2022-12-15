@@ -4,7 +4,6 @@ const {
   GOOGLE_CLIENT_SECRET,
   GOOGLE_CALLBACK_URI,
 } = require("../config/config");
-const User = require("../models/user");
 
 var GoogleStrategy = require("passport-google-oauth20").Strategy;
 
@@ -16,26 +15,14 @@ passport.use(
       callbackURL: GOOGLE_CALLBACK_URI,
     },
     (accessToken, refreshToken, profile, next) => {
-      User.findOne({ email: profile._json.email }).then((user) => {
-        if (user) {
-          // user already exists
-          next(null, user);
-        } else {
-          User.create({
-            name: profile.displayName,
-            googleId: profile.id,
-            email: profile._json.email,
-          })
-            .then((user) => {
-              // new user
-              next(null, user);
-            })
-            .catch((err) => {
-              console.log(err);
-              next(err, null);
-            });
-        }
-      });
+      /**
+       * NOTE: This is a JUGAAD
+       * the profile object is kept in place of Express.User in next()
+       * usually it is user object (from DB) over there
+       * but I had to modify the flow to accomodate all
+       * Login | Sign-up | Connect Google in one route
+       */
+      next(null, profile);
     }
   )
 );

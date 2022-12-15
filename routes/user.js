@@ -10,6 +10,7 @@ const {
   getLoggedInUserDetails,
   getAllUserIntrestTags,
   createUserIntrestTag,
+  loginViaGoogle,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const cookieToken = require("../utils/cookieToken");
@@ -33,9 +34,7 @@ router.route("/login/google").get(
 );
 router
   .route("/login/google/callback")
-  .get(passport.authenticate("google", { session: false }), (req, res) => {
-    cookieToken(req.user, res);
-  });
+  .get(passport.authenticate("google", { session: false }), loginViaGoogle);
 
 router.route("/logout").get(logout);
 

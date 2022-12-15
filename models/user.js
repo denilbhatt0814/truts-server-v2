@@ -65,7 +65,10 @@ const userSchema = new mongoose.Schema(
       validator: [validator.isEmail, "Please provide email in correct format"],
       unique: [true, "The provided email is already registered"],
     },
-    googleId: String,
+    googleId: {
+      type: String,
+      unique: [true, "This google account is already registered"],
+    },
     photo: {
       id: { type: String },
       secure_url: { type: String },

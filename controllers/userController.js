@@ -9,8 +9,11 @@ const {
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const uploadToS3 = require("../utils/uploadToS3");
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../config/config");
 
 exports.signup = async (req, res) => {
+  // NOTE: this controller is of no use RN
   try {
     const { email, password } = req.body;
 
@@ -39,6 +42,7 @@ exports.signup = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  // NOTE: this controller is of no use RN
   try {
     const { email, password } = req.body;
 
@@ -74,6 +78,58 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.loginViaGoogle = async (req, res) => {
+  // NOTE: this code will run after exec of Passportjs middleware
+
+  const profile = req.user; // this user is google's user object
+
+  let filter;
+  // If already Logged in then connect
+  if ("token" in req.cookies || "Authorization" in req.headers) {
+    const token =
+      req.cookies.token || req.headers("Authorization").replace("Bearer ", "");
+    console.log(token);
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    filter = { _id: decoded.id };
+    console.log("Connected w/ google");
+  } else {
+    // Login or Sign up w/ Google
+    filter = { email: profile._json.email };
+    console.log("LOGIN || SIGNUP W/ GOOGLE");
+  }
+
+  // update/insert user's google details
+  const options = {
+    upsert: true, // Perform an upsert operation
+    new: true, // Return the updated document, instead of the original
+    setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+  };
+  let user = await User.findOneAndUpdate(
+    filter,
+    {
+      googleId: profile.id,
+      email: profile._json.email,
+    },
+    options
+  ).populate("tags");
+
+  // add name if missing or if new user
+  if (!user.name) {
+    user = await User.findOneAndUpdate(
+      { _id: user._id },
+      { name: profile.displayName },
+      {
+        new: true,
+      }
+    ).populate("tags");
+  }
+
+  // return jwt token
+  cookieToken(user, res);
+};
+
 exports.loginViaDiscord = async (req, res) => {
   try {
     const code = req.query.code;
@@ -82,6 +138,25 @@ exports.loginViaDiscord = async (req, res) => {
     // use access token to get user info - user ID n all (need to figure out)
     const discordUser = await getUserDetails(accessResponse.access_token);
 
+    let filter;
+
+    // If already Logged in then connect
+    if ("token" in req.cookies || "Authorization" in req.headers) {
+      const token =
+        req.cookies.token ||
+        req.headers("Authorization").replace("Bearer ", "");
+      console.log(token);
+
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      filter = { _id: decoded.id };
+      console.log("Connected w/ discord");
+    } else {
+      // Login or Sign up w/ discord
+      filter = { "discord.id": discordUser.id };
+      console.log("LOGIN || SIGNUP W/ DISCORD");
+    }
+
     // update/insert user's discord details
     const options = {
       upsert: true, // Perform an upsert operation
@@ -89,7 +164,7 @@ exports.loginViaDiscord = async (req, res) => {
       setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
     };
     let user = await User.findOneAndUpdate(
-      { "discord.id": discordUser.id },
+      filter,
       {
         discord: {
           id: discordUser.id,
@@ -103,7 +178,7 @@ exports.loginViaDiscord = async (req, res) => {
         },
       },
       options
-    );
+    ).populate("tags");
 
     // add name if missing or if new user
     if (!user.name) {
@@ -113,12 +188,9 @@ exports.loginViaDiscord = async (req, res) => {
         {
           new: true,
         }
-      );
+      ).populate("tags");
     }
-    // TODO: for connect additional social
-    // if ("token" in req.cookies) {
-    //   console.log("token ", req.cookies.token);
-    // }
+
     // return jwt token
     cookieToken(user, res);
   } catch (error) {

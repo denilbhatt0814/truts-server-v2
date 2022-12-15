@@ -10,6 +10,8 @@ const cookieToken = (user, res) => {
 
   res.status(200).cookie("token", token, options).json({
     success: true,
+    message: "Login | Sign-up | Connect Social : Successful",
+    error: null,
     data: {
       token,
       user,
