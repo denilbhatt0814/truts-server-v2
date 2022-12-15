@@ -34,4 +34,8 @@ const user = require("./routes/user");
 app.use("/api/v1", home);
 app.use("/api/v1", user);
 
+app.get("/api/v1/status", (req, res) => {
+  res.send("Running...");
+});
+
 module.exports = app;
