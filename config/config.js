@@ -11,7 +11,7 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET || "thisismyjwtsecret",
   JWT_EXPIRY: "3d",
   COOKIE_TIME: process.env.COOKIE_TIME || 3,
-
+  WALLET_NONCE_LENGTH: process.env.WALLET_NONCE_LENGTH || 12,
   /* GOOGLE OUTH CONFIGS */
   GOOGLE_CLIENT_ID:
     process.env.GOOGLE_CLIENT_ID ||

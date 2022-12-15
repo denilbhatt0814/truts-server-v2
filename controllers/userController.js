@@ -10,7 +10,9 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const uploadToS3 = require("../utils/uploadToS3");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../config/config");
+const { JWT_SECRET, WALLET_NONCE_LENGTH } = require("../config/config");
+const randomString = require("../utils/randomString");
+const { ethers } = require("ethers");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -200,6 +202,87 @@ exports.loginViaDiscord = async (req, res) => {
       msg: "internal server error",
       error: error,
     });
+  }
+};
+
+exports.loginViaWallet = async (req, res) => {
+  try {
+    const address = req.query.address;
+
+    let filter, msg;
+    // If already Logged in then connect
+    if ("token" in req.cookies || "Authorization" in req.headers) {
+      const token =
+        req.cookies.token ||
+        req.headers("Authorization").replace("Bearer ", "");
+      console.log(token);
+
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      filter = { _id: decoded.id };
+      msg = "Connected a wallet";
+      console.log(msg);
+    } else {
+      // Login or Sign up w/ discord
+      filter = { "wallets.address": address };
+      msg = "LOGIN || SIGNUP W/ WALLET";
+      console.log();
+    }
+
+    // update/insert user's wallet details
+    const options = {
+      upsert: true, // Perform an upsert operation
+      new: true, // Return the updated document, instead of the original
+      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+    };
+    let user = await User.findOneAndUpdate(
+      filter,
+      {
+        wallets: {
+          address: address,
+          nonce: randomString(WALLET_NONCE_LENGTH),
+        },
+      },
+      options
+    );
+
+    // return nonce
+    return new HTTPResponse(res, true, 200, msg, null, {
+      nonce: user.wallets.nonce,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      msg: "internal server error",
+      error: error,
+    });
+  }
+};
+
+exports.verifyWallet = async (req, res) => {
+  try {
+    const { public_key, signature } = req.body;
+
+    let user = await User.findOne({ "wallets.address": public_key });
+
+    // If no user with given public_key
+    if (!user) {
+      return new HTTPError(res, 401, "User w/ provided public_key not found");
+    }
+
+    const hash = ethers.utils.hashMessage(user.wallets.nonce);
+    const signing_address = ethers.utils.recoverAddress(hash, signature);
+
+    if (signing_address == public_key) {
+      user = await User.findByIdAndUpdate(user._id, {
+        "wallets.verified": true,
+      }).populate("tags");
+      cookieToken(user, res);
+    }
+  } catch (error) {
+    console.log(error);
+    return new HTTPError(res, 500, error, "internal server error");
   }
 };
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
+const cors = require("cors");
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -7,6 +8,12 @@ const morgan = require("morgan");
 const app = express();
 
 // BASIC SERVER CONFIGS
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

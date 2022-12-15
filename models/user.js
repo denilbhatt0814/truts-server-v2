@@ -6,7 +6,7 @@ const { JWT_SECRET, JWT_EXPIRY } = require("../config/config");
 const walletSchema = new mongoose.Schema({
   chain: {
     type: String,
-    required: true,
+    // required: true,
   },
   address: {
     type: String,
@@ -16,8 +16,12 @@ const walletSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  token: String,
-  tokenExpiry: Date,
+  verified: {
+    type: Boolean,
+    default: false,
+  },
+  nonce: String,
+  // tokenExpiry: Date,
   // TODO: primary - flag
 });
 
@@ -57,9 +61,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxLength: [300, "Bio should be under 300 charc"],
     },
-    wallets: {
-      type: [walletSchema],
-    },
+    // TODO: Change me back to array of wallets
+    // wallets: {
+    //   type: [walletSchema],
+    // },
+    wallets: walletSchema,
     email: {
       type: String,
       validator: [validator.isEmail, "Please provide email in correct format"],

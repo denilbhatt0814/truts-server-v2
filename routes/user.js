@@ -11,9 +11,10 @@ const {
   getAllUserIntrestTags,
   createUserIntrestTag,
   loginViaGoogle,
+  loginViaWallet,
+  verifyWallet,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
-const cookieToken = require("../utils/cookieToken");
 
 router.route("/signup").post(signup);
 
@@ -37,6 +38,9 @@ router
   .get(passport.authenticate("google", { session: false }), loginViaGoogle);
 
 router.route("/logout").get(logout);
+
+router.route("/login/wallet").get(loginViaWallet);
+router.route("/login/wallet/verify").post(verifyWallet);
 
 // ------ USER ROUTES ------
 router.route("/user").get(isLoggedIn, getLoggedInUserDetails);
