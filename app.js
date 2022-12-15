@@ -21,6 +21,12 @@ app.use(fileUpload());
 // Logging
 app.use(morgan("tiny"));
 
+// TEST:
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "http://localhost.com:8080");
+  next();
+});
+
 // Passportjs setup - for google OAuth
 const passportConfig = require("./passport/googleStrategy");
 const passport = require("passport");
