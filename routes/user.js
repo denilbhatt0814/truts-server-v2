@@ -13,6 +13,7 @@ const {
   loginViaGoogle,
   loginViaWallet,
   verifyWallet,
+  testGoogleLogin,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -24,18 +25,7 @@ router
   .get((req, res) => res.redirect(DISCORD_OAUTH_URL));
 router.route("/login/discord/callback").get(loginViaDiscord);
 
-router.route("/login/google").get(
-  passport.authenticate("google", {
-    scope: ["email", "profile"],
-    session: false,
-  }),
-  (req, res) => {
-    res.send("login with google");
-  }
-);
-router
-  .route("/login/google/callback")
-  .get(passport.authenticate("google", { session: false }), loginViaGoogle);
+router.route("/login/google").post(loginViaGoogle);
 
 router.route("/logout").get(logout);
 

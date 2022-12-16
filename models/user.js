@@ -28,7 +28,7 @@ const walletSchema = new mongoose.Schema({
 const discordSchema = new mongoose.Schema({
   id: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
   },
   username: String,

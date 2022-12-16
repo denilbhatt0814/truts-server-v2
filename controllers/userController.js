@@ -10,7 +10,11 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const uploadToS3 = require("../utils/uploadToS3");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET, WALLET_NONCE_LENGTH } = require("../config/config");
+const {
+  JWT_SECRET,
+  WALLET_NONCE_LENGTH,
+  GOOGLE_CLIENT_ID,
+} = require("../config/config");
 const randomString = require("../utils/randomString");
 const { ethers } = require("ethers");
 
@@ -80,17 +84,24 @@ exports.login = async (req, res) => {
   }
 };
 
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
 exports.loginViaGoogle = async (req, res) => {
   // NOTE: this code will run after exec of Passportjs middleware
 
-  const profile = req.user; // this user is google's user object
+  const g_token = req.body.token;
+  const ticket = await client.verifyIdToken({
+    idToken: g_token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const profile = ticket.getPayload();
 
   let filter;
   // If already Logged in then connect
   if ("token" in req.cookies || "Authorization" in req.headers) {
     const token =
       req.cookies.token || req.headers("Authorization").replace("Bearer ", "");
-    console.log(token);
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
@@ -98,7 +109,7 @@ exports.loginViaGoogle = async (req, res) => {
     console.log("Connected w/ google");
   } else {
     // Login or Sign up w/ Google
-    filter = { email: profile._json.email };
+    filter = { email: profile.email };
     console.log("LOGIN || SIGNUP W/ GOOGLE");
   }
 
@@ -111,8 +122,8 @@ exports.loginViaGoogle = async (req, res) => {
   let user = await User.findOneAndUpdate(
     filter,
     {
-      googleId: profile.id,
-      email: profile._json.email,
+      googleId: profile.sub,
+      email: profile.email,
     },
     options
   ).populate("tags");
@@ -121,7 +132,7 @@ exports.loginViaGoogle = async (req, res) => {
   if (!user.name) {
     user = await User.findOneAndUpdate(
       { _id: user._id },
-      { name: profile.displayName },
+      { name: profile.name },
       {
         new: true,
       }
