@@ -144,6 +144,7 @@ exports.loginViaGoogle = async (req, res) => {
     // return jwt token
     cookieToken(user, res);
   } catch (error) {
+    console.log(error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
