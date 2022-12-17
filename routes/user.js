@@ -13,7 +13,6 @@ const {
   loginViaGoogle,
   loginViaWallet,
   verifyWallet,
-  testGoogleLogin,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
