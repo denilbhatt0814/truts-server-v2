@@ -104,7 +104,7 @@ exports.loginViaGoogle = async (req, res) => {
       const token =
         req.cookies.token ||
         req.headers("Authorization").replace("Bearer ", "");
-
+      console.log(token);
       const decoded = jwt.verify(token, JWT_SECRET);
 
       filter = { _id: decoded.id };
