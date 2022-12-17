@@ -88,59 +88,64 @@ const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 exports.loginViaGoogle = async (req, res) => {
-  // NOTE: this code will run after exec of Passportjs middleware
+  try {
+    // NOTE: this code will run after exec of Passportjs middleware
 
-  const g_token = req.body.token;
-  const ticket = await client.verifyIdToken({
-    idToken: g_token,
-    audience: GOOGLE_CLIENT_ID,
-  });
-  const profile = ticket.getPayload();
+    const g_token = req.body.token;
+    const ticket = await client.verifyIdToken({
+      idToken: g_token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const profile = ticket.getPayload();
 
-  let filter;
-  // If already Logged in then connect
-  if ("token" in req.cookies || "Authorization" in req.headers) {
-    const token =
-      req.cookies.token || req.headers("Authorization").replace("Bearer ", "");
+    let filter;
+    // If already Logged in then connect
+    if ("token" in req.cookies || "Authorization" in req.headers) {
+      const token =
+        req.cookies.token ||
+        req.headers("Authorization").replace("Bearer ", "");
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
 
-    filter = { _id: decoded.id };
-    console.log("Connected w/ google");
-  } else {
-    // Login or Sign up w/ Google
-    filter = { email: profile.email };
-    console.log("LOGIN || SIGNUP W/ GOOGLE");
-  }
+      filter = { _id: decoded.id };
+      console.log("Connected w/ google");
+    } else {
+      // Login or Sign up w/ Google
+      filter = { email: profile.email };
+      console.log("LOGIN || SIGNUP W/ GOOGLE");
+    }
 
-  // update/insert user's google details
-  const options = {
-    upsert: true, // Perform an upsert operation
-    new: true, // Return the updated document, instead of the original
-    setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
-  };
-  let user = await User.findOneAndUpdate(
-    filter,
-    {
-      googleId: profile.sub,
-      email: profile.email,
-    },
-    options
-  ).populate("tags");
-
-  // add name if missing or if new user
-  if (!user.name) {
-    user = await User.findOneAndUpdate(
-      { _id: user._id },
-      { name: profile.name },
+    // update/insert user's google details
+    const options = {
+      upsert: true, // Perform an upsert operation
+      new: true, // Return the updated document, instead of the original
+      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+    };
+    let user = await User.findOneAndUpdate(
+      filter,
       {
-        new: true,
-      }
+        googleId: profile.sub,
+        email: profile.email,
+      },
+      options
     ).populate("tags");
-  }
 
-  // return jwt token
-  cookieToken(user, res);
+    // add name if missing or if new user
+    if (!user.name) {
+      user = await User.findOneAndUpdate(
+        { _id: user._id },
+        { name: profile.name },
+        {
+          new: true,
+        }
+      ).populate("tags");
+    }
+
+    // return jwt token
+    cookieToken(user, res);
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
 };
 
 exports.loginViaDiscord = async (req, res) => {
