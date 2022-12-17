@@ -100,10 +100,9 @@ exports.loginViaGoogle = async (req, res) => {
 
     let filter;
     // If already Logged in then connect
-    if ("token" in req.cookies || "Authorization" in req.headers) {
+    if ("token" in req.cookies || "authorization" in req.headers) {
       const token =
-        req.cookies.token ||
-        req.headers("Authorization").replace("Bearer ", "");
+        req.cookies.token || req.header("Authorization").replace("Bearer ", "");
       console.log(token);
       const decoded = jwt.verify(token, JWT_SECRET);
 
@@ -160,10 +159,9 @@ exports.loginViaDiscord = async (req, res) => {
     let filter;
 
     // If already Logged in then connect
-    if ("token" in req.cookies || "Authorization" in req.headers) {
+    if ("token" in req.cookies || "authorization" in req.headers) {
       const token =
-        req.cookies.token ||
-        req.headers("Authorization").replace("Bearer ", "");
+        req.cookies.token || req.header("Authorization").replace("Bearer ", "");
       console.log(token);
 
       const decoded = jwt.verify(token, JWT_SECRET);
@@ -228,10 +226,9 @@ exports.loginViaWallet = async (req, res) => {
 
     let filter, msg;
     // If already Logged in then connect
-    if ("token" in req.cookies || "Authorization" in req.headers) {
+    if ("token" in req.cookies || "authorization" in req.headers) {
       const token =
-        req.cookies.token ||
-        req.headers("Authorization").replace("Bearer ", "");
+        req.cookies.token || req.header("Authorization").replace("Bearer ", "");
       console.log(token);
 
       const decoded = jwt.verify(token, JWT_SECRET);
