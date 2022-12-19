@@ -315,7 +315,7 @@ exports.updateUserDeatils = async (req, res) => {
     };
 
     // if asked for photo update
-    if ("photo" in req.files) {
+    if (req.files && "photo" in req.files) {
       const saveResp = await updateProfileImage(req.user, req.files.photo);
 
       // save link and id for the new image
