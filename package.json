@@ -14,6 +14,7 @@
     "aws-sdk": "^2.1272.0",
     "axios": "^1.2.1",
     "bcryptjs": "^2.4.3",
+    "bs58": "^5.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -28,6 +29,7 @@
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
     "sharp": "^0.31.2",
+    "tweetnacl": "^1.0.3",
     "validator": "^13.7.0"
   },
   "devDependencies": {

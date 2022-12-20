@@ -1,5 +1,4 @@
 const express = require("express");
-const passport = require("passport");
 const router = express.Router();
 const { DISCORD_OAUTH_URL } = require("../config/config");
 const {
@@ -13,6 +12,7 @@ const {
   loginViaGoogle,
   loginViaWallet,
   verifyWallet,
+  setPrimaryWallet,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -28,8 +28,16 @@ router.route("/login/google").post(loginViaGoogle);
 
 router.route("/logout").get(logout);
 
+// TEST: login wallet
 router.route("/login/wallet").get(loginViaWallet);
 router.route("/login/wallet/verify").post(verifyWallet);
+
+// ------ WALLET ROUTES (FUTURE) ------
+// TEST: need to test these new routes
+router.route("/user/wallet/connect").get(isLoggedIn, addNewWallet);
+router.route("/user/wallet/verify").post(isLoggedIn, verifyWallet);
+router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
+// TODO: delete
 
 // ------ USER ROUTES ------
 router.route("/user").get(isLoggedIn, getLoggedInUserDetails);

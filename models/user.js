@@ -6,7 +6,7 @@ const { JWT_SECRET, JWT_EXPIRY } = require("../config/config");
 const walletSchema = new mongoose.Schema({
   chain: {
     type: String,
-    // required: true,
+    enum: ["EVM", "SOL"],
   },
   address: {
     type: String,
@@ -63,9 +63,7 @@ const userSchema = new mongoose.Schema(
       maxLength: [300, "Bio should be under 300 charc"],
     },
     // TODO: Change me back to array of wallets
-    // wallets: {
-    //   type: [walletSchema],
-    // },
+    // wallets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wallet" }],
     wallets: walletSchema,
     email: {
       type: String,
