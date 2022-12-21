@@ -226,6 +226,14 @@ exports.loginViaDiscord = async (req, res) => {
 exports.loginViaWallet = async (req, res) => {
   try {
     const address = req.query.address;
+    if (!address) {
+      return new HTTPError(
+        res,
+        400,
+        "missing address in params",
+        "invalid input"
+      );
+    }
 
     let filter, msg;
     // If already Logged in then connect
@@ -294,7 +302,7 @@ exports.verifyWallet = async (req, res) => {
     let evm_verified, sol_verified;
     const message = user.wallets.nonce;
     switch (chain) {
-      case "ETH":
+      case "EVM":
         const hash = ethers.utils.hashMessage(message);
         const signing_address = ethers.utils.recoverAddress(hash, signature);
         evm_verified = signing_address == public_key;
