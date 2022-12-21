@@ -249,7 +249,6 @@ exports.loginViaWallet = async (req, res) => {
       msg = "Connected a wallet";
       console.log(msg);
     } else {
-      // TODO: create a new account or login to a account
       // Login or Sign up w/ with a wallet
       filter = { "wallets.address": address };
 
