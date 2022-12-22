@@ -2,6 +2,7 @@ const sharp = require("sharp");
 const User = require("../models/user");
 const Wallet = require("../models/wallet");
 const Dao = require("../models/dao");
+const Review = require("../models/review");
 const UserIntrestTag = require("../models/userIntrestTag");
 const cookieToken = require("../utils/cookieToken");
 const {
@@ -91,6 +92,7 @@ exports.login = async (req, res) => {
 };
 
 const { OAuth2Client } = require("google-auth-library");
+
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 exports.loginViaGoogle = async (req, res) => {
@@ -450,6 +452,36 @@ exports.getMyMatchWithListedGuilds = async (req, res) => {
   } catch (error) {
     console.log(error);
     return new HTTPError(res, 500, error, "Internal server error");
+  }
+};
+
+exports.getMyReviews = async (req, res) => {
+  try {
+    let reviews = await Review.find({ user_discord_id: req.user.discord.id });
+    reviews = reviews.map((review) => {
+      return {
+        rating: review.rating,
+        content: review.review_desc,
+        listing: {
+          name: review.dao_name,
+          discord: {
+            id: review.guild_id,
+          },
+        },
+        vote: {
+          up: {
+            count: review.thumbs_up,
+          },
+          down: {
+            count: review.thumbs_down,
+          },
+        },
+        updatedAt: review.updatedAt,
+      };
+    });
+    return new HTTPResponse(res, true, 200, null, null, { reviews });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
   }
 };
 

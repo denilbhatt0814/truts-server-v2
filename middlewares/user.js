@@ -5,11 +5,8 @@ const User = require("../models/user");
 
 exports.isLoggedIn = async (req, res, next) => {
   try {
-    // fetch n decode the token
-    const token =
-      req.cookies.token ?? req.header("Authorization").replace("Bearer ", "");
     // if no token is sent
-    if (!token) {
+    if (!("token" in req.cookies) && !("authorization" in req.headers)) {
       return next(
         new HTTPError(
           res,
@@ -19,6 +16,11 @@ exports.isLoggedIn = async (req, res, next) => {
         )
       );
     }
+
+    // fetch n decode the token
+    const token =
+      req.cookies.token ?? req.header("Authorization").replace("Bearer ", "");
+
     const decoded = jwt.verify(token, JWT_SECRET);
     // find the user
     const user = await User.findById(decoded.id).populate("tags");
@@ -39,6 +41,7 @@ exports.isLoggedIn = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.log(error);
     return next(new HTTPError(res, 500, "Internal server error", error));
   }
 };

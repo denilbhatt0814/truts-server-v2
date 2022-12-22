@@ -14,6 +14,7 @@ const {
   verifyWallet,
   setPrimaryWallet,
   getMyMatchWithListedGuilds,
+  getMyReviews,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -38,12 +39,12 @@ router.route("/login/wallet/verify").post(verifyWallet);
 // router.route("/user/wallet/connect").get(isLoggedIn, addNewWallet);
 // router.route("/user/wallet/verify").post(isLoggedIn, verifyWallet);
 // router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
-// TODO: delete
+// TODO: delete a wallet
 
 // ------ USER ROUTES ------
 router.route("/user").get(isLoggedIn, getMyUserDetails);
-// UNDER-WORK:
 router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
+router.route("/user/reviews").get(isLoggedIn, getMyReviews);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 
 router
