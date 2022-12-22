@@ -31,7 +31,7 @@ module.exports = {
     "http://localhost:3000/api/v1/login/discord/callback",
   DISCORD_OAUTH_URL:
     process.env.DISCORD_OAUTH_URL ||
-    `https://discord.com/oauth2/authorize?client_id=782120524956434432&redirect_uri=http://localhost:3000/api/v1/login/discord/callback&response_type=code&scope=identify%20email`,
+    `https://discord.com/api/oauth2/authorize?client_id=782120524956434432&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Flogin%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email%20guilds`,
 
   /* AWS CONFIGS */
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || "",

@@ -6,13 +6,14 @@ const {
   loginViaDiscord,
   logout,
   updateUserDeatils,
-  getLoggedInUserDetails,
+  getMyUserDetails,
   getAllUserIntrestTags,
   createUserIntrestTag,
   loginViaGoogle,
   loginViaWallet,
   verifyWallet,
   setPrimaryWallet,
+  getMyMatchWithListedGuilds,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -34,13 +35,15 @@ router.route("/login/wallet/verify").post(verifyWallet);
 
 // ------ WALLET ROUTES (FUTURE) ------
 // TEST: need to test these new routes
-router.route("/user/wallet/connect").get(isLoggedIn, addNewWallet);
-router.route("/user/wallet/verify").post(isLoggedIn, verifyWallet);
-router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
+// router.route("/user/wallet/connect").get(isLoggedIn, addNewWallet);
+// router.route("/user/wallet/verify").post(isLoggedIn, verifyWallet);
+// router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
 // TODO: delete
 
 // ------ USER ROUTES ------
-router.route("/user").get(isLoggedIn, getLoggedInUserDetails);
+router.route("/user").get(isLoggedIn, getMyUserDetails);
+// UNDER-WORK:
+router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 
 router

@@ -42,11 +42,33 @@ exports.getUserDetails = async (accessToken) => {
         "Accept-Encoding": "gzip,deflate,compress",
       },
     };
-    let axios_resp = await axios.get(
+    let axios_resp_profile = await axios.get(
       "https://discord.com/api/users/@me",
       config
     );
-    return axios_resp.data;
+
+    let guilds;
+    try {
+      let axios_resp_guilds = await axios.get(
+        "https://discord.com/api/users/@me/guilds",
+        config
+      );
+      guilds = axios_resp_guilds.data.map(function (guild) {
+        return {
+          id: guild.id,
+          name: guild.name,
+          owner: guild.owner,
+          permissions: guild.permissions,
+        };
+      });
+      console.log(guilds);
+    } catch (error) {
+      console.error(
+        "DiscordError: unable to get guilds of user\nSuggestion: may be guilds wasn't included in scope"
+      );
+    }
+
+    return { ...axios_resp_profile.data, guilds };
   } catch (error) {
     throw error;
   }

@@ -25,6 +25,17 @@ const walletSchema = new mongoose.Schema({
   // TODO: primary - flag
 });
 
+const guildSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    unique: [true, "user already is linked to this guild"],
+    require: [true, "missing guild id"],
+  },
+  name: String,
+  owner: Boolean,
+  permissions: String,
+});
+
 const discordSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -46,6 +57,10 @@ const discordSchema = new mongoose.Schema({
     select: false,
   },
   token_expiry: Date,
+  guilds: {
+    type: [guildSchema],
+    select: false,
+  },
 });
 
 const userSchema = new mongoose.Schema(

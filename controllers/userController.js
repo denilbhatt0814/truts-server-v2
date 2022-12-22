@@ -193,6 +193,7 @@ exports.loginViaDiscord = async (req, res) => {
           email: discordUser.email,
           access_token: accessResponse.access_token,
           refresh_token: accessResponse.refresh_token,
+          guilds: discordUser.guilds,
           // TODO: add expiry to current
           token_expiry: new Date(Date.now() + accessResponse.expires_in / 1000), // expires_in is in seconds
         },
@@ -344,7 +345,7 @@ exports.verifyWallet = async (req, res) => {
 };
 
 // ------ USER CONTROLLER ------
-exports.getLoggedInUserDetails = async (req, res) => {
+exports.getMyUserDetails = async (req, res) => {
   return new HTTPResponse(res, true, 200, null, null, { user: req.user });
 };
 
@@ -382,6 +383,19 @@ exports.updateUserDeatils = async (req, res) => {
       null,
       { user }
     );
+  } catch (error) {
+    console.log(error);
+    return new HTTPError(res, 500, error, "Internal server error");
+  }
+};
+
+exports.getMyMatchWithListedGuilds = async (req, res) => {
+  try {
+    let user = User.findById(req.user._id, { "discord.guilds": 1 });
+    console.log(JSON.parse(JSON.stringify(user)));
+    return new HTTPResponse(res, true, 200, null, null, {
+      user: JSON.parse(JSON.stringify(user)),
+    });
   } catch (error) {
     console.log(error);
     return new HTTPError(res, 500, error, "Internal server error");
