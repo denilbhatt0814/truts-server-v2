@@ -1,6 +1,7 @@
 const sharp = require("sharp");
 const User = require("../models/user");
 const Wallet = require("../models/wallet");
+const Dao = require("../models/dao");
 const UserIntrestTag = require("../models/userIntrestTag");
 const cookieToken = require("../utils/cookieToken");
 const {
@@ -391,10 +392,60 @@ exports.updateUserDeatils = async (req, res) => {
 
 exports.getMyMatchWithListedGuilds = async (req, res) => {
   try {
-    let user = User.findById(req.user._id, { "discord.guilds": 1 });
-    console.log(JSON.parse(JSON.stringify(user)));
+    let user = await User.findById(req.user._id, { "discord.guilds": 1 });
+
+    const guildIds = user.discord.guilds.map((guild) => guild.id);
+    let listings = await Dao.find(
+      { guild_id: { $in: guildIds }, verified_status: true },
+      {
+        dao_name: 1,
+        slug: 1,
+        guild_id: 1,
+        average_rating: 1,
+        dao_cover: 1,
+        dao_logo: 1,
+        discord_link: 1,
+        twitter_link: 1,
+        website_link: 1,
+        verified_status: 1,
+        review_count: 1,
+        twitter_followers: 1,
+        discord_members: 1,
+      }
+    );
+    listings = listings.map((listing) => {
+      return {
+        name: listing.dao_name,
+        ratings: {
+          average: listing.average_rating,
+          count: listing.review_count,
+        },
+        discord: {
+          id: listing.guild_id,
+          link: listing.discord_link,
+          count: listing.discord_members,
+        },
+        twitter: {
+          // id: "",
+          link: listing.twitter_link,
+          count: listing.twitter_followers,
+        },
+        website: listing.website_link,
+        image: {
+          logo: {
+            url: listing.dao_logo,
+          },
+          cover: {
+            url: listing.dao_cover,
+          },
+        },
+        slug: listing.slug,
+      };
+    });
+
     return new HTTPResponse(res, true, 200, null, null, {
-      user: JSON.parse(JSON.stringify(user)),
+      count: listings.length,
+      listings,
     });
   } catch (error) {
     console.log(error);
