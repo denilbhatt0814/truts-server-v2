@@ -100,11 +100,28 @@ const userSchema = new mongoose.Schema(
         ref: "UserIntrestTag",
       },
     ],
+    isCompleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// UNDER-WORK: build hook for check profile completion
+// HOOKS on User model
+userSchema.pre("save", function (next) {
+  if (this.googleId && this.wallets.verified && this.discord.id) {
+    // mark complete
+    this.isCompleted = true;
+  } else {
+    // turn it incomplete
+    this.isCompleted = false;
+  }
+  next();
+});
 
 // METHODS on User model
 
