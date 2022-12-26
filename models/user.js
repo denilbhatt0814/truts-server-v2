@@ -110,17 +110,14 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// UNDER-WORK: build hook for check profile completion
 // HOOKS on User model
-userSchema.pre("save", function (next) {
-  if (this.googleId && this.wallets.verified && this.discord.id) {
-    // mark complete
-    this.isCompleted = true;
+userSchema.post("findOneAndUpdate", async function (doc) {
+  if (doc.googleId && doc.discord && doc.wallets) {
+    doc.isCompleted = true;
   } else {
-    // turn it incomplete
-    this.isCompleted = false;
+    doc.isCompleted = false;
   }
-  next();
+  await doc.save();
 });
 
 // METHODS on User model
