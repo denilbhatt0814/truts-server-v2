@@ -15,6 +15,9 @@ const {
   setPrimaryWallet,
   getMyMatchWithListedGuilds,
   getMyReviews,
+  getUserDetails,
+  getMatchWithListedGuilds,
+  getUserReviews,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -51,5 +54,12 @@ router
   .route("/user/intrest-tag")
   .get(isLoggedIn, getAllUserIntrestTags)
   .post(isLoggedIn, createUserIntrestTag);
+
+// UNDER-WORK: Public routes
+router.route("/public/user/:address").get(isLoggedIn, getUserDetails);
+router
+  .route("/public/user/:address/guilds")
+  .get(isLoggedIn, getMatchWithListedGuilds);
+router.route("/public/user/:address/reviews").get(isLoggedIn, getUserReviews);
 
 module.exports = router;

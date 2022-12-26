@@ -347,7 +347,7 @@ exports.verifyWallet = async (req, res) => {
   }
 };
 
-// ------ USER CONTROLLER ------
+// ------ USER CONTROLLER (PRIVATE) ------
 exports.getMyUserDetails = async (req, res) => {
   return new HTTPResponse(res, true, 200, null, null, { user: req.user });
 };
@@ -395,6 +395,15 @@ exports.updateUserDeatils = async (req, res) => {
 exports.getMyMatchWithListedGuilds = async (req, res) => {
   try {
     let user = await User.findById(req.user._id, { "discord.guilds": 1 });
+
+    if (!user.discord) {
+      return new HTTPError(
+        res,
+        400,
+        "Please link your discord account",
+        "Discord not connected"
+      );
+    }
 
     const guildIds = user.discord.guilds.map((guild) => guild.id);
     let listings = await Dao.find(
@@ -457,7 +466,163 @@ exports.getMyMatchWithListedGuilds = async (req, res) => {
 
 exports.getMyReviews = async (req, res) => {
   try {
+    if (!req.user.discord) {
+      return new HTTPError(
+        res,
+        400,
+        "Please link your discord account",
+        "Discord not connected"
+      );
+    }
+
     let reviews = await Review.find({ user_discord_id: req.user.discord.id });
+    reviews = reviews.map((review) => {
+      return {
+        rating: review.rating,
+        content: review.review_desc,
+        listing: {
+          name: review.dao_name,
+          discord: {
+            id: review.guild_id,
+          },
+        },
+        vote: {
+          up: {
+            count: review.thumbs_up,
+          },
+          down: {
+            count: review.thumbs_down,
+          },
+        },
+        updatedAt: review.updatedAt,
+      };
+    });
+    return new HTTPResponse(res, true, 200, null, null, { reviews });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// ------ USER CONTROLLER (PUBLIC) ------
+exports.getUserDetails = async (req, res) => {
+  try {
+    const address = req.params.address;
+    const user = await User.findOne(
+      {
+        "wallets.address": address,
+        isCompleted: true,
+      },
+      {
+        email: 0,
+        googleId: 0,
+        "wallets.nonce": 0,
+        "discord.discriminator": 0,
+        "discord.id": 0,
+        "discord.token_expiry": 0,
+      }
+    ).populate("tags");
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given address not found",
+        "user not found"
+      );
+    }
+    return new HTTPResponse(res, true, 200, null, null, { user });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getMatchWithListedGuilds = async (req, res) => {
+  try {
+    const address = req.params.address;
+    let user = await User.findOne(
+      { address, isCompleted: true },
+      { "discord.guilds": 1 }
+    );
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given address not found",
+        "user not found"
+      );
+    }
+    const guildIds = user.discord.guilds.map((guild) => guild.id);
+    let listings = await Dao.find(
+      { guild_id: { $in: guildIds }, verified_status: true },
+      {
+        dao_name: 1,
+        slug: 1,
+        guild_id: 1,
+        average_rating: 1,
+        dao_cover: 1,
+        dao_logo: 1,
+        discord_link: 1,
+        twitter_link: 1,
+        website_link: 1,
+        verified_status: 1,
+        review_count: 1,
+        twitter_followers: 1,
+        discord_members: 1,
+      }
+    );
+    listings = listings.map((listing) => {
+      return {
+        name: listing.dao_name,
+        ratings: {
+          average: listing.average_rating,
+          count: listing.review_count,
+        },
+        discord: {
+          id: listing.guild_id,
+          link: listing.discord_link,
+          count: listing.discord_members,
+        },
+        twitter: {
+          // id: "",
+          link: listing.twitter_link,
+          count: listing.twitter_followers,
+        },
+        website: listing.website_link,
+        image: {
+          logo: {
+            url: listing.dao_logo,
+          },
+          cover: {
+            url: listing.dao_cover,
+          },
+        },
+        slug: listing.slug,
+      };
+    });
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: listings.length,
+      listings,
+    });
+  } catch (error) {
+    console.log(error);
+    return new HTTPError(res, 500, error, "Internal server error");
+  }
+};
+
+exports.getUserReviews = async (req, res) => {
+  try {
+    const address = req.params.address;
+    const user = await User.findOne({ address, isCompleted: true });
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given address not found",
+        "user not found"
+      );
+    }
+
+    let reviews = await Review.find({ user_discord_id: user.discord.id });
     reviews = reviews.map((review) => {
       return {
         rating: review.rating,
