@@ -30,10 +30,12 @@ app.use(morgan("tiny"));
 // route imports
 const home = require("./routes/home");
 const user = require("./routes/user");
+const mission = require("./routes/mission");
 
 // routes middleware
 app.use("/api/v1", home);
 app.use("/api/v1", user);
+app.use("/api/v1", mission);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");
