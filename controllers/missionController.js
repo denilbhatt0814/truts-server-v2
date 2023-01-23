@@ -48,10 +48,13 @@ exports.getMissions = async (req, res) => {
     // UNDER-WORK: querying in this could be optimized | This is temperory
     let searchQ = {};
     if ("communityID" in req.query) {
-      searchQ.community = req.query.communityID;
+      searchQ.community = mongoose.Types.ObjectId(req.query.communityID);
     }
 
-    let missions = await Mission.find(searchQ);
+    let missions = await Mission.find(searchQ)
+      .populate("tags")
+      .populate({ path: "community", select: "name photo.logo" })
+      .select({ tasks: 0 });
     return new HTTPResponse(res, true, null, null, { missions });
   } catch (error) {
     console.log("getMissions: ", error);
@@ -59,11 +62,52 @@ exports.getMissions = async (req, res) => {
   }
 };
 
+exports.getOneMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+
+    const mission = await Mission.findById(missionID)
+      .populate("tags")
+      .populate({ path: "community", select: "name photo.logo" });
+
+    return new HTTPResponse(res, true, 200, null, null, { mission });
+  } catch (error) {
+    console.log(error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.myAttemptedMissionStatus = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const userID = req.user._id;
+    const attemptedMission = await User_Mission.findOne({
+      user: mongoose.Types.ObjectId(userID),
+      mission: mongoose.Types.ObjectId(missionID),
+    });
+
+    if (!attemptedMission) {
+      return new HTTPError(
+        res,
+        400,
+        `user[${userID}] has not attempted mission[${missionID}] OR mission does not exit`,
+        "mission not attempted"
+      );
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, { attemptedMission });
+  } catch (error) {
+    console.log("myAttemptedMissionStatus: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.performTask = async (req, res) => {
   try {
     // PARSE TASK ID & USER ID (userID from authenticated route)
-    const taskID = req.params.id;
-    const userID = req.query.userID; // TODO: query this from middleware
+    const taskID = req.params.taskID;
+    const missionID = req.params.misisonID;
+    const userID = req.user._id;
 
     let mission = await Mission.findOne({
       "tasks._id": mongoose.Types.ObjectId(taskID),
@@ -80,24 +124,33 @@ exports.performTask = async (req, res) => {
       );
     }
 
+    if (missionID != mission._id) {
+      return new HTTPError(
+        res,
+        400,
+        `task[${taskID}] does not belong to mission[${missionID}]`,
+        "illegal task to mission reference"
+      );
+    }
+
     // Add missions/task to UserMission
     const task = mission.tasks.find((task) => task._id == taskID);
     const taskValidator = taskValidators[task.taskTemplate.validator];
     const arguments = { ...task.validationDetails, userID };
-    const isValid = taskValidator.exec(arguments);
+    const isValid = await taskValidator.exec(arguments);
 
     if (!isValid) {
       return new HTTPError(
         res,
         400,
-        `taskID: ${taskID} [mission: ${mission._id}] couldn't be validated`,
+        `taskID: ${taskID} [mission: ${mission._id}] could not be validated`,
         "Task validation falied"
       );
     }
 
     // If task is validated
     // TODO: CHECK: when can the task status be pending ?
-    // UPSERT: if user hasn't attempted the mission create new,
+    // UPSERT: if user has not attempted the mission create new,
     // else update the done task in the old document
     const filterQ = {
       user: mongoose.Types.ObjectId(userID),
@@ -121,7 +174,7 @@ exports.performTask = async (req, res) => {
     }
 
     attemptedMission.tasks[task._id] = "COMPLETE";
-    mission = await attemptedMission.save();
+    await attemptedMission.save();
 
     return new HTTPResponse(
       res,
@@ -129,10 +182,10 @@ exports.performTask = async (req, res) => {
       200,
       `taskID: ${taskID} [mission: ${mission._id}] marked complete`,
       null,
-      { mission }
+      { attemptedMission }
     );
   } catch (error) {
-    console.log("performMission", error);
+    console.log("performMission: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -140,7 +193,7 @@ exports.performTask = async (req, res) => {
 exports.claimMissionCompletion = async (req, res) => {
   try {
     const missionID = req.query.missionID;
-    const userID = req.query.userID; // TODO: Modify userID receive
+    const userID = req.user._id;
 
     const mission = await Mission.findById(missionID).populate("taskTemplate");
 
@@ -153,7 +206,7 @@ exports.claimMissionCompletion = async (req, res) => {
       return new HTTPError(
         res,
         400,
-        `the user[${userID}] hasn't attempted the mission[${missionID}]`,
+        `the user[${userID}] has not attempted the mission[${missionID}]`,
         "mission not attempted"
       );
     }
@@ -177,7 +230,7 @@ exports.claimMissionCompletion = async (req, res) => {
         return new HTTPError(
           res,
           400,
-          `task[${task._id}] isn't complete in mission[${missionID}]`,
+          `task[${task._id}] is not complete in mission[${missionID}]`,
           "mission incomplete"
         );
       }

@@ -99,8 +99,13 @@ var DaoSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+DaoSchema.virtual("name").get(() => this.dao_name);
+DaoSchema.virtual("photo.logo").get(() => this.dao_logo);
 
 // Export the model
 module.exports = mongoose.model("Dao", DaoSchema);
