@@ -1,5 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const { Mission } = require("../models/mission");
+const { Dao } = require("../models/dao");
+const { MissionTag } = require("../models/missionTag");
 const { TaskTemplate } = require("../models/taskTemplate");
 const { User_Mission } = require("../models/user_mission");
 const HTTPError = require("../utils/httpError");
@@ -14,7 +16,7 @@ const taskValidators = require("../validators/task/validators");
 
 exports.createMission = async (req, res) => {
   try {
-    const communityID = req.params.communityID;
+    const communityID = req.body.communityID;
     const { name, description, tags, tasks, communityXP, startDate, endDate } =
       req.body;
 
@@ -55,7 +57,7 @@ exports.getMissions = async (req, res) => {
       .populate("tags")
       .populate({ path: "community", select: "name photo.logo" })
       .select({ tasks: 0 });
-    return new HTTPResponse(res, true, null, null, { missions });
+    return new HTTPResponse(res, true, 200, null, null, { missions });
   } catch (error) {
     console.log("getMissions: ", error);
     return new HTTPError(res, 500, error, "internal server error");

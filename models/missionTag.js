@@ -9,4 +9,4 @@ const missionTagSchema = new mongoose.Schema({
   // TODO: add logo url
 });
 
-module.exports = { Missiontag: mongoose.model("MissionTag", missionTagSchema) };
+module.exports = { MissionTag: mongoose.model("MissionTag", missionTagSchema) };

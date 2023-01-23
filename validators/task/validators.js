@@ -10,8 +10,13 @@ module.exports = {
   },
   REVIEWED_IN_COMMUNITY: {
     parameters: [
-      { communityID: { name: "Community ID", type: String } },
-      { userID: { name: "User ID", type: String } },
+      {
+        field: "communityID",
+        name: "Community ID",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
     ],
     areValidArguments: function (arguments) {
       if ("communityID" in arguments) {
