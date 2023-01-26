@@ -55,7 +55,7 @@ exports.getMissions = async (req, res) => {
 
     let missions = await Mission.find(searchQ)
       .populate("tags")
-      .populate({ path: "community", select: "name photo.logo" })
+      .populate({ path: "community", select: { dao_name: 1, dao_logo: 1 } })
       .select({ tasks: 0 });
     return new HTTPResponse(res, true, 200, null, null, { missions });
   } catch (error) {
@@ -70,7 +70,7 @@ exports.getOneMission = async (req, res) => {
 
     const mission = await Mission.findById(missionID)
       .populate("tags")
-      .populate({ path: "community", select: "name photo.logo" });
+      .populate({ path: "community", select: { dao_name: 1, dao_logo: 1 } });
 
     return new HTTPResponse(res, true, 200, null, null, { mission });
   } catch (error) {

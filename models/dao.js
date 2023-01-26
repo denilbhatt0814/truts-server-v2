@@ -104,8 +104,12 @@ var DaoSchema = new Schema(
   }
 );
 
-DaoSchema.virtual("name").get(() => this.dao_name);
-DaoSchema.virtual("photo.logo").get(() => this.dao_logo);
+DaoSchema.virtual("name").get(function () {
+  return this.dao_name;
+});
+DaoSchema.virtual("photo.logo").get(function () {
+  return this.dao_logo;
+});
 
 // Export the model
 module.exports = mongoose.model("Dao", DaoSchema);
