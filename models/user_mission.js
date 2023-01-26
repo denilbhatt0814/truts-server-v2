@@ -40,11 +40,9 @@ const user_missionSchema = new mongoose.Schema({
   },
   trutsXP: {
     type: Number,
-    required: [true, "Please allocate trutsXP to this task template"],
   },
   communityXP: {
     type: Number,
-    required: [true, "Please allocate communityXP to this mission"],
   },
   isCompleted: {
     type: Boolean,

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const taskSchema = new mongoose.Schema({
   taskTemplate: {
@@ -12,6 +13,13 @@ const taskSchema = new mongoose.Schema({
   description: {
     type: String,
     required: [true, "Please provide description for task"],
+  },
+  redirect_url: {
+    type: String,
+    validate: {
+      validator: (value) => validator.isURL(value),
+      message: "Please provide a valid URL",
+    },
   },
   validationDetails: {
     type: mongoose.Schema.Types.Mixed,

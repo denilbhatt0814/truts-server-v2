@@ -113,7 +113,7 @@ exports.performTask = async (req, res) => {
 
     let mission = await Mission.findOne({
       "tasks._id": mongoose.Types.ObjectId(taskID),
-    }).populate("taskTemplate");
+    }).populate("tasks.taskTemplate");
 
     console.log(mission);
 
@@ -187,7 +187,7 @@ exports.performTask = async (req, res) => {
       { attemptedMission }
     );
   } catch (error) {
-    console.log("performMission: ", error);
+    console.log("performTask: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -259,6 +259,7 @@ exports.claimMissionCompletion = async (req, res) => {
 const cleanseAndVerifyTasks = async (res, tasks) => {
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
+    // TODO: Add redirect_url if needed
     if (
       !("taskTemplate" in task) ||
       !("name" in task) ||
