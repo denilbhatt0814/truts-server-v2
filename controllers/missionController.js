@@ -161,18 +161,19 @@ exports.performTask = async (req, res) => {
     let attemptedMission = await User_Mission.findOne(filterQ);
 
     if (!attemptedMission) {
+
+      let tasks = {};
+      mission.tasks.forEach((task) => {
+        tasks[task._id] = "INCOMPLETE";
+      });
+
       attemptedMission = new User_Mission({
         user: userID,
         mission: mission._id,
         community: mission.community._id,
-        tasks: () => {
-          let tasks = {};
-          mission.tasks.forEach((task) => {
-            tasks[task._id] = "INCOMPLETE";
-          });
-          return tasks;
-        },
+        tasks,
       });
+
     }
 
     attemptedMission.tasks[task._id] = "COMPLETE";
