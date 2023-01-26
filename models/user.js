@@ -3,6 +3,11 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const { JWT_SECRET, JWT_EXPIRY } = require("../config/config");
 
+/**
+ * NOTE: If any new field is added or updated in userSchema
+ *      calculateProfileCompletion Fn() must be modified for accurate response
+ */
+
 const walletSchema = new mongoose.Schema({
   chain: {
     type: String,
@@ -100,6 +105,10 @@ const userSchema = new mongoose.Schema(
         ref: "UserIntrestTag",
       },
     ],
+    completionStatus: {
+      type: Number,
+      default: 0.0,
+    },
     isCompleted: {
       type: Boolean,
       default: false,
@@ -112,6 +121,7 @@ const userSchema = new mongoose.Schema(
 
 // HOOKS on User model
 userSchema.post("findOneAndUpdate", async function (doc) {
+  doc.completionStatus = calculateProfileCompletion(doc);
   if (doc.googleId && doc.discord && doc.wallets) {
     doc.isCompleted = true;
   } else {
@@ -129,3 +139,27 @@ userSchema.methods.getJWTToken = function () {
 };
 
 module.exports = mongoose.model("User", userSchema);
+
+// User schema utility methods:
+// TEST:
+function calculateProfileCompletion(doc) {
+  toBeFilled = [
+    "username",
+    "name",
+    "bio",
+    "wallets",
+    "googleId",
+    "photo",
+    "discord",
+    "tags",
+  ];
+
+  let fieldsFilled = 0;
+  toBeFilled.forEach((field) => {
+    if (doc[field]) {
+      fieldsFilled++;
+    }
+  });
+
+  return Math.floor((fieldsFilled / toBeFilled.length) * 100);
+}

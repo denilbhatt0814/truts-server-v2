@@ -107,7 +107,7 @@ var DaoSchema = new Schema(
 DaoSchema.virtual("name").get(function () {
   return this.dao_name;
 });
-DaoSchema.virtual("photo.logo").get(function () {
+DaoSchema.virtual("photo.logo.secure_url").get(function () {
   return this.dao_logo;
 });
 
