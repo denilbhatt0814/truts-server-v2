@@ -89,11 +89,42 @@ exports.myAttemptedMissionStatus = async (req, res) => {
     });
 
     if (!attemptedMission) {
-      return new HTTPError(
-        res,
-        400,
-        `user[${userID}] has not attempted mission[${missionID}] OR mission does not exit`,
-        "mission not attempted"
+      /** NOTE: THE RESPONSE HERE IS HARD CODED, MUST BE UPDATED
+       * IF ANY MOD. IN USER_MISSION SCHEMA
+       */
+      // return new HTTPError(
+      //   res,
+      //   400,
+      //   `user[${userID}] has not attempted mission[${missionID}] OR mission does not exit`,
+      //   "mission not attempted"
+      // );
+      const mission = await Mission.findById(missionID);
+      if (!mission) {
+        return new HTTPError(
+          res,
+          404,
+          `mission[${missionID}] does not exist`,
+          "mission not found"
+        );
+      }
+      let tasks = {};
+      mission.tasks.forEach((task) => {
+        tasks[task._id] = "INCOMPLETE";
+      });
+      return new HTTPResponse(
+        200,
+        true,
+        `user[${userID}] has not attempted mission[${missionID}]`,
+        "mission not attempted",
+        {
+          attemptedMission: {
+            mission: mission._id,
+            user: userID,
+            community: mission.community,
+            tasks: mission.tasks,
+            isCompleted: false,
+          },
+        }
       );
     }
 
@@ -161,7 +192,6 @@ exports.performTask = async (req, res) => {
     let attemptedMission = await User_Mission.findOne(filterQ);
 
     if (!attemptedMission) {
-
       let tasks = {};
       mission.tasks.forEach((task) => {
         tasks[task._id] = "INCOMPLETE";
@@ -173,7 +203,6 @@ exports.performTask = async (req, res) => {
         community: mission.community._id,
         tasks,
       });
-
     }
 
     attemptedMission.tasks[task._id] = "COMPLETE";
