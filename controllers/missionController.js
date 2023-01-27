@@ -112,8 +112,9 @@ exports.myAttemptedMissionStatus = async (req, res) => {
         tasks[task._id] = "INCOMPLETE";
       });
       return new HTTPResponse(
-        200,
+        res,
         true,
+        200,
         `user[${userID}] has not attempted mission[${missionID}]`,
         "mission not attempted",
         {
@@ -121,7 +122,7 @@ exports.myAttemptedMissionStatus = async (req, res) => {
             mission: mission._id,
             user: userID,
             community: mission.community,
-            tasks: mission.tasks,
+            tasks,
             isCompleted: false,
           },
         }
