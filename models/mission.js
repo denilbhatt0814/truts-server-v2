@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 
 const taskSchema = new mongoose.Schema({
+  stepNum: {
+    type: Number,
+    required: [true, "Please provide a step number to this task"],
+  },
   taskTemplate: {
     type: mongoose.Schema.ObjectId,
     ref: "TaskTemplate",

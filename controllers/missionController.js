@@ -288,10 +288,30 @@ exports.claimMissionCompletion = async (req, res) => {
 
 // KINDA MIDDLEWARE
 const cleanseAndVerifyTasks = async (res, tasks) => {
+  let existingSteps = [];
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
+    if (task.stepNum > tasks.length || task.stepNum <= 0) {
+      return new HTTPError(
+        res,
+        400,
+        `task number (${task.stepNum}) should in range of 1 to total number of tasks(${tasks.length})`,
+        "invalid task step number"
+      );
+    }
+
+    if (task.stepNum in existingSteps) {
+      return new HTTPError(
+        res,
+        400,
+        `stepNum: ${task.stepNum} already exists`,
+        "invalid task step number"
+      );
+    }
+
     // TODO: Add redirect_url if needed
     if (
+      !("stepNum" in task) ||
       !("taskTemplate" in task) ||
       !("name" in task) ||
       !("description" in task) ||
@@ -300,7 +320,7 @@ const cleanseAndVerifyTasks = async (res, tasks) => {
       return new HTTPError(
         res,
         400,
-        "Missing fields in tasks - require [{taskTemplate, name, description, validationDetails}]",
+        "Missing fields in tasks - require [{stepNum, taskTemplate, name, description, validationDetails}]",
         "Invalid input"
       );
     }
