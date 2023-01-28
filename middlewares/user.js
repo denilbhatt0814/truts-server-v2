@@ -41,7 +41,16 @@ exports.isLoggedIn = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.log(error);
+    if (error instanceof jwt.TokenExpiredError) {
+      return next(
+        new HTTPError(
+          res,
+          403,
+          "Auth token expired: please login again",
+          "TokenExpired"
+        )
+      );
+    }
     return next(new HTTPError(res, 500, "Internal server error", error));
   }
 };

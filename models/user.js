@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const { JWT_SECRET, JWT_EXPIRY } = require("../config/config");
+const {
+  refreshToken,
+  getUserDetails,
+  getUserGuilds,
+} = require("../utils/discordHelper");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -136,6 +141,49 @@ userSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,
   });
+};
+
+userSchema.methods.updateDiscordDetails = async function () {
+  try {
+    // 1. REFRESH TOKEN
+    const accessResponse = await refreshToken(this.discord.refresh_token);
+
+    // 2. STORE NEW TOKEN
+    this.discord.access_token = accessResponse.access_token;
+    this.discord.refresh_token = accessResponse.refresh_token;
+    this.discord.token_expiry = new Date(
+      Date.now() + accessResponse.expires_in / 1000
+    );
+
+    // 3. USE NEW TOKEN FETCH GUILDS
+    const discordUser = await getUserDetails(accessResponse.access_token);
+
+    // 4. STORE NEW GUILDS
+    this.discord = {
+      id: discordUser.id,
+      username: discordUser.username,
+      discriminator: discordUser.discriminator,
+      email: discordUser.email,
+      access_token: accessResponse.access_token,
+      refresh_token: accessResponse.refresh_token,
+      guilds: discordUser.guilds,
+      token_expiry: new Date(Date.now() + accessResponse.expires_in / 1000), // expires_in is in seconds
+    };
+  } catch (error) {
+    console.error("updateDiscordDetails: ", error);
+  } finally {
+    return await this.save();
+  }
+};
+
+userSchema.methods.updateDiscordGuilds = async function () {
+  try {
+    const guilds = await getUserGuilds(this.discord.access_token);
+    this.discord.guilds = guilds;
+    return await this.save();
+  } catch (error) {
+    console.error("updateDiscordGuilds: ", error);
+  }
 };
 
 module.exports = mongoose.model("User", userSchema);

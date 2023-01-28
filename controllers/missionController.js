@@ -207,7 +207,9 @@ exports.performTask = async (req, res) => {
     }
 
     attemptedMission.tasks[task._id] = "COMPLETE";
-    await attemptedMission.save();
+    let resp_doc = await attemptedMission.save();
+
+    console.log({ resp_doc });
 
     return new HTTPResponse(
       res,
@@ -215,7 +217,7 @@ exports.performTask = async (req, res) => {
       200,
       `taskID: ${taskID} [mission: ${mission._id}] marked complete`,
       null,
-      { attemptedMission }
+      { attemptedMission, resp_doc }
     );
   } catch (error) {
     console.log("performTask: ", error);

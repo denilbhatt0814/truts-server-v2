@@ -101,3 +101,36 @@ exports.refreshToken = async (refresh_token) => {
     throw error;
   }
 };
+
+exports.getUserGuilds = async (accessToken) => {
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Accept-Encoding": "gzip,deflate,compress",
+      },
+    };
+
+    let guilds;
+    let axios_resp_guilds = await axios.get(
+      "https://discord.com/api/users/@me/guilds",
+      config
+    );
+    guilds = axios_resp_guilds.data.map(function (guild) {
+      return {
+        id: guild.id,
+        name: guild.name,
+        owner: guild.owner,
+        permissions: guild.permissions,
+      };
+    });
+    console.log(guilds);
+
+    return guilds;
+  } catch (error) {
+    console.error(
+      "DiscordError: unable to get guilds of user\nSuggestion: may be guilds wasn't included in scope"
+    );
+    throw error;
+  }
+};
