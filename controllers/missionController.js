@@ -140,7 +140,7 @@ exports.performTask = async (req, res) => {
   try {
     // PARSE TASK ID & USER ID (userID from authenticated route)
     const taskID = req.params.taskID;
-    const missionID = req.params.misisonID;
+    const missionID = req.params.missionID;
     const userID = req.user._id;
 
     let mission = await Mission.findOne({
@@ -205,11 +205,16 @@ exports.performTask = async (req, res) => {
         tasks,
       });
     }
+    // } else {
+    //   attemptedMission.tasks[task._id] = "COMPLETE";
+    //   await attemptedMission.updateOne({
+    //     $set: { tasks: attemptedMission.tasks },
+    //   });
+    // }
 
     attemptedMission.tasks[task._id] = "COMPLETE";
-    let resp_doc = await attemptedMission.save();
-
-    console.log({ resp_doc });
+    attemptedMission.markModified("tasks");
+    await attemptedMission.save();
 
     return new HTTPResponse(
       res,
@@ -217,7 +222,7 @@ exports.performTask = async (req, res) => {
       200,
       `taskID: ${taskID} [mission: ${mission._id}] marked complete`,
       null,
-      { attemptedMission, resp_doc }
+      { attemptedMission }
     );
   } catch (error) {
     console.log("performTask: ", error);
@@ -227,10 +232,12 @@ exports.performTask = async (req, res) => {
 
 exports.claimMissionCompletion = async (req, res) => {
   try {
-    const missionID = req.query.missionID;
+    const missionID = req.params.missionID;
     const userID = req.user._id;
 
-    const mission = await Mission.findById(missionID).populate("taskTemplate");
+    const mission = await Mission.findById(missionID).populate(
+      "tasks.taskTemplate"
+    );
 
     let attemptedMission = await User_Mission.findOne({
       user: mongoose.Types.ObjectId(userID),

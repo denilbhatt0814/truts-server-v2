@@ -22,9 +22,9 @@ router.get(
 );
 
 // task verification and
-router.get("/mission/:misisonID/task-verify/:taskID", isLoggedIn, performTask);
+router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
 
 // mission claim
-router.get("/mission/:misisonID/claim", isLoggedIn, claimMissionCompletion);
+router.get("/mission/:missionID/claim", isLoggedIn, claimMissionCompletion);
 
 module.exports = router;
