@@ -92,6 +92,10 @@ exports.login = async (req, res) => {
 };
 
 const { OAuth2Client } = require("google-auth-library");
+const {
+  exchangeTwitterToken,
+  getUserTwitterDetails,
+} = require("../utils/twitterHelper");
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -217,6 +221,33 @@ exports.loginViaDiscord = async (req, res) => {
 
     // return jwt token
     cookieToken(user, res);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      msg: "internal server error",
+      error: error,
+    });
+  }
+};
+
+exports.connectTwitter = async (req, res) => {
+  try {
+    const code = req.query.code;
+    const user = await User.findById("63d51fe5e590b56c1b989db9");
+    const data = await exchangeTwitterToken(code);
+    const user_data = await getUserTwitterDetails(data.access_token);
+
+    user.twitter = {
+      id: user_data.data.id,
+      name: user_data.data.name,
+      username: user_data.data.username,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      token_expiry: new Date(Date.now() + data.expires_in * 1000), // expires_in is in seconds
+    };
+    await user.save();
+    res.json({ code, data, user_data, user });
   } catch (error) {
     console.log(error);
     return res.status(500).json({

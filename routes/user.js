@@ -18,8 +18,12 @@ const {
   getUserDetails,
   getMatchWithListedGuilds,
   getUserReviews,
+  loginViaTwitter,
+  connectTwitter,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
+const randomString = require("../utils/randomString");
+const { authorizeTwitterURI } = require("../utils/twitterHelper");
 
 router.route("/signup").post(signup);
 
@@ -28,6 +32,11 @@ router
   .route("/login/discord")
   .get((req, res) => res.redirect(DISCORD_OAUTH_URL));
 router.route("/login/discord/callback").get(loginViaDiscord);
+
+router
+  .route("/connect/twitter")
+  .get((req, res) => res.redirect(authorizeTwitterURI(randomString(5))));
+router.route("/connect/twitter/callback").get(connectTwitter);
 
 router.route("/login/google").post(loginViaGoogle);
 

@@ -73,6 +73,28 @@ const discordSchema = new mongoose.Schema({
   },
 });
 
+const twitterSchema = new mongoose.Schema({
+  id: {
+    type: String,
+    // required: true,
+    unique: true,
+    sparse: true,
+  },
+  username: String,
+  name: String,
+  access_token: {
+    type: String,
+    required: true,
+    select: false,
+  },
+  refresh_token: {
+    type: String,
+    required: true,
+    select: false,
+  },
+  token_expiry: Date,
+});
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -104,6 +126,8 @@ const userSchema = new mongoose.Schema(
       secure_url: { type: String },
     },
     discord: discordSchema,
+    // TODO: twitter can bring affects in completion tags
+    twitter: twitterSchema,
     tags: [
       {
         type: mongoose.Schema.ObjectId,

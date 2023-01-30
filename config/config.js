@@ -33,6 +33,19 @@ module.exports = {
     process.env.DISCORD_OAUTH_URL ||
     `https://discord.com/api/oauth2/authorize?client_id=782120524956434432&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Flogin%2Fdiscord%2Fcallback&response_type=code&scope=identify%20email%20guilds`,
 
+  /* TWITTER CONFIGS */
+  TWITTER_CLIENT_ID:
+    process.env.TWITTER_CLIENT_ID || "cGExTzFlbmw5dGxWc2E3RDRQYVo6MTpjaQ",
+  TWITTER_CLIENT_SECRET:
+    process.env.TWITTER_CLIENT_SECRET ||
+    "WqtjIWNzHzZr71veexa-4vyv4JYvaNILqF3OXTt9yp6Qw-jc63",
+  TWITTER_REDIRECT_URI:
+    process.env.TWITTER_REDIRECT_URI ||
+    "https://e71a-136-232-1-166.in.ngrok.io/api/v1/connect/twitter/callback",
+  TWITTER_OAUTH_SCOPE:
+    process.env.TWITTER_OAUTH_SCOPE ||
+    "users.read tweet.read like.read offline.access follows.read",
+
   /* AWS CONFIGS */
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
