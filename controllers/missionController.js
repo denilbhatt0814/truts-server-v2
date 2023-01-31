@@ -79,6 +79,27 @@ exports.getOneMission = async (req, res) => {
   }
 };
 
+exports.getMissionCompletedBy = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+
+    const completedBy = await User_Mission.find({
+      mission: mongoose.Types.ObjectId(missionID),
+      isCompleted: true,
+    })
+      .select({ user: 1 })
+      .populate({ path: "user", select: { username: 1, name: 1, photo: 1 } });
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      completedBy,
+      count: completedBy.length,
+    });
+  } catch (error) {
+    console.log("getMissionCompletedBy: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.myAttemptedMissionStatus = async (req, res) => {
   try {
     const missionID = req.params.missionID;

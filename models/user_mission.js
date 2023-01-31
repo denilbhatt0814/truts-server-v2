@@ -37,7 +37,7 @@ const user_missionSchema = new mongoose.Schema({
    */
   tasks: {
     type: mongoose.Schema.Types.Mixed,
-    default: {}
+    default: {},
   },
   trutsXP: {
     type: Number,

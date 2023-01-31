@@ -5,6 +5,7 @@ const {
   performTask,
   claimMissionCompletion,
   myAttemptedMissionStatus,
+  getMissionCompletedBy,
 } = require("../controllers/missionController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -14,6 +15,7 @@ const router = require("express").Router();
 // /mission?communityID= for all mission of a community
 router.route("/mission").get(getMissions).post(createMission);
 router.route("/mission/:missionID").get(getOneMission);
+router.route("/mission/:missionID/completed-by").get(getMissionCompletedBy);
 
 router.get(
   "/mission/:missionID/my-status",
