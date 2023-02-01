@@ -48,7 +48,7 @@ exports.createMission = async (req, res) => {
 exports.getMissions = async (req, res) => {
   try {
     // UNDER-WORK: querying in this could be optimized | This is temperory
-    let searchQ = {};
+    let searchQ = { visible: true };
     if ("communityID" in req.query) {
       searchQ.community = mongoose.Types.ObjectId(req.query.communityID);
     }

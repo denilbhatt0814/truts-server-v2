@@ -65,6 +65,10 @@ const missionSchema = new mongoose.Schema(
       default: Date.now,
     },
     endDate: Date,
+    visible: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
