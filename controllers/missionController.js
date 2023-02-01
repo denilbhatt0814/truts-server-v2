@@ -305,6 +305,7 @@ exports.claimMissionCompletion = async (req, res) => {
 
     // if no return -> All tasks completed
     attemptedMission.isCompleted = true;
+    attemptedMission.completedAt = new Date();
     await attemptedMission.save();
 
     return new HTTPResponse(res, true, 200, "claim successful", null, {

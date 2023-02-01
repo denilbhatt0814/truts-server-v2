@@ -30,41 +30,46 @@ const taskSchema = new mongoose.Schema({
   },
 });
 
-const missionSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Please provide a name for mission"],
-  },
-  description: {
-    type: String,
-    required: [true, "Please provide a description for mission"],
-  },
-  tags: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "MissionTag",
+const missionSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Please provide a name for mission"],
     },
-  ],
-  community: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Dao",
-    required: [
-      true,
-      "A mission must be linked with a community. Provide communityID",
+    description: {
+      type: String,
+      required: [true, "Please provide a description for mission"],
+    },
+    tags: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "MissionTag",
+      },
     ],
+    community: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Dao",
+      required: [
+        true,
+        "A mission must be linked with a community. Provide communityID",
+      ],
+    },
+    // TODO: If this works well then delete task model
+    tasks: [taskSchema],
+    communityXP: {
+      type: Number,
+      required: [true, "Please allocate communityXP to this mission"],
+    },
+    startDate: {
+      type: Date,
+      default: Date.now,
+    },
+    endDate: Date,
   },
-  // TODO: If this works well then delete task model
-  tasks: [taskSchema],
-  communityXP: {
-    type: Number,
-    required: [true, "Please allocate communityXP to this mission"],
-  },
-  startDate: {
-    type: Date,
-    default: Date.now,
-  },
-  endDate: Date,
-});
+  {
+    timestamps: true,
+  }
+);
 
 missionSchema.pre("save", async function (next) {
   // TODO: sum up truts xp to give community xp
