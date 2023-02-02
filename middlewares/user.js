@@ -51,6 +51,7 @@ exports.isLoggedIn = async (req, res, next) => {
         )
       );
     }
+    console.log("LoggedIn: ", error);
     return next(new HTTPError(res, 500, "Internal server error", error));
   }
 };

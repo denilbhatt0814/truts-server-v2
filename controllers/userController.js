@@ -1,5 +1,6 @@
 const sharp = require("sharp");
 const User = require("../models/user");
+const { User_Mission } = require("../models/user_mission");
 const Wallet = require("../models/wallet");
 const Dao = require("../models/dao");
 const Review = require("../models/review");
@@ -534,6 +535,137 @@ exports.getMyReviews = async (req, res) => {
   }
 };
 
+exports.getMyCompletedMissions = async (req, res) => {
+  try {
+    const userID = req.user._id;
+    const aggregationPipeline = [
+      {
+        $match: {
+          user: mongoose.Types.ObjectId(userID),
+          isCompleted: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          attemptID: "$_id",
+          mission: 1,
+          completedAt: 1,
+          trutsXP: 1,
+          communityXP: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "missions",
+          localField: "mission",
+          foreignField: "_id",
+          as: "mission",
+        },
+      },
+      {
+        $unwind: {
+          path: "$mission",
+        },
+      },
+      {
+        $lookup: {
+          from: "daos",
+          localField: "mission.community",
+          foreignField: "_id",
+          as: "community",
+        },
+      },
+      {
+        $unwind: {
+          path: "$community",
+        },
+      },
+      {
+        $group: {
+          _id: "$mission._id",
+          attemptID: {
+            $first: "$attemptID",
+          },
+          name: {
+            $first: "$mission.name",
+          },
+          description: {
+            $first: "$mission.description",
+          },
+          tags: {
+            $first: "$mission.tags",
+          },
+          community: {
+            $first: "$community",
+          },
+          communityXP: {
+            $first: "$communityXP",
+          },
+          trutsXP: {
+            $first: "$trutsXP",
+          },
+          completedAt: {
+            $first: "$completedAt",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "missiontags",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          attemptID: 1,
+          name: 1,
+          description: 1,
+          tags: 1,
+          community: {
+            name: "$community.dao_name",
+            slug: "$community.slug",
+            photo: {
+              logo: {
+                secure_url: "$community.dao_logo",
+              },
+            },
+          },
+          communityXP: 1,
+          trutsXP: 1,
+          completedAt: 1,
+        },
+      },
+    ];
+    const missions = await User_Mission.aggregate(aggregationPipeline);
+
+    return new HTTPResponse(res, true, 200, null, null, { missions });
+  } catch (error) {
+    console.log("getMyCompletedMissions: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getMyTrutsXP = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const totalTrutsXP = await user.getTrutsXP();
+    const level = await user.getLevelDetails();
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      totalTrutsXP,
+      level,
+    });
+  } catch (error) {
+    console.log("getMyXP: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 // ------ USER CONTROLLER (PUBLIC) ------
 exports.getUserDetails = async (req, res) => {
   try {
@@ -570,7 +702,7 @@ exports.getMatchWithListedGuilds = async (req, res) => {
   try {
     const address = req.params.address;
     let user = await User.findOne(
-      { address, isCompleted: true },
+      { "wallets.address": address, isCompleted: true },
       { "discord.guilds": 1 }
     );
     if (!user) {
@@ -643,7 +775,10 @@ exports.getMatchWithListedGuilds = async (req, res) => {
 exports.getUserReviews = async (req, res) => {
   try {
     const address = req.params.address;
-    const user = await User.findOne({ address, isCompleted: true });
+    const user = await User.findOne({
+      "wallets.address": address,
+      isCompleted: true,
+    });
     if (!user) {
       return new HTTPError(
         res,
@@ -677,6 +812,166 @@ exports.getUserReviews = async (req, res) => {
     });
     return new HTTPResponse(res, true, 200, null, null, { reviews });
   } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getUserCompletedMissions = async (req, res) => {
+  try {
+    const address = req.params.address;
+    const user = await User.findOne({
+      "wallets.address": address,
+      isCompleted: true,
+    });
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given address not found",
+        "user not found"
+      );
+    }
+    const userID = user._id;
+    const aggregationPipeline = [
+      {
+        $match: {
+          user: mongoose.Types.ObjectId(userID),
+          isCompleted: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          attemptID: "$_id",
+          mission: 1,
+          completedAt: 1,
+          trutsXP: 1,
+          communityXP: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "missions",
+          localField: "mission",
+          foreignField: "_id",
+          as: "mission",
+        },
+      },
+      {
+        $unwind: {
+          path: "$mission",
+        },
+      },
+      {
+        $lookup: {
+          from: "daos",
+          localField: "mission.community",
+          foreignField: "_id",
+          as: "community",
+        },
+      },
+      {
+        $unwind: {
+          path: "$community",
+        },
+      },
+      {
+        $group: {
+          _id: "$mission._id",
+          attemptID: {
+            $first: "$attemptID",
+          },
+          name: {
+            $first: "$mission.name",
+          },
+          description: {
+            $first: "$mission.description",
+          },
+          tags: {
+            $first: "$mission.tags",
+          },
+          community: {
+            $first: "$community",
+          },
+          communityXP: {
+            $first: "$communityXP",
+          },
+          trutsXP: {
+            $first: "$trutsXP",
+          },
+          completedAt: {
+            $first: "$completedAt",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "missiontags",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          attemptID: 1,
+          name: 1,
+          description: 1,
+          tags: 1,
+          community: {
+            name: "$community.dao_name",
+            slug: "$community.slug",
+            photo: {
+              logo: {
+                secure_url: "$community.dao_logo",
+              },
+            },
+          },
+          communityXP: 1,
+          trutsXP: 1,
+          completedAt: 1,
+        },
+      },
+    ];
+    const missions = await User_Mission.aggregate(aggregationPipeline);
+
+    return new HTTPResponse(res, true, 200, null, null, { missions });
+  } catch (error) {
+    console.log("getMyCompletedMissions: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getUserTrutsXP = async (req, res) => {
+  try {
+    const address = req.params.address;
+    const user = await User.findOne(
+      {
+        "wallets.address": address,
+        isCompleted: true,
+      },
+      { _id: 1 } // Project only _id
+    );
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given address not found",
+        "user not found"
+      );
+    }
+
+    const totalTrutsXP = await user.getTrutsXP();
+    const level = await user.getLevelDetails();
+
+    console.log(user, totalTrutsXP, level);
+    return new HTTPResponse(res, true, 200, null, null, {
+      totalTrutsXP,
+      level,
+    });
+  } catch (error) {
+    console.log("getUserTrutsXP: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

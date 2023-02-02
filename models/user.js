@@ -7,6 +7,7 @@ const {
   getUserDetails,
   getUserGuilds,
 } = require("../utils/discordHelper");
+const { User_Mission } = require("./user_mission");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -208,6 +209,57 @@ userSchema.methods.updateDiscordGuilds = async function () {
   } catch (error) {
     console.error("updateDiscordGuilds: ", error);
   }
+};
+
+userSchema.methods.getTrutsXP = async function () {
+  const resp_doc = await User_Mission.aggregate([
+    { $match: { user: this._id, isCompleted: true } },
+    { $group: { _id: null, totalTrutsXP: { $sum: "$trutsXP" } } },
+    { $project: { _id: 0, totalTrutsXP: 1 } },
+  ]);
+
+  return resp_doc[0]?.totalTrutsXP ?? 0; // if no missions attempted -> must return 0
+};
+
+userSchema.methods.getLevelDetails = async function () {
+  const usersTrutsXP = await this.getTrutsXP();
+  const levels = [
+    { level: 0, xpForNextLevel: 0 },
+    { level: 1, xpForNextLevel: 500 },
+    { level: 2, xpForNextLevel: 1500 },
+    { level: 3, xpForNextLevel: 3000 },
+    { level: 4, xpForNextLevel: 5000 },
+    { level: 5, xpForNextLevel: 7000 },
+    { level: 6, xpForNextLevel: 9000 },
+    { level: 7, xpForNextLevel: 12000 },
+    { level: 8, xpForNextLevel: 15000 },
+    { level: 9, xpForNextLevel: 20000 },
+  ];
+
+  for (let i = 0; i < levels.length; i++) {
+    const currentLevel = levels[i];
+    if (usersTrutsXP < currentLevel.xpForNextLevel) {
+      const prevLevel = levels[i - 1];
+      const xpForNextLevel = currentLevel.xpForNextLevel - usersTrutsXP;
+      const precentToNextLevel = Math.floor(
+        ((usersTrutsXP - prevLevel.xpForNextLevel) /
+          (currentLevel.xpForNextLevel - prevLevel.xpForNextLevel)) *
+          100
+      );
+      return {
+        currentLevel: currentLevel.level,
+        xpForNextLevel,
+        precentToNextLevel,
+      };
+    }
+  }
+
+  // If acheived all the levels
+  return {
+    currentLevel: levels.length + 1,
+    xpForNextLevel: 0,
+    precentToNextLevel: 0,
+  };
 };
 
 module.exports = mongoose.model("User", userSchema);

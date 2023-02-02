@@ -20,6 +20,9 @@ const {
   getUserReviews,
   loginViaTwitter,
   connectTwitter,
+  getMyTrutsXP,
+  getUserTrutsXP,
+  getMyCompletedMissions,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -57,6 +60,8 @@ router.route("/login/wallet/verify").post(verifyWallet);
 router.route("/user").get(isLoggedIn, getMyUserDetails);
 router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
 router.route("/user/reviews").get(isLoggedIn, getMyReviews);
+router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
+router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 
 router
@@ -70,5 +75,9 @@ router
   .route("/public/user/:address/guilds")
   .get(isLoggedIn, getMatchWithListedGuilds);
 router.route("/public/user/:address/reviews").get(isLoggedIn, getUserReviews);
+router.route("/public/user/:address/truts-xp").get(isLoggedIn, getUserTrutsXP);
+router
+  .route("/public/user/:address/completed-mission")
+  .get(isLoggedIn, getMyCompletedMissions);
 
 module.exports = router;
