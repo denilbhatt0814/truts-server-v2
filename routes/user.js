@@ -23,6 +23,8 @@ const {
   getMyTrutsXP,
   getUserTrutsXP,
   getMyCompletedMissions,
+  isUsernameAvailable,
+  setMyUsername,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -63,6 +65,10 @@ router.route("/user/reviews").get(isLoggedIn, getMyReviews);
 router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
 router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
+router.route("/user/set/username").patch(isLoggedIn, setMyUsername);
+router
+  .route("/user/availability/username")
+  .get(isLoggedIn, isUsernameAvailable); // ?username=bond007
 
 router
   .route("/user/intrest-tag")

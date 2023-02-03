@@ -160,6 +160,13 @@ userSchema.post("findOneAndUpdate", async function (doc) {
   await doc.save();
 });
 
+// STATIC methods
+userSchema.statics.isUsernameAvailable = function (username) {
+  return this.findOne({ username }).then((user) => {
+    return !user;
+  });
+};
+
 // METHODS on User model
 
 userSchema.methods.getJWTToken = function () {

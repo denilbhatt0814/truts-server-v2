@@ -384,6 +384,59 @@ exports.getMyUserDetails = async (req, res) => {
   return new HTTPResponse(res, true, 200, null, null, { user: req.user });
 };
 
+exports.setMyUsername = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (req.user.username) {
+      return new HTTPError(
+        res,
+        409,
+        `user already has username: ${req.user.username}`,
+        "username already exists (can not update)"
+      );
+    }
+    if (!(await User.isUsernameAvailable(username))) {
+      return new HTTPError(
+        res,
+        409,
+        `requested username: ${username} is already taken`,
+        "username already taken"
+      );
+    }
+
+    req.user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { username } },
+      { new: true }
+    );
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `username: ${username} set successfully`,
+      null,
+      { user: req.user }
+    );
+  } catch (error) {
+    console.log("setMyUsername: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.isUsernameAvailable = async (req, res) => {
+  try {
+    const { username } = req.query;
+    const available = await User.isUsernameAvailable(username);
+    return new HTTPResponse(res, true, 200, null, null, {
+      username,
+      available,
+    });
+  } catch (error) {
+    console.log("isUsernameAvailable: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.updateUserDeatils = async (req, res) => {
   try {
     // get new data
