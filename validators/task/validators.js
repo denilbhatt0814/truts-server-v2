@@ -10,18 +10,18 @@ module.exports = {
     parameters: [{ data1: String }, { data2: Number }],
     areValidArguments: function (arguments) {},
   },
-  REVIEWED_IN_COMMUNITY: {
+  REVIEWED_IN_LISTING: {
     parameters: [
       {
-        field: "communityID",
-        name: "Community ID",
+        field: "listingID",
+        name: "Listing ID",
         type: String,
         required: true,
       },
       { field: "userID", name: "User ID", type: String, required: false },
     ],
     areValidArguments: function (arguments) {
-      if ("communityID" in arguments) {
+      if ("listingID" in arguments) {
         return true;
       }
       return false;
@@ -30,16 +30,16 @@ module.exports = {
       // TODO: This validator might need to be rewriten
       // after new review module
       // NOTE: optimize find by using select
-      const { communityID, userID } = arguments;
+      const { listingID, userID } = arguments;
       const user = await User.findById(userID);
-      const community = await Dao.findById(communityID);
+      const listing = await Dao.findById(listingID);
       const atLeastOneReview = await Review.findOne({
         user_discord_id: user.discord.id,
-        dao_name: community.dao_name,
+        dao_name: listing.dao_name,
       });
 
       // TEST: REMOVE AFTER DEBUG
-      console.log("atLeastOneReview: ", { user, community, atLeastOneReview });
+      console.log("atLeastOneReview: ", { user, listing, atLeastOneReview });
       if (!atLeastOneReview) {
         return false;
       }
@@ -49,26 +49,26 @@ module.exports = {
   PART_OF_DISCORD: {
     parameters: [
       {
-        field: "communityID",
-        name: "Community ID",
+        field: "listingID",
+        name: "Listing ID",
         type: String,
         required: true,
       },
       { field: "userID", name: "User ID", type: String, required: false },
     ],
     areValidArguments: function (arguments) {
-      if ("communityID" in arguments) {
+      if ("listingID" in arguments) {
         return true;
       }
       return false;
     },
     exec: async function (arguments) {
       // TODO: This validator might need to be rewriten
-      // after new Community model
+      // after new Listing model
       // NOTE: optimize find by using select
-      const { communityID, userID } = arguments;
+      const { listingID, userID } = arguments;
       const user = await User.findById(userID).select("+discord.refresh_token");
-      const community = await Dao.findById(communityID);
+      const listing = await Dao.findById(listingID);
 
       // If token has expired
       if (Date.now() >= user.discord.token_expiry) {
@@ -77,15 +77,15 @@ module.exports = {
         await user.updateDiscordGuilds();
       }
 
-      // CHECK IF PART OF COMMUNITY
+      // CHECK IF PART OF LISTING
       let partOfGuild = user.discord.guilds.find(
-        (guild) => guild.id == community.guild_id
+        (guild) => guild.id == listing.guild_id
       );
 
       // TEST: REMOVE AFTER DEBUG
       console.log("partOfDiscordServer: ", {
         user,
-        community,
+        listing,
         partOfGuild,
       });
 

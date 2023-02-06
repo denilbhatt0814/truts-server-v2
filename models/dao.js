@@ -45,9 +45,9 @@ var DaoSchema = new Schema(
         q6: { type: String },
       },
       default: {
-        q1: "Do you resonate with the vibes in the DAO community?",
-        q2: "Do you believe your opinions matter in the DAO community?",
-        q3: "Would you recommed this DAO/community to your friend?",
+        q1: "Do you resonate with the vibes in the DAO listing?",
+        q2: "Do you believe your opinions matter in the DAO listing?",
+        q3: "Would you recommed this DAO/listing to your friend?",
         q4: "How would you rate the DAO’s onboarding experience?",
         q5: "Do you think that DAO has great organizational structure?",
         q6: "Do you think there are great incentives for DAO members?",

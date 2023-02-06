@@ -23,12 +23,12 @@ const user_missionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    community: {
+    listing: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Dao",
       required: [
         true,
-        "A mission must be linked with a community. Provide communityID",
+        "A mission must be linked with a listing. Provide listingID",
       ],
     },
     /**
@@ -43,7 +43,7 @@ const user_missionSchema = new mongoose.Schema(
     trutsXP: {
       type: Number,
     },
-    communityXP: {
+    listingXP: {
       type: Number,
     },
     isCompleted: {

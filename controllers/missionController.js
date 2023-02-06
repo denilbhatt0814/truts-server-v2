@@ -11,16 +11,16 @@ const taskValidators = require("../validators/task/validators");
 /**
  * NOTE: TODO:  ADD TIMESTAMPS IN ALL SCHEMAS
  * THIS COMPLETE FEATURE OF MISSIONS REQUIRES TO PROTECTED
- * UNDER AUTH BY ADMIN OR COMMUNITY MANAGER
+ * UNDER AUTH BY ADMIN OR LISTING MANAGER
  */
 
 exports.createMission = async (req, res) => {
   try {
-    const communityID = req.body.communityID;
-    const { name, description, tags, tasks, communityXP, startDate, endDate } =
+    const listingID = req.body.listingID;
+    const { name, description, tags, tasks, listingXP, startDate, endDate } =
       req.body;
 
-    // TODO: VERIFY IF COMMUNITY EXISTS - another middleware
+    // TODO: VERIFY IF LISTING EXISTS - another middleware
 
     // cleansing and verification of tasks
     await cleanseAndVerifyTasks(res, tasks);
@@ -30,8 +30,8 @@ exports.createMission = async (req, res) => {
       description,
       tags,
       tasks,
-      community: communityID,
-      communityXP,
+      listing: listingID,
+      listingXP,
       startDate,
       endDate,
     });
@@ -49,13 +49,13 @@ exports.getMissions = async (req, res) => {
   try {
     // UNDER-WORK: querying in this could be optimized | This is temperory
     let searchQ = { visible: true };
-    if ("communityID" in req.query) {
-      searchQ.community = mongoose.Types.ObjectId(req.query.communityID);
+    if ("listingID" in req.query) {
+      searchQ.listing = mongoose.Types.ObjectId(req.query.listingID);
     }
 
     let missions = await Mission.find(searchQ)
       .populate("tags")
-      .populate({ path: "community", select: { dao_name: 1, dao_logo: 1 } })
+      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } })
       .select({ tasks: 0 });
     return new HTTPResponse(res, true, 200, null, null, { missions });
   } catch (error) {
@@ -70,7 +70,7 @@ exports.getOneMission = async (req, res) => {
 
     const mission = await Mission.findById(missionID)
       .populate("tags")
-      .populate({ path: "community", select: { dao_name: 1, dao_logo: 1 } });
+      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
 
     return new HTTPResponse(res, true, 200, null, null, { mission });
   } catch (error) {
@@ -142,7 +142,7 @@ exports.myAttemptedMissionStatus = async (req, res) => {
           attemptedMission: {
             mission: mission._id,
             user: userID,
-            community: mission.community,
+            listing: mission.listing,
             tasks,
             isCompleted: false,
           },
@@ -222,7 +222,7 @@ exports.performTask = async (req, res) => {
       attemptedMission = new User_Mission({
         user: userID,
         mission: mission._id,
-        community: mission.community._id,
+        listing: mission.listing._id,
         tasks,
       });
     }
@@ -300,7 +300,7 @@ exports.claimMissionCompletion = async (req, res) => {
       trutsXP += task.taskTemplate.trutsXP;
     });
     // allocate XPs
-    attemptedMission.communityXP = mission.communityXP;
+    attemptedMission.listingXP = mission.listingXP;
     attemptedMission.trutsXP = trutsXP;
 
     // if no return -> All tasks completed

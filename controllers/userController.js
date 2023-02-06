@@ -605,7 +605,7 @@ exports.getMyCompletedMissions = async (req, res) => {
           mission: 1,
           completedAt: 1,
           trutsXP: 1,
-          communityXP: 1,
+          listingXP: 1,
         },
       },
       {
@@ -624,14 +624,14 @@ exports.getMyCompletedMissions = async (req, res) => {
       {
         $lookup: {
           from: "daos",
-          localField: "mission.community",
+          localField: "mission.listing",
           foreignField: "_id",
-          as: "community",
+          as: "listing",
         },
       },
       {
         $unwind: {
-          path: "$community",
+          path: "$listing",
         },
       },
       {
@@ -649,11 +649,11 @@ exports.getMyCompletedMissions = async (req, res) => {
           tags: {
             $first: "$mission.tags",
           },
-          community: {
-            $first: "$community",
+          listing: {
+            $first: "$listing",
           },
-          communityXP: {
-            $first: "$communityXP",
+          listingXP: {
+            $first: "$listingXP",
           },
           trutsXP: {
             $first: "$trutsXP",
@@ -678,16 +678,16 @@ exports.getMyCompletedMissions = async (req, res) => {
           name: 1,
           description: 1,
           tags: 1,
-          community: {
-            name: "$community.dao_name",
-            slug: "$community.slug",
+          listing: {
+            name: "$listing.dao_name",
+            slug: "$listing.slug",
             photo: {
               logo: {
-                secure_url: "$community.dao_logo",
+                secure_url: "$listing.dao_logo",
               },
             },
           },
-          communityXP: 1,
+          listingXP: 1,
           trutsXP: 1,
           completedAt: 1,
         },
@@ -899,7 +899,7 @@ exports.getUserCompletedMissions = async (req, res) => {
           mission: 1,
           completedAt: 1,
           trutsXP: 1,
-          communityXP: 1,
+          listingXP: 1,
         },
       },
       {
@@ -918,14 +918,14 @@ exports.getUserCompletedMissions = async (req, res) => {
       {
         $lookup: {
           from: "daos",
-          localField: "mission.community",
+          localField: "mission.listing",
           foreignField: "_id",
-          as: "community",
+          as: "listing",
         },
       },
       {
         $unwind: {
-          path: "$community",
+          path: "$listing",
         },
       },
       {
@@ -943,11 +943,11 @@ exports.getUserCompletedMissions = async (req, res) => {
           tags: {
             $first: "$mission.tags",
           },
-          community: {
-            $first: "$community",
+          listing: {
+            $first: "$listing",
           },
-          communityXP: {
-            $first: "$communityXP",
+          listingXP: {
+            $first: "$listingXP",
           },
           trutsXP: {
             $first: "$trutsXP",
@@ -972,16 +972,16 @@ exports.getUserCompletedMissions = async (req, res) => {
           name: 1,
           description: 1,
           tags: 1,
-          community: {
-            name: "$community.dao_name",
-            slug: "$community.slug",
+          listing: {
+            name: "$listing.dao_name",
+            slug: "$listing.slug",
             photo: {
               logo: {
-                secure_url: "$community.dao_logo",
+                secure_url: "$listing.dao_logo",
               },
             },
           },
-          communityXP: 1,
+          listingXP: 1,
           trutsXP: 1,
           completedAt: 1,
         },

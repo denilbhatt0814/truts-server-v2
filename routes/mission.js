@@ -12,7 +12,7 @@ const { isLoggedIn } = require("../middlewares/user");
 const router = require("express").Router();
 
 // TEST: ALL MISSION ROUTES AND CONTROLLERS ARE TO BE TESTED
-// /mission?communityID= for all mission of a community
+// /mission?listingID= for all mission of a listing
 router.route("/mission").get(getMissions).post(createMission);
 router.route("/mission/:missionID").get(getOneMission);
 router.route("/mission/:missionID/completed-by").get(getMissionCompletedBy);

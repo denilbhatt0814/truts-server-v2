@@ -46,19 +46,19 @@ const missionSchema = new mongoose.Schema(
         ref: "MissionTag",
       },
     ],
-    community: {
+    listing: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Dao",
       required: [
         true,
-        "A mission must be linked with a community. Provide communityID",
+        "A mission must be linked with a listing. Provide listingID",
       ],
     },
     // TODO: If this works well then delete task model
     tasks: [taskSchema],
-    communityXP: {
+    listingXP: {
       type: Number,
-      required: [true, "Please allocate communityXP to this mission"],
+      required: [true, "Please allocate listingXP to this mission"],
     },
     startDate: {
       type: Date,
@@ -76,7 +76,7 @@ const missionSchema = new mongoose.Schema(
 );
 
 missionSchema.pre("save", async function (next) {
-  // TODO: sum up truts xp to give community xp
+  // TODO: sum up truts xp to give listing xp
 });
 
 module.exports = { Mission: mongoose.model("Mission", missionSchema) };
