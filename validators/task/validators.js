@@ -70,6 +70,7 @@ module.exports = {
       const user = await User.findById(userID).select("+discord.refresh_token");
       const listing = await Dao.findById(listingID);
 
+      // TODO: USE DIRECTLY METHOD IN USER MODEL FOR THIS
       // If token has expired
       if (Date.now() >= user.discord.token_expiry) {
         await user.updateDiscordDetails();

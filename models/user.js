@@ -161,7 +161,7 @@ userSchema.post("findOneAndUpdate", async function (doc) {
 });
 
 // STATIC methods
-userSchema.statics.isUsernameAvailable = function (username) {
+userSchema.statics.isUsernameAvailable = async function (username) {
   return this.findOne({ username }).then((user) => {
     return !user;
   });
@@ -215,6 +215,27 @@ userSchema.methods.updateDiscordGuilds = async function () {
     return await this.save();
   } catch (error) {
     console.error("updateDiscordGuilds: ", error);
+  }
+};
+
+userSchema.methods.isPartOfGuild = async function (guildID) {
+  try {
+    // if listing has no discord
+    if (guildID == null) return true;
+
+    // If token has expired
+    if (Date.now() >= this.discord.token_expiry) {
+      await this.updateDiscordDetails();
+    } else {
+      await this.updateDiscordGuilds();
+    }
+
+    // CHECK IF PART OF LISTING
+    let partOfGuild = this.discord.guilds.find((guild) => guild.id == guildID);
+    return partOfGuild ? true : false;
+  } catch (error) {
+    console.log("isPartOfGuild: ", error);
+    throw error;
   }
 };
 

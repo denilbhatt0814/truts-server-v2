@@ -110,6 +110,21 @@ DaoSchema.virtual("name").get(function () {
 DaoSchema.virtual("photo.logo.secure_url").get(function () {
   return this.dao_logo;
 });
+DaoSchema.virtual("rating")
+  .get(function () {
+    return this.average_rating;
+  })
+  .set(function (value) {
+    this.set({ average_rating: value });
+  });
+
+DaoSchema.virtual("reviewCount")
+  .get(function () {
+    return this.review_count;
+  })
+  .set(function (value) {
+    this.set({ review_count: value });
+  });
 
 // Export the model
 module.exports = mongoose.model("Dao", DaoSchema);

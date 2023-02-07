@@ -564,7 +564,7 @@ exports.getMyReviews = async (req, res) => {
     reviews = reviews.map((review) => {
       return {
         rating: review.rating,
-        content: review.review_desc,
+        comment: review.review_desc,
         listing: {
           name: review.dao_name,
           discord: {
