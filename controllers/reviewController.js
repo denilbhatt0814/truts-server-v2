@@ -9,7 +9,7 @@ exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const { listingID, comment, rating } = req.body;
+    const { listingID, comment, rating, meta } = req.body;
     const userID = req.user._id;
     const user = await User.findById(userID).select("+discord.refresh_token");
 
@@ -54,13 +54,22 @@ exports.addReview = async (req, res) => {
       listing: mongoose.Types.ObjectId(listingID),
       comment: comment,
       rating: Number(rating),
+      meta: meta, // object structure in model
     });
 
-    // update listing's rating and reviewCount
-    listing.rating =
-      (listing.rating * listing.reviewCount + review.rating) /
-      (listing.reviewCount + 1);
-    listing.reviewCount += 1;
+    // update listing's rating and reviewCount and metas
+    for (const mkey in review.meta) {
+      // NOTE: this piece of code must be above update of review count
+      listing.reviews.meta[mkey] =
+        (listing.reviews.meta[mkey] * listing.reviews.count +
+          review.meta[mkey]) /
+        (listing.reviews.count + 1);
+    }
+
+    listing.reviews.rating =
+      (listing.reviews.rating * listing.reviews.count + review.rating) /
+      (listing.reviews.count + 1);
+    listing.reviews.count += 1;
 
     await listing.save({ session });
     await review.save({ session });

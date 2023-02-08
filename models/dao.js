@@ -96,6 +96,14 @@ var DaoSchema = new Schema(
     treasury: {
       type: String,
     },
+    review_meta: {
+      resonate_vibes_rate: { type: Number, default: 0 },
+      onboarding_exp: { type: Number, default: 0 },
+      opinions_matter: { type: Number, default: 0 },
+      great_org_structure: { type: Number, default: 0 },
+      friend_recommend: { type: Number, default: 0 },
+      great_incentives: { type: Number, default: 0 },
+    },
   },
   {
     timestamps: true,
@@ -110,7 +118,7 @@ DaoSchema.virtual("name").get(function () {
 DaoSchema.virtual("photo.logo.secure_url").get(function () {
   return this.dao_logo;
 });
-DaoSchema.virtual("rating")
+DaoSchema.virtual("reviews.rating")
   .get(function () {
     return this.average_rating;
   })
@@ -118,12 +126,20 @@ DaoSchema.virtual("rating")
     this.set({ average_rating: value });
   });
 
-DaoSchema.virtual("reviewCount")
+DaoSchema.virtual("reviews.count")
   .get(function () {
     return this.review_count;
   })
   .set(function (value) {
     this.set({ review_count: value });
+  });
+
+DaoSchema.virtual("reviews.meta")
+  .get(function () {
+    return this.review_meta;
+  })
+  .set(function (value) {
+    this.set({ review_meta: value });
   });
 
 // Export the model

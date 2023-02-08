@@ -18,6 +18,15 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Dao",
     },
+    // TODO: can be updated to have dynamic questions
+    meta: {
+      resonate_vibes_rate: Number,
+      onboarding_exp: Number,
+      opinions_matter: Number,
+      great_org_structure: Number,
+      friend_recommend: Number,
+      great_incentives: Number,
+    },
     vote: {
       up: {
         count: Number,
