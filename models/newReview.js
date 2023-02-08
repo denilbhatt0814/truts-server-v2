@@ -29,11 +29,11 @@ const reviewSchema = new mongoose.Schema(
     },
     vote: {
       up: {
-        count: Number,
+        type: Number,
         default: 0,
       },
       down: {
-        count: Number,
+        type: Number,
         default: 0,
       },
     },
