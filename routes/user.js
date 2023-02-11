@@ -15,16 +15,18 @@ const {
   setPrimaryWallet,
   getMyMatchWithListedGuilds,
   getMyReviews,
-  getUserDetails,
-  getMatchWithListedGuilds,
-  getUserReviews,
+  getUserDetails_Public,
+  getMatchWithListedGuilds_Public,
+  getUserReviews_Public,
   loginViaTwitter,
   connectTwitter,
   getMyTrutsXP,
-  getUserTrutsXP,
+  getUserTrutsXP_Public,
   getMyCompletedMissions,
   isUsernameAvailable,
   setMyUsername,
+  getUserCompletedMissions_Public,
+  getUserReviews,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -58,12 +60,28 @@ router.route("/login/wallet/verify").post(verifyWallet);
 // router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
 // TODO: delete a wallet
 
-// ------ USER ROUTES ------
+// ------NOTE: USER ROUTES : when Authenticated ------
 router.route("/user").get(isLoggedIn, getMyUserDetails);
+router.route("/user/:address").get(isLoggedIn, getUserDetails_Public);
+
 router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
+router
+  .route("/user/:address/guilds")
+  .get(isLoggedIn, getMatchWithListedGuilds_Public);
+
 router.route("/user/reviews").get(isLoggedIn, getMyReviews);
+// TEST:
+router.route("/user/:address/reviews").get(isLoggedIn, getUserReviews);
+
 router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
+router.route("/user/:address/truts-xp").get(isLoggedIn, getUserTrutsXP_Public);
+
 router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
+router
+  .route("/user/:address/completed-mission")
+  .get(isLoggedIn, getUserCompletedMissions_Public);
+
+// Edit Profile related routes
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 router.route("/user/set/username").patch(isLoggedIn, setMyUsername);
 router
@@ -75,15 +93,18 @@ router
   .get(isLoggedIn, getAllUserIntrestTags)
   .post(isLoggedIn, createUserIntrestTag);
 
-// UNDER-WORK: Public routes
-router.route("/public/user/:address").get(isLoggedIn, getUserDetails);
+// ------- NOTE: USER PUBLIC ROUTES : (for lurker/ not logged-in ) ------------
+router.route("/public/user/:address").get(getUserDetails_Public);
 router
   .route("/public/user/:address/guilds")
-  .get(isLoggedIn, getMatchWithListedGuilds);
-router.route("/public/user/:address/reviews").get(isLoggedIn, getUserReviews);
-router.route("/public/user/:address/truts-xp").get(isLoggedIn, getUserTrutsXP);
+  .get(getMatchWithListedGuilds_Public);
+
+// TEST:
+router.route("/public/user/:address/reviews").get(getUserReviews_Public);
+
+router.route("/public/user/:address/truts-xp").get(getUserTrutsXP_Public);
 router
   .route("/public/user/:address/completed-mission")
-  .get(isLoggedIn, getMyCompletedMissions);
+  .get(getUserCompletedMissions_Public);
 
 module.exports = router;
