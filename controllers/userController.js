@@ -3,7 +3,7 @@ const User = require("../models/user");
 const { User_Mission } = require("../models/user_mission");
 const Wallet = require("../models/wallet");
 const Dao = require("../models/dao");
-const Review = require("../models/review");
+const { Review } = require("../models/newReview");
 const UserIntrestTag = require("../models/userIntrestTag");
 const cookieToken = require("../utils/cookieToken");
 const {
@@ -551,39 +551,139 @@ exports.getMyMatchWithListedGuilds = async (req, res) => {
 
 exports.getMyReviews = async (req, res) => {
   try {
-    if (!req.user.discord) {
-      return new HTTPError(
-        res,
-        400,
-        "Please link your discord account",
-        "Discord not connected"
-      );
-    }
+    const userID = req.user._id;
+    const agg = [
+      {
+        // Get all reviews by user: userID
+        $match: {
+          user: new mongoose.Types.ObjectId(userID),
+        },
+      },
+      {
+        // Now look for all votes relating to a selected review
+        $lookup: {
+          from: "votereviews",
+          localField: "_id",
+          foreignField: "review",
+          as: "votes", // arr of relating votes
+        },
+      },
+      {
+        // Add new field to response review object
+        $addFields: {
+          voteState: {
+            // Based on a condition
+            $cond: [
+              {
+                // IF: no vote by user on the specific review -> voteState: null
+                $eq: [
+                  // matches size of filtered arrray with 0
+                  {
+                    $size: {
+                      // filters an array of votes if current user matches user who voted
+                      $filter: {
+                        input: "$votes",
+                        as: "vote",
+                        cond: {
+                          $eq: [
+                            "$$vote.user",
+                            new mongoose.Types.ObjectId(userID),
+                          ],
+                        },
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+              // then return voteState: null i.e no vote by me on the specific review
+              null,
+              // else if I have ever voted for a review -> then:
+              {
+                // return 0th elem from filtered array
+                $arrayElemAt: [
+                  {
+                    // filter for finding if a vote by me/user calling this api
+                    $filter: {
+                      input: "$votes",
+                      as: "vote",
+                      cond: {
+                        $eq: [
+                          "$$vote.user",
+                          new mongoose.Types.ObjectId(userID),
+                        ],
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $lookup: {
+          from: "daos",
+          localField: "listing",
+          foreignField: "_id",
+          as: "listing",
+        },
+      },
+      {
+        $unwind: {
+          path: "$listing",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          rating: 1,
+          comment: 1,
+          vote: 1,
+          voteState: 1,
+          user: {
+            _id: 1,
+            name: 1,
+            username: 1,
+          },
+          listing: {
+            _id: 1,
+            name: "$listing.dao_name",
+            photo: {
+              logo: {
+                secure_url: "$listing.dao_logo",
+              },
+            },
+            slug: 1,
+          },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ];
 
-    let reviews = await Review.find({ user_discord_id: req.user.discord.id });
-    reviews = reviews.map((review) => {
-      return {
-        rating: review.rating,
-        comment: review.review_desc,
-        listing: {
-          name: review.dao_name,
-          discord: {
-            id: review.guild_id,
-          },
-        },
-        vote: {
-          up: {
-            count: review.thumbs_up,
-          },
-          down: {
-            count: review.thumbs_down,
-          },
-        },
-        updatedAt: review.updatedAt,
-      };
+    const reviews = await Review.aggregate(agg);
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: reviews.length,
+      reviews,
     });
-    return new HTTPResponse(res, true, 200, null, null, { reviews });
   } catch (error) {
+    console.log("getMyReviews: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -840,30 +940,137 @@ exports.getUserReviews = async (req, res) => {
         "user not found"
       );
     }
+    //TODO: How to manage both logged in and out user for voteState ?
+    const agg = [
+      {
+        // Get all reviews for asked user: user._id
+        $match: {
+          user: new mongoose.Types.ObjectId(user._id),
+        },
+      },
+      {
+        // Now look for all votes relating to a selected review
+        $lookup: {
+          from: "votereviews",
+          localField: "_id",
+          foreignField: "review",
+          as: "votes", // arr of relating votes
+        },
+      },
+      {
+        // Add new field to response review object
+        $addFields: {
+          voteState: {
+            // Based on a condition
+            $cond: [
+              {
+                // IF: no vote by user on the specific review -> voteState: null
+                $eq: [
+                  // matches size of filtered arrray with 0
+                  {
+                    $size: {
+                      // filters an array of votes if current user matches user who voted
+                      $filter: {
+                        input: "$votes",
+                        as: "vote",
+                        cond: {
+                          $eq: [
+                            "$$vote.user",
+                            new mongoose.Types.ObjectId(userID),
+                          ],
+                        },
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+              // then return voteState: null i.e no vote by me on the specific review
+              null,
+              // else if I have ever voted for a review -> then:
+              {
+                // return 0th elem from filtered array
+                $arrayElemAt: [
+                  {
+                    // filter for finding if a vote by me/user calling this api
+                    $filter: {
+                      input: "$votes",
+                      as: "vote",
+                      cond: {
+                        $eq: [
+                          "$$vote.user",
+                          new mongoose.Types.ObjectId(userID),
+                        ],
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $lookup: {
+          from: "daos",
+          localField: "listing",
+          foreignField: "_id",
+          as: "listing",
+        },
+      },
+      {
+        $unwind: {
+          path: "$listing",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          rating: 1,
+          comment: 1,
+          vote: 1,
+          voteState: 1,
+          user: {
+            _id: 1,
+            name: 1,
+            username: 1,
+          },
+          listing: {
+            _id: 1,
+            name: "$listing.dao_name",
+            photo: {
+              logo: {
+                secure_url: "$listing.dao_logo",
+              },
+            },
+            slug: 1,
+          },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ];
 
-    let reviews = await Review.find({ user_discord_id: user.discord.id });
-    reviews = reviews.map((review) => {
-      return {
-        rating: review.rating,
-        content: review.review_desc,
-        listing: {
-          name: review.dao_name,
-          discord: {
-            id: review.guild_id,
-          },
-        },
-        vote: {
-          up: {
-            count: review.thumbs_up,
-          },
-          down: {
-            count: review.thumbs_down,
-          },
-        },
-        updatedAt: review.updatedAt,
-      };
+    const reviews = await Review.aggregate(agg);
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: reviews.length,
+      reviews,
     });
-    return new HTTPResponse(res, true, 200, null, null, { reviews });
   } catch (error) {
     return new HTTPError(res, 500, error, "internal server error");
   }

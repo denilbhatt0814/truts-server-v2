@@ -1,8 +1,9 @@
 const User = require("../../models/user");
-const Review = require("../../models/review");
+const { Review } = require("../../models/newReview");
 const Dao = require("../../models/dao");
 const { refreshToken } = require("../../utils/discordHelper");
 const HTTPError = require("../../utils/httpError");
+const { default: mongoose } = require("mongoose");
 
 module.exports = {
   validator1: {
@@ -31,11 +32,11 @@ module.exports = {
       // after new review module
       // NOTE: optimize find by using select
       const { listingID, userID } = arguments;
-      const user = await User.findById(userID);
-      const listing = await Dao.findById(listingID);
+      const user = await User.findById(userID).select({ _id: 1 });
+      const listing = await Dao.findById(listingID).select({ _id: 1 });
       const atLeastOneReview = await Review.findOne({
-        user_discord_id: user.discord.id,
-        dao_name: listing.dao_name,
+        user: mongoose.Types.ObjectId(user._id),
+        listing: mongoose.Types.ObjectId(listing._id),
       });
 
       // TEST: REMOVE AFTER DEBUG

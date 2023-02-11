@@ -357,7 +357,7 @@ const cleanseAndVerifyTasks = async (res, tasks) => {
     }
 
     // Fetch validator and verify validationDetails
-    let template = await TaskTemplate.findById(task.taskTemplate);
+    const template = await TaskTemplate.findById(task.taskTemplate);
     if (!template) {
       return new HTTPError(
         res,
@@ -367,7 +367,15 @@ const cleanseAndVerifyTasks = async (res, tasks) => {
       );
     }
 
-    let taskValidator = taskValidators[template.validator];
+    const taskValidator = taskValidators[template.validator];
+    if (!taskValidator) {
+      return new HTTPError(
+        res,
+        404,
+        `Error finding taskValidator[${template.validator}] in list of validators`,
+        "validator not found"
+      );
+    }
     if (!taskValidator.areValidArguments(task.validationDetails)) {
       return new HTTPError(
         res,
