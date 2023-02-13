@@ -220,6 +220,24 @@ exports.loginViaDiscord = async (req, res) => {
       ).populate("tags");
     }
 
+    // link all previous reviews w/ discord to truts account
+    try {
+      await Review.updateMany(
+        {
+          "oldData.user_discord_id": discordUser.id,
+          user: null,
+        },
+        {
+          $set: { user: mongoose.Types.ObjectId(user._id) },
+        },
+        {
+          new: true,
+        }
+      );
+    } catch (error) {
+      console.log("loginViaDiscord->LinkReview: ", error);
+    }
+
     // return jwt token
     cookieToken(user, res);
   } catch (error) {
@@ -364,6 +382,25 @@ exports.verifyWallet = async (req, res) => {
         "wallets.verified": true,
         "wallets.chain": chain,
       }).populate("tags");
+
+      // link all previous reviews w/ discord to truts account
+      try {
+        await Review.updateMany(
+          {
+            "oldData.public_address": discordUser.id,
+            user: null,
+          },
+          {
+            $set: { user: mongoose.Types.ObjectId(user._id) },
+          },
+          {
+            new: true,
+          }
+        );
+      } catch (error) {
+        console.log("verifyWallet->LinkReview: ", error);
+      }
+
       cookieToken(user, res);
     } else {
       return new HTTPError(

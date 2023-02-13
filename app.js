@@ -33,6 +33,7 @@ const user = require("./routes/user");
 const mission = require("./routes/mission");
 const taskTemplate = require("./routes/taskTemplate");
 const review = require("./routes/review");
+const listing = require("./routes/listing");
 
 // routes middleware
 app.use("/api/v1", home);
@@ -40,6 +41,7 @@ app.use("/api/v1", user);
 app.use("/api/v1", mission);
 app.use("/api/v1", taskTemplate);
 app.use("/api/v1", review);
+app.use("/api/v1", listing);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");

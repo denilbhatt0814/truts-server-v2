@@ -37,6 +37,13 @@ const reviewSchema = new mongoose.Schema(
         default: 0,
       },
     },
+
+    // NOTE: only for linking oldReviews to new user w/ same discordID
+    oldData: {
+      user_discord_id: String,
+      public_address: String,
+      guild_id: String,
+    },
   },
   {
     timestamps: true,

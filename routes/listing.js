@@ -5,7 +5,6 @@ const {
 } = require("../controllers/listingController");
 const { isLoggedIn } = require("../middlewares/user");
 
-// TEST:
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
 router
   .route("/public/listing/:listingID/reviews")
