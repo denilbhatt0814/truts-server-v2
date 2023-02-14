@@ -49,7 +49,6 @@ router.route("/login/google").post(loginViaGoogle);
 
 router.route("/logout").get(logout);
 
-// TEST: login wallet
 router.route("/login/wallet").get(loginViaWallet);
 router.route("/login/wallet/verify").post(verifyWallet);
 
@@ -84,7 +83,6 @@ router
   .route("/user/:address/guilds")
   .get(isLoggedIn, getMatchWithListedGuilds_Public);
 
-// TEST:
 router.route("/user/:address/reviews").get(isLoggedIn, getUserReviews);
 
 router.route("/user/:address/truts-xp").get(isLoggedIn, getUserTrutsXP_Public);

@@ -1133,8 +1133,22 @@ exports.getUserReviews_Public = async (req, res) => {
       );
     }
 
-    const reviews = await Review.find({
+    let reviews = await Review.find({
       user: mongoose.Types.ObjectId(user._id),
+    });
+
+    reviews = reviews.map((review) => {
+      if (!review.user) {
+        return {
+          ...review._doc,
+          user: {
+            name: review.oldData.public_address,
+          },
+          voteState: null,
+        };
+      } else {
+        return { ...review._doc, voteState: null };
+      }
     });
 
     return new HTTPResponse(res, true, 200, null, null, {
