@@ -8,6 +8,7 @@ const {
   getUserGuilds,
 } = require("../utils/discordHelper");
 const { User_Mission } = require("./user_mission");
+const { XpTxn } = require("./xpTxn");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -40,7 +41,7 @@ const guildSchema = new mongoose.Schema({
   id: {
     type: String,
     unique: [true, "user already is linked to this guild"],
-    require: [true, "missing guild id"],
+    required: [true, "missing guild id"],
   },
   name: String,
   owner: Boolean,
@@ -240,9 +241,10 @@ userSchema.methods.isPartOfGuild = async function (guildID) {
 };
 
 userSchema.methods.getTrutsXP = async function () {
-  const resp_doc = await User_Mission.aggregate([
-    { $match: { user: this._id, isCompleted: true } },
-    { $group: { _id: null, totalTrutsXP: { $sum: "$trutsXP" } } },
+  // TEST:
+  const resp_doc = await XpTxn.aggregate([
+    { $match: { user: this._id } },
+    { $group: { _id: null, totalTrutsXP: { $sum: "$value" } } },
     { $project: { _id: 0, totalTrutsXP: 1 } },
   ]);
 

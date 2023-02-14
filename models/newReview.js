@@ -8,11 +8,11 @@ const reviewSchema = new mongoose.Schema(
     },
     rating: {
       type: Number,
-      require: [true, "Please add rating for this review."],
+      required: [true, "Please add rating for this review."],
     },
     comment: {
       type: String,
-      require: [true, "Please add comment for this review."],
+      required: [true, "Please add comment for this review."],
     },
     listing: {
       type: mongoose.Schema.Types.ObjectId,

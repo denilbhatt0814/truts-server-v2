@@ -7,6 +7,7 @@ const { User_Mission } = require("../models/user_mission");
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
+const { XpTxn } = require("../models/xpTxn");
 
 /**
  * NOTE: TODO:  ADD TIMESTAMPS IN ALL SCHEMAS
@@ -57,7 +58,10 @@ exports.getMissions = async (req, res) => {
       .populate("tags")
       .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } })
       .select({ tasks: 0 });
-    return new HTTPResponse(res, true, 200, null, null, { missions });
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: missions.length,
+      missions,
+    });
   } catch (error) {
     console.log("getMissions: ", error);
     return new HTTPError(res, 500, error, "internal server error");
@@ -252,10 +256,12 @@ exports.performTask = async (req, res) => {
 };
 
 exports.claimMissionCompletion = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const missionID = req.params.missionID;
     const userID = req.user._id;
 
+    await session.startTransaction();
     const mission = await Mission.findById(missionID).populate(
       "tasks.taskTemplate"
     );
@@ -266,6 +272,8 @@ exports.claimMissionCompletion = async (req, res) => {
     });
 
     if (!attemptedMission) {
+      await session.abortTransaction();
+      await session.endSession();
       return new HTTPError(
         res,
         400,
@@ -306,12 +314,35 @@ exports.claimMissionCompletion = async (req, res) => {
     // if no return -> All tasks completed
     attemptedMission.isCompleted = true;
     attemptedMission.completedAt = new Date();
-    await attemptedMission.save();
+    await attemptedMission.save({ session });
 
+    // create a xpTxn
+    const xpTxn = new XpTxn({
+      reason: {
+        tag: "mission",
+        id: missionID,
+      },
+      user: userID,
+      value: attemptedMission.trutsXP,
+      meta: {
+        title: `Completed ${mission.name}`,
+        description: "",
+        data: {
+          user_mission: mongoose.Types.ObjectId(attemptedMission._id),
+        },
+      },
+    });
+
+    await xpTxn.save({ session });
+
+    await session.commitTransaction();
+    await session.endSession();
     return new HTTPResponse(res, true, 200, "claim successful", null, {
       attemptedMission,
     });
   } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
     console.log("claimMissionCompletion: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }

@@ -76,7 +76,7 @@ exports.addReview = async (req, res) => {
     await session.commitTransaction();
     return new HTTPResponse(res, true, 201, "review added successfully", null, {
       review,
-      listing,
+      listing: { _id: listing._id, name: listing.name, slug: listing.slug },
     });
   } catch (error) {
     await session.abortTransaction();

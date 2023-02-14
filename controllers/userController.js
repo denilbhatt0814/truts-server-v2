@@ -987,7 +987,10 @@ exports.getMyCompletedMissions = async (req, res) => {
     ];
     const missions = await User_Mission.aggregate(aggregationPipeline);
 
-    return new HTTPResponse(res, true, 200, null, null, { missions });
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: missions.length,
+      missions,
+    });
   } catch (error) {
     console.log("getMyCompletedMissions: ", error);
     return new HTTPError(res, 500, error, "internal server error");
@@ -1281,7 +1284,10 @@ exports.getUserCompletedMissions_Public = async (req, res) => {
     ];
     const missions = await User_Mission.aggregate(aggregationPipeline);
 
-    return new HTTPResponse(res, true, 200, null, null, { missions });
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: missions.length,
+      missions,
+    });
   } catch (error) {
     console.log("getMyCompletedMissions: ", error);
     return new HTTPError(res, 500, error, "internal server error");

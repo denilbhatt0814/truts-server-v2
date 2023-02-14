@@ -12,7 +12,7 @@ const voteReviewSchema = new mongoose.Schema({
   action: {
     type: String,
     enum: ["UP_VOTE", "DOWN_VOTE", "UNVOTE"],
-    require: [
+    required: [
       true,
       `Please add action for this vote to review. ["UP_VOTE", "DOWN_VOTE"]`,
     ],
