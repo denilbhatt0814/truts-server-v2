@@ -9,6 +9,8 @@ const {
 } = require("../utils/discordHelper");
 const { User_Mission } = require("./user_mission");
 const { XpTxn } = require("./xpTxn");
+const wallet = require("./wallet");
+const { Referral } = require("./referral");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -144,6 +146,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    referredBy: {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      code: String,
+      isProviderRewarded: Boolean,
+    },
   },
   {
     timestamps: true,
@@ -159,6 +169,41 @@ userSchema.post("findOneAndUpdate", async function (doc) {
     doc.isCompleted = false;
   }
   await doc.save();
+});
+
+userSchema.pre("save", async function (next) {
+  // NOTE: needs MOD on multi wallet integration
+  // TEST:
+  if (this.isModified("wallets")) {
+    if (this.wallets.verified) {
+      await Referral.updateOne(
+        { generatedBy: mongoose.Types.ObjectId(this._id) },
+        {
+          generatedBy: this._id,
+          code: this.wallets.address,
+          baseXP: 500,
+        },
+        {
+          upsert: true,
+        }
+      );
+      console.log("Updated referral");
+    }
+  }
+  if (this.isModified("isCompleted") && this.isCompleted) {
+    // check if your referral provider was rewarded
+    if ("referredBy" in this && !this.referredBy.isProviderRewarded) {
+      const referral = await Referral.findOne({ code: this.referredBy.code });
+      if (referral) {
+        await referral.usedByUserID(this._id);
+        this.referredBy.isProviderRewarded = true;
+        console.log("used referral");
+      } else {
+        delete this.referredBy;
+      }
+    }
+  }
+  next();
 });
 
 // STATIC methods
@@ -253,6 +298,7 @@ userSchema.methods.getTrutsXP = async function () {
 
 userSchema.methods.getLevelDetails = async function () {
   const usersTrutsXP = await this.getTrutsXP();
+  // TEST: REMOVING LEVEL 0
   const levels = [
     { level: 0, xpForNextLevel: 0 },
     { level: 1, xpForNextLevel: 500 },

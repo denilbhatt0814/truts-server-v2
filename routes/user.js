@@ -27,6 +27,7 @@ const {
   setMyUsername,
   getUserCompletedMissions_Public,
   getUserReviews,
+  getMyReferralDetails,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -65,6 +66,7 @@ router.route("/user/reviews").get(isLoggedIn, getMyReviews);
 router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
 router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
 router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
+router.route("/user/referral").get(isLoggedIn, getMyReferralDetails);
 
 // Edit Profile related routes
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);

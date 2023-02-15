@@ -4,6 +4,7 @@ const { User_Mission } = require("../models/user_mission");
 const Wallet = require("../models/wallet");
 const Dao = require("../models/dao");
 const { Review } = require("../models/newReview");
+const { Referral } = require("../models/referral");
 const UserIntrestTag = require("../models/userIntrestTag");
 const cookieToken = require("../utils/cookieToken");
 const {
@@ -25,6 +26,11 @@ const { ethers } = require("ethers");
 // for sol wallet verifiaction
 const bs58 = require("bs58");
 const nacl = require("tweetnacl");
+const { OAuth2Client } = require("google-auth-library");
+const {
+  exchangeTwitterToken,
+  getUserTwitterDetails,
+} = require("../utils/twitterHelper");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -92,17 +98,14 @@ exports.login = async (req, res) => {
   }
 };
 
-const { OAuth2Client } = require("google-auth-library");
-const {
-  exchangeTwitterToken,
-  getUserTwitterDetails,
-} = require("../utils/twitterHelper");
-
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 exports.loginViaGoogle = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const g_token = req.body.token;
+    console.log(req.body);
     const ticket = await client.verifyIdToken({
       idToken: g_token,
       audience: GOOGLE_CLIENT_ID,
@@ -130,6 +133,7 @@ exports.loginViaGoogle = async (req, res) => {
       upsert: true, // Perform an upsert operation
       new: true, // Return the updated document, instead of the original
       setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+      session: session,
     };
     let user = await User.findOneAndUpdate(
       filter,
@@ -140,20 +144,30 @@ exports.loginViaGoogle = async (req, res) => {
       options
     ).populate("tags");
 
-    // add name if missing or if new user
+    // if provided referral:
+    if (req.body.referral) {
+      await attachReferral(user, req.body.referral, session);
+    }
+
     if (!user.name) {
+      // add name if missing or if new user
       user = await User.findOneAndUpdate(
         { _id: user._id },
         { name: profile.name },
         {
           new: true,
+          session,
         }
       ).populate("tags");
     }
 
+    await session.commitTransaction();
+    await session.endSession();
     // return jwt token
     cookieToken(user, res);
   } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
     console.log(error);
     return new HTTPError(res, 500, error, "internal server error");
   }
@@ -342,10 +356,14 @@ exports.loginViaWallet = async (req, res) => {
 };
 
 exports.verifyWallet = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { public_key, signature, chain } = req.body;
 
-    let user = await User.findOne({ "wallets.address": public_key });
+    let user = await User.findOne({ "wallets.address": public_key }).session(
+      session
+    );
 
     // If no user with given public_key
     if (!user) {
@@ -378,16 +396,20 @@ exports.verifyWallet = async (req, res) => {
     }
 
     if (evm_verified || sol_verified) {
-      user = await User.findByIdAndUpdate(user._id, {
-        "wallets.verified": true,
-        "wallets.chain": chain,
-      }).populate("tags");
+      user.wallets.verified = true;
+      user.wallets.chain = chain;
+      user.markModified("wallets");
+      /**
+       * NOTE: using save rather than updateOne as, we a hook on save
+       *      for generating/updating users referral code = wallet address
+       */
+      await user.save({ session });
 
-      // link all previous reviews w/ discord to truts account
+      // link all previous reviews w/ wallet address to truts account
       try {
         await Review.updateMany(
           {
-            "oldData.public_address": discordUser.id,
+            "oldData.public_address": user.wallets.address,
             user: null,
           },
           {
@@ -395,14 +417,24 @@ exports.verifyWallet = async (req, res) => {
           },
           {
             new: true,
+            session,
           }
         );
       } catch (error) {
         console.log("verifyWallet->LinkReview: ", error);
       }
 
+      // if provided referral:
+      if (req.body.referral) {
+        await attachReferral(user, req.body.referral, session);
+      }
+
+      await session.commitTransaction();
+      await session.endSession();
       cookieToken(user, res);
     } else {
+      await session.abortTransaction();
+      await session.endSession();
       return new HTTPError(
         res,
         400,
@@ -411,6 +443,8 @@ exports.verifyWallet = async (req, res) => {
       );
     }
   } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
     console.log(error);
     return new HTTPError(res, 500, error, "internal server error");
   }
@@ -726,7 +760,24 @@ exports.getMyReviews = async (req, res) => {
   }
 };
 
-// TEST:
+exports.getMyReferralDetails = async (req, res) => {
+  try {
+    let referral = await Referral.findOne({ generatedBy: req.user._id });
+    console.log(referral);
+    /**
+     * NOTE: - need to do update in _doc as doing it directly doesn't actually
+     *         update the object untill you use .save() method.
+     *       - Secondly I could have made a virtual for xpEarned but virtuals
+     *         don't allow async calls. thus a way around is used here.
+     */
+    referral._doc.xpEarned = await referral.calculateXpEarned();
+    return new HTTPResponse(res, true, 200, null, null, { referral });
+  } catch (error) {
+    console.log("getMyReferralDetails: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.getUserReviews = async (req, res) => {
   try {
     const address = req.params.address;
@@ -1382,6 +1433,44 @@ const updateProfileImage = async (user, photo) => {
     return data;
   } catch (error) {
     throw error;
+  }
+};
+
+const attachReferral = async (user, code, session) => {
+  try {
+    console.log({ code });
+    // use referral only during creation of account
+    if (Date.now() - user.createdAt < 20 * 1000) {
+      const referral = await Referral.findOne({ code }).session(session);
+      console.log({ referral });
+      if (
+        referral && // only if referral exists
+        referral.generatedBy != user._id // I can't use my own referral
+      ) {
+        await User.updateOne(
+          { _id: user._id },
+          {
+            referredBy: {
+              user: referral.generatedBy,
+              code: code,
+              isProviderRewarded: false,
+            },
+          },
+          { session }
+        );
+        console.log("attached referral");
+      } else {
+        console.log("did not link referral: ", code);
+      }
+    } else {
+      console.log(
+        "did not link referral: ",
+        code,
+        " as account was already created"
+      );
+    }
+  } catch (error) {
+    console.log("attachReferral: ", error);
   }
 };
 
