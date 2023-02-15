@@ -9,7 +9,7 @@ exports.castVoteToReview = async (req, res) => {
   try {
     const { reviewID } = req.params;
     const { action } = req.body;
-    const userID = "63da6ccb1c392b83d69b590b";
+    const userID = req.user._id;
 
     // CHECK: if review exists
     let review = await Review.findById(reviewID);
