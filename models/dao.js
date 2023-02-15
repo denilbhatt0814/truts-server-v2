@@ -118,6 +118,9 @@ DaoSchema.virtual("name").get(function () {
 DaoSchema.virtual("photo.logo.secure_url").get(function () {
   return this.dao_logo;
 });
+DaoSchema.virtual("photo.cover.secure_url").get(function () {
+  return this.dao_cover;
+});
 DaoSchema.virtual("reviews.rating")
   .get(function () {
     return this.average_rating;

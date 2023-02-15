@@ -4,6 +4,17 @@ const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 
+exports.getListing = async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const listing = await Dao.findOne({ slug });
+    return new HTTPResponse(res, true, 200, null, null, { listing });
+  } catch (error) {
+    console.log("getListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.getListingReviews = async (req, res) => {
   try {
     const userID = req.user._id;
