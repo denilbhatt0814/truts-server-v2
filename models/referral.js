@@ -34,7 +34,7 @@ const referralSchema = new mongoose.Schema(
 );
 
 // hooks
-referralSchema.post("updateOne", async function (doc) {
+referralSchema.post("findOneAndUpdate", async function (doc) {
   // update multiplier
   const teirDetail = getReferralTeirDetails(doc);
   if (doc.multiplier != teirDetail.multiplier) {
@@ -101,7 +101,7 @@ referralSchema.methods.usedByUserID = async function (userID) {
   );
 
   // update useCount
-  await this.model("Referral").updateOne(
+  await this.model("Referral").findOneAndUpdate(
     { _id: this._id },
     { $inc: { useCount: 1 } }
   );

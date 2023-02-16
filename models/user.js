@@ -190,6 +190,7 @@ userSchema.pre("save", async function (next) {
       console.log("Updated referral");
     }
   }
+
   if (this.isModified("isCompleted") && this.isCompleted) {
     // check if your referral provider was rewarded
     if ("referredBy" in this && !this.referredBy.isProviderRewarded) {
