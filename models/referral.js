@@ -79,6 +79,9 @@ referralSchema.methods.calculateXpEarned = async function () {
     "reason.tag": "referral",
     "reason.id": this._id.toString(),
   });
+  if (!txn) {
+    return 0;
+  }
   return txn.value;
 };
 
