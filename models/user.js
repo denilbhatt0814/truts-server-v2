@@ -42,6 +42,7 @@ const walletSchema = new mongoose.Schema({
 const guildSchema = new mongoose.Schema({
   id: {
     type: String,
+    // NOTE: This unique creates an index in DB on collection initialization : remove it if it causes errors
     unique: [true, "user already is linked to this guild"],
     required: [true, "missing guild id"],
   },
@@ -162,12 +163,30 @@ const userSchema = new mongoose.Schema(
 
 // HOOKS on User model
 userSchema.post("findOneAndUpdate", async function (doc) {
-  doc.completionStatus = calculateProfileCompletion(doc);
-  if (doc.googleId && doc.discord && doc.wallets) {
+  const completionStatus = calculateProfileCompletion(doc);
+  if (doc.googleId && doc.discord && doc.wallets && doc.username) {
     doc.isCompleted = true;
   } else {
     doc.isCompleted = false;
   }
+  if (doc.completionStatus != 100) {
+    // allocate XP on each field filled in profile
+    await XpTxn.updateOne(
+      {
+        reason: { tag: "profile_completion", id: doc._id },
+        user: mongoose.Types.ObjectId(doc._id),
+      },
+      {
+        $set: { value: completionStatus.rewardXP },
+        meta: {
+          title: `Filling fields in profile`,
+          description: `you have filled out ${completionStatus.percentage}% of your profile`,
+        },
+      },
+      { upsert: true }
+    );
+  }
+  doc.completionStatus = completionStatus.percentage;
   await doc.save();
 });
 
@@ -342,25 +361,29 @@ userSchema.methods.getLevelDetails = async function () {
 module.exports = mongoose.model("User", userSchema);
 
 // User schema utility methods:
-// TEST:
 function calculateProfileCompletion(doc) {
   toBeFilled = [
-    "username",
-    "name",
-    "bio",
-    "wallets",
-    "googleId",
-    "photo",
-    "discord",
-    "tags",
+    { name: "username", rewardXP: 50 },
+    // "name", //  currently not updating it from frontend
+    { name: "bio", rewardXP: 50 },
+    { name: "wallets", rewardXP: 50 },
+    { name: "googleId", rewardXP: 50 },
+    { name: "photo", rewardXP: 50 },
+    { name: "discord", rewardXP: 50 },
+    { name: "tags", rewardXP: 50 },
   ];
 
   let fieldsFilled = 0;
+  let rewardXP = 0;
   toBeFilled.forEach((field) => {
-    if (doc[field]) {
+    if (doc[field.name]) {
       fieldsFilled++;
+      rewardXP += field.rewardXP;
     }
   });
 
-  return Math.floor((fieldsFilled / toBeFilled.length) * 100);
+  return {
+    percentage: Math.floor((fieldsFilled / toBeFilled.length) * 100),
+    rewardXP: rewardXP,
+  };
 }
