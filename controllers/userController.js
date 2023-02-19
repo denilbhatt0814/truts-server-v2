@@ -780,9 +780,9 @@ exports.getMyReferralDetails = async (req, res) => {
 
 exports.getUserReviews = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     const user = await User.findOne({
-      "wallets.address": address,
+      username: username,
       isCompleted: true,
     });
     if (!user) {
@@ -1068,10 +1068,10 @@ exports.getMyTrutsXP = async (req, res) => {
 // ------ USER CONTROLLER (PUBLIC - NO AUTH) ------
 exports.getUserDetails_Public = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     const user = await User.findOne(
       {
-        "wallets.address": address,
+        username: username,
         isCompleted: true,
       },
       {
@@ -1099,9 +1099,9 @@ exports.getUserDetails_Public = async (req, res) => {
 
 exports.getMatchWithListedGuilds_Public = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     let user = await User.findOne(
-      { "wallets.address": address, isCompleted: true },
+      { username: username, isCompleted: true },
       { "discord.guilds": 1 }
     );
     if (!user) {
@@ -1173,9 +1173,9 @@ exports.getMatchWithListedGuilds_Public = async (req, res) => {
 
 exports.getUserReviews_Public = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     const user = await User.findOne({
-      "wallets.address": address,
+      username: username,
       isCompleted: true,
     });
     if (!user) {
@@ -1217,9 +1217,9 @@ exports.getUserReviews_Public = async (req, res) => {
 
 exports.getUserCompletedMissions_Public = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     const user = await User.findOne({
-      "wallets.address": address,
+      username: username,
       isCompleted: true,
     });
     if (!user) {
@@ -1347,10 +1347,10 @@ exports.getUserCompletedMissions_Public = async (req, res) => {
 
 exports.getUserTrutsXP_Public = async (req, res) => {
   try {
-    const address = req.params.address;
+    const username = req.params.username;
     const user = await User.findOne(
       {
-        "wallets.address": address,
+        username: username,
         isCompleted: true,
       },
       { _id: 1 } // Project only _id

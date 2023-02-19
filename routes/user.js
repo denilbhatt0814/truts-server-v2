@@ -80,31 +80,31 @@ router
   .get(isLoggedIn, getAllUserIntrestTags)
   .post(isLoggedIn, createUserIntrestTag);
 
-router.route("/user/:address").get(isLoggedIn, getUserDetails_Public);
+router.route("/user/:username").get(isLoggedIn, getUserDetails_Public);
 router
-  .route("/user/:address/guilds")
+  .route("/user/:username/guilds")
   .get(isLoggedIn, getMatchWithListedGuilds_Public);
 
-router.route("/user/:address/reviews").get(isLoggedIn, getUserReviews);
+router.route("/user/:username/reviews").get(isLoggedIn, getUserReviews);
 
-router.route("/user/:address/truts-xp").get(isLoggedIn, getUserTrutsXP_Public);
+router.route("/user/:username/truts-xp").get(isLoggedIn, getUserTrutsXP_Public);
 
 router
-  .route("/user/:address/completed-mission")
+  .route("/user/:username/completed-mission")
   .get(isLoggedIn, getUserCompletedMissions_Public);
 
 // ------- NOTE: USER PUBLIC ROUTES : (for lurker/ not logged-in ) ------------
-router.route("/public/user/:address").get(getUserDetails_Public);
+router.route("/public/user/:username").get(getUserDetails_Public);
 router
-  .route("/public/user/:address/guilds")
+  .route("/public/user/:username/guilds")
   .get(getMatchWithListedGuilds_Public);
 
 // TEST:
-router.route("/public/user/:address/reviews").get(getUserReviews_Public);
+router.route("/public/user/:username/reviews").get(getUserReviews_Public);
 
-router.route("/public/user/:address/truts-xp").get(getUserTrutsXP_Public);
+router.route("/public/user/:username/truts-xp").get(getUserTrutsXP_Public);
 router
-  .route("/public/user/:address/completed-mission")
+  .route("/public/user/:username/completed-mission")
   .get(getUserCompletedMissions_Public);
 
 module.exports = router;
