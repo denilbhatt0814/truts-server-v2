@@ -164,12 +164,17 @@ const userSchema = new mongoose.Schema(
 // HOOKS on User model
 userSchema.post("findOneAndUpdate", async function (doc) {
   const completionStatus = calculateProfileCompletion(doc);
-  if (doc.googleId && doc.discord && doc.wallets && doc.username) {
+  // removed wallet complusion
+  if (doc.googleId && doc.discord && doc.username) {
     doc.isCompleted = true;
   } else {
     doc.isCompleted = false;
   }
   if (doc.completionStatus != 100) {
+    if (!doc.photo) {
+      // add a random photo
+      doc.photo.secure_url = selectRandomPhoto();
+    }
     // allocate XP on each field filled in profile
     await XpTxn.updateOne(
       {
@@ -386,4 +391,17 @@ function calculateProfileCompletion(doc) {
     percentage: Math.floor((fieldsFilled / toBeFilled.length) * 100),
     rewardXP: rewardXP,
   };
+}
+
+function selectRandomPhoto() {
+  let url = "https://truts-listings.s3.ap-south-1.amazonaws.com/";
+  listOfPhotos = [
+    "user-random-1.webp",
+    "user-random-2.webp",
+    "user-random-3.webp",
+    "user-random-4.webp",
+    "user-random-5.webp",
+  ];
+  let photo = url + listOfPhotos[Math.random() * listOfPhotos.length];
+  return photo;
 }
