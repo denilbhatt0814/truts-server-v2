@@ -401,7 +401,9 @@ function selectRandomPhoto() {
     "user-random-3.webp",
     "user-random-4.webp",
     "user-random-5.webp",
+    "user-random-6.webp",
   ];
-  let photo = url + listOfPhotos[Math.random() * listOfPhotos.length];
+  let photo =
+    url + listOfPhotos[Math.floor(Math.random() * listOfPhotos.length)];
   return photo;
 }
