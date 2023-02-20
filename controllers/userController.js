@@ -330,12 +330,17 @@ exports.loginViaWallet = async (req, res) => {
       new: true, // Return the updated document, instead of the original
       setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
     };
+
+    const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
+      WALLET_NONCE_LENGTH
+    )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
+
     let user = await User.findOneAndUpdate(
       filter,
       {
         wallets: {
           address: address,
-          nonce: randomString(WALLET_NONCE_LENGTH),
+          nonce: nonce,
         },
       },
       options

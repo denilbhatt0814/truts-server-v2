@@ -121,10 +121,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       validator: [validator.isEmail, "Please provide email in correct format"],
       unique: [true, "The provided email is already registered"],
+      sparse: true,
     },
     googleId: {
       type: String,
       unique: [true, "This google account is already registered"],
+      sparse: true,
     },
     photo: {
       id: { type: String },
