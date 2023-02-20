@@ -128,7 +128,7 @@ const userSchema = new mongoose.Schema(
     },
     photo: {
       id: { type: String },
-      secure_url: { type: String },
+      secure_url: { type: String, default: selectRandomPhoto },
     },
     discord: discordSchema,
     // TODO: twitter can bring affects in completion tags
@@ -171,10 +171,6 @@ userSchema.post("findOneAndUpdate", async function (doc) {
     doc.isCompleted = false;
   }
   if (doc.completionStatus != 100) {
-    if (!doc.photo) {
-      // add a random photo
-      doc.photo.secure_url = selectRandomPhoto();
-    }
     // allocate XP on each field filled in profile
     await XpTxn.updateOne(
       {
@@ -326,15 +322,15 @@ userSchema.methods.getLevelDetails = async function () {
   // TEST: REMOVING LEVEL 0
   const levels = [
     { level: 0, xpForNextLevel: 0 },
-    { level: 1, xpForNextLevel: 500 },
-    { level: 2, xpForNextLevel: 1500 },
-    { level: 3, xpForNextLevel: 3000 },
-    { level: 4, xpForNextLevel: 5000 },
-    { level: 5, xpForNextLevel: 7000 },
-    { level: 6, xpForNextLevel: 9000 },
-    { level: 7, xpForNextLevel: 12000 },
-    { level: 8, xpForNextLevel: 15000 },
-    { level: 9, xpForNextLevel: 20000 },
+    { level: 1, xpForNextLevel: 5000 },
+    { level: 2, xpForNextLevel: 10000 },
+    { level: 3, xpForNextLevel: 17000 },
+    { level: 4, xpForNextLevel: 25000 },
+    { level: 5, xpForNextLevel: 40000 },
+    { level: 6, xpForNextLevel: 60000 },
+    { level: 7, xpForNextLevel: 75000 },
+    { level: 8, xpForNextLevel: 100000 },
+    { level: 9, xpForNextLevel: 120000 },
   ];
 
   for (let i = 0; i < levels.length; i++) {
@@ -368,14 +364,14 @@ module.exports = mongoose.model("User", userSchema);
 // User schema utility methods:
 function calculateProfileCompletion(doc) {
   toBeFilled = [
-    { name: "username", rewardXP: 50 },
+    { name: "username", rewardXP: 500 },
     // "name", //  currently not updating it from frontend
-    { name: "bio", rewardXP: 50 },
-    { name: "wallets", rewardXP: 50 },
-    { name: "googleId", rewardXP: 50 },
-    { name: "photo", rewardXP: 50 },
-    { name: "discord", rewardXP: 50 },
-    { name: "tags", rewardXP: 50 },
+    { name: "bio", rewardXP: 500 },
+    { name: "wallets", rewardXP: 500 },
+    { name: "googleId", rewardXP: 500 },
+    { name: "photo", rewardXP: 500 },
+    { name: "discord", rewardXP: 500 },
+    { name: "tags", rewardXP: 500 },
   ];
 
   let fieldsFilled = 0;
@@ -394,7 +390,7 @@ function calculateProfileCompletion(doc) {
 }
 
 function selectRandomPhoto() {
-  let url = "https://truts-listings.s3.ap-south-1.amazonaws.com/";
+  let url = "https://truts-users.s3.ap-south-1.amazonaws.com/";
   listOfPhotos = [
     "user-random-1.webp",
     "user-random-2.webp",
