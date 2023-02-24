@@ -97,4 +97,40 @@ module.exports = {
       return true;
     },
   },
+  FOLLOWS_ON_TWITTER: {
+    parameters: [
+      {
+        field: "listingID",
+        name: "Listing ID",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("listingID" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    exec: async function (arguments) {
+      // TODO: This validator might need to be rewriten
+      // after new Listing model
+      // NOTE: optimize find by using select
+      const { listingID, userID } = arguments;
+      const user = await User.findById(userID).select(
+        "+twitter.refresh_token +twitter.following"
+      );
+      const listing = await Dao.findById(listingID);
+      const twitterUserName = listing.twitter_link;
+      const followsOnTwitter = await user.followsTwitterAccount(
+        twitterUserName
+      );
+
+      if (!followsOnTwitter) {
+        return false;
+      }
+      return true;
+    },
+  },
 };

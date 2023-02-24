@@ -5,7 +5,7 @@ const fs = require("fs");
 
 let newReviews = [];
 let oldReviews = [];
-oReview.find({ authorized: true }).then((reviews) => {
+oReview.find({}).then((reviews) => {
   console.log(`Found ${oldReviews.length} reviews`);
   oldReviews = reviews;
   const oldRLen = oldReviews.length;
@@ -13,6 +13,9 @@ oReview.find({ authorized: true }).then((reviews) => {
     (oldReview, idx) =>
       new Promise(async (resolve) => {
         console.log(`working on: ${oldReview._id} [${idx + 1}/${oldRLen}]`);
+        if ("authorized" in oldReview && oldReview.authorized == false) {
+          resolve();
+        }
         let review = {};
         review._id = { $oid: oldReview._id };
         review.rating = Number.parseInt(oldReview.rating);

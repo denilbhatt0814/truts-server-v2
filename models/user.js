@@ -11,6 +11,11 @@ const { User_Mission } = require("./user_mission");
 const { XpTxn } = require("./xpTxn");
 const wallet = require("./wallet");
 const { Referral } = require("./referral");
+const {
+  refreshTwitterToken,
+  getTwitterUserDetails,
+  getTwitterUserFollowing,
+} = require("../utils/twitterHelper");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -78,6 +83,12 @@ const discordSchema = new mongoose.Schema({
   },
 });
 
+const twitterAccountSchema = new mongoose.Schema({
+  id: String,
+  name: String,
+  username: String,
+});
+
 const twitterSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -95,6 +106,10 @@ const twitterSchema = new mongoose.Schema({
   refresh_token: {
     type: String,
     required: true,
+    select: false,
+  },
+  following: {
+    type: [twitterAccountSchema],
     select: false,
   },
   token_expiry: Date,
@@ -244,6 +259,7 @@ userSchema.methods.getJWTToken = function () {
   });
 };
 
+// DISCORD USER METHODS
 userSchema.methods.updateDiscordDetails = async function () {
   try {
     // 1. REFRESH TOKEN
@@ -304,6 +320,83 @@ userSchema.methods.isPartOfGuild = async function (guildID) {
     return partOfGuild ? true : false;
   } catch (error) {
     console.log("isPartOfGuild: ", error);
+    throw error;
+  }
+};
+
+// TWITTER USER METHODS
+userSchema.methods.updateTwitterDetails = async function () {
+  try {
+    // 1. REFRESH TOKEN
+    const accessResponse = await refreshTwitterToken(this.user.refresh_token);
+
+    // 2. STORE NEW TOKEN
+    this.twitter.access_token = accessResponse.access_token;
+    this.twitter.refresh_token = accessResponse.refresh_token;
+    this.twitter.token_expiry = new Date(
+      Date.now() + accessResponse.expires_in * 1000
+    );
+
+    // 3. USE NEW TOKEN FETCH NEW DETAILS
+    const twitterUser = await getTwitterUserDetails(
+      accessResponse.access_token
+    );
+
+    // 4. STORE NEW DETAILS
+    user.twitter = {
+      id: twitterUser.id,
+      name: twitterUser.name,
+      username: twitterUser.username,
+      following: twitterUser.following,
+      access_token: accessResponse.access_token,
+      refresh_token: accessResponse.refresh_token,
+      token_expiry: new Date(Date.now() + accessResponse.expires_in * 1000), // expires_in is in seconds
+    };
+  } catch (error) {
+    console.error("updateTwitterDetails: ", error);
+  } finally {
+    return await this.save();
+  }
+};
+
+userSchema.methods.updateTwitterFollowings = async function () {
+  try {
+    const following = await getTwitterUserFollowing(this.twitter.access_token);
+    this.twitter.following = following;
+    return await this.save();
+  } catch (error) {
+    console.error("updateTwitterFollowings: ", error);
+  }
+};
+
+userSchema.methods.followsTwitterAccount = async function (twitterUserName) {
+  try {
+    // TODO: if such a username not exist on twitter
+    // if (twitterUserName == null) return true;
+
+    // PRE-CHECK IF ALREADY FOLLOWING
+    let alreadyFollowsAccount = this.twitter.following.find(
+      (account) => twitterUserName == account.username
+    );
+    if (alreadyFollowsAccount) {
+      return true;
+    }
+    // ELSE QUERY TWITTER FOR LATEST FOLLOWINGS/DETAILS
+
+    // If token has expired
+    if (Date.now() >= this.twitter.token_expiry) {
+      await this.updateTwitterDetails();
+    } else {
+      await this.updateTwitterFollowings();
+    }
+
+    // CHECK IF FOLLOWS THE TWITTTER ACCOUNT
+    let followsAccount = this.twitter.following.find(
+      (account) => twitterUserName == account.username
+    );
+    return followsAccount ? true : false;
+  } catch (error) {
+    console.log("followsTwitterAccount: ", error);
     throw error;
   }
 };

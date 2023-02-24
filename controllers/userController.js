@@ -29,8 +29,9 @@ const nacl = require("tweetnacl");
 const { OAuth2Client } = require("google-auth-library");
 const {
   exchangeTwitterToken,
-  getUserTwitterDetails,
+  getTwitterUserDetails,
 } = require("../utils/twitterHelper");
+const { default: axios } = require("axios");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -267,9 +268,9 @@ exports.loginViaDiscord = async (req, res) => {
 exports.connectTwitter = async (req, res) => {
   try {
     const code = req.query.code;
-    const user = await User.findById("63d51fe5e590b56c1b989db9");
+    const user = req.user;
     const data = await exchangeTwitterToken(code);
-    const user_data = await getUserTwitterDetails(data.access_token);
+    const user_data = await getTwitterUserDetails(data.access_token);
 
     user.twitter = {
       id: user_data.data.id,
@@ -280,7 +281,7 @@ exports.connectTwitter = async (req, res) => {
       token_expiry: new Date(Date.now() + data.expires_in * 1000), // expires_in is in seconds
     };
     await user.save();
-    res.json({ code, data, user_data, user });
+    return new HTTPResponse(res, true, 200, null, null, { user });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -451,6 +452,37 @@ exports.verifyWallet = async (req, res) => {
     await session.abortTransaction();
     await session.endSession();
     console.log(error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST: AREA
+// 1. whom do i follow
+exports.getWhomIFollowOnTwitter = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "+twitter.access_token"
+    );
+    const id = user.twitter.id;
+    console.log(user);
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.twitter.access_token}`,
+      },
+    };
+
+    const axios_resp = await axios.get(
+      `https://api.twitter.com/2/users/${id}/following`,
+      config
+    );
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      list: axios_resp.data,
+    });
+  } catch (error) {
+    console.log("getWhomIFollowOnTwitter: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

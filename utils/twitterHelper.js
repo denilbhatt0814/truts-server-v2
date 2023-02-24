@@ -56,7 +56,7 @@ exports.exchangeTwitterToken = async (
 // TODO: needs work
 exports.refreshTwitterToken = async (
   refresh_token,
-  callback = REDIRECT_URI
+  callback = TWITTER_REDIRECT_URI
 ) => {
   const url = "https://api.twitter.com/2/oauth2/token";
   const params = new URLSearchParams({
@@ -89,7 +89,7 @@ exports.revokeTwitterToken = async (token) => {
   return json;
 };
 
-exports.getUserTwitterDetails = async (access_token) => {
+exports.getTwitterUserDetails = async (access_token) => {
   try {
     const url = "https://api.twitter.com/2/users/me";
 
@@ -100,11 +100,38 @@ exports.getUserTwitterDetails = async (access_token) => {
         Authorization: `Bearer ${access_token}`,
       },
     };
+    const axios_resp_profile = await axios.get(url, config);
+
+    const axios_resp_following = await axios.get(url, config);
+    // TODO: CAN CLUB 2 QUERIES W/ PROMISE.ALL OR USE THE SAME FUNC I.E BELOW
+    return {
+      ...axios_resp_profile.data,
+      following: axios_resp_following.data.data,
+    };
+  } catch (error) {
+    console.log("TwitterError: unable to fetch latest deatils of user");
+    throw error;
+  }
+};
+
+exports.getTwitterUserFollowing = async (userID, access_token) => {
+  try {
+    const url = `https://api.twitter.com/2/users/${userID}/following`;
+
+    // TODO: INCREASE MAX RESULT OF FOLLOWING LIST TO 100->1000
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
 
     const axios_resp = await axios.get(url, config);
-
-    return axios_resp.data;
+    const followingList = axios_resp.data.data;
+    console.log(followingList);
+    return followingList;
   } catch (error) {
+    console.log("TwitterError: unable to fetch following list of user");
     throw error;
   }
 };

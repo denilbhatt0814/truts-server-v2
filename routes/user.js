@@ -44,7 +44,7 @@ router.route("/login/discord/callback").get(loginViaDiscord);
 router
   .route("/connect/twitter")
   .get((req, res) => res.redirect(authorizeTwitterURI(randomString(5))));
-router.route("/connect/twitter/callback").get(connectTwitter);
+router.route("/connect/twitter/callback").get(isLoggedIn, connectTwitter);
 
 router.route("/login/google").post(loginViaGoogle);
 

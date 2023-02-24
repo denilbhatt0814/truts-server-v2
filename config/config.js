@@ -41,7 +41,7 @@ module.exports = {
     "WqtjIWNzHzZr71veexa-4vyv4JYvaNILqF3OXTt9yp6Qw-jc63",
   TWITTER_REDIRECT_URI:
     process.env.TWITTER_REDIRECT_URI ||
-    "https://e71a-136-232-1-166.in.ngrok.io/api/v1/connect/twitter/callback",
+    "https://c7df-49-34-46-229.in.ngrok.io/api/v1/connect/twitter/callback",
   TWITTER_OAUTH_SCOPE:
     process.env.TWITTER_OAUTH_SCOPE ||
     "users.read tweet.read like.read offline.access follows.read",
