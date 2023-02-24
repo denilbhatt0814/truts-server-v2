@@ -328,7 +328,9 @@ userSchema.methods.isPartOfGuild = async function (guildID) {
 userSchema.methods.updateTwitterDetails = async function () {
   try {
     // 1. REFRESH TOKEN
-    const accessResponse = await refreshTwitterToken(this.user.refresh_token);
+    const accessResponse = await refreshTwitterToken(
+      this.twitter.refresh_token
+    );
 
     // 2. STORE NEW TOKEN
     this.twitter.access_token = accessResponse.access_token;
@@ -341,9 +343,9 @@ userSchema.methods.updateTwitterDetails = async function () {
     const twitterUser = await getTwitterUserDetails(
       accessResponse.access_token
     );
-
+    console.log({ twitterUser });
     // 4. STORE NEW DETAILS
-    user.twitter = {
+    this.twitter = {
       id: twitterUser.id,
       name: twitterUser.name,
       username: twitterUser.username,
@@ -361,7 +363,10 @@ userSchema.methods.updateTwitterDetails = async function () {
 
 userSchema.methods.updateTwitterFollowings = async function () {
   try {
-    const following = await getTwitterUserFollowing(this.twitter.access_token);
+    const following = await getTwitterUserFollowing(
+      this.twitter.id,
+      this.twitter.access_token
+    );
     this.twitter.following = following;
     return await this.save();
   } catch (error) {

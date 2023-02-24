@@ -59,20 +59,31 @@ exports.refreshTwitterToken = async (
   callback = TWITTER_REDIRECT_URI
 ) => {
   const url = "https://api.twitter.com/2/oauth2/token";
-  const params = new URLSearchParams({
+  const data = new URLSearchParams({
     client_id: TWITTER_CLIENT_ID,
     client_secret: TWITTER_CLIENT_SECRET,
     grant_type: "refresh_token",
+    // redirect uri
     refresh_token: refresh_token,
   });
-  params.append("grant_type", "refresh_token");
-  params.append("client_id", TWITTER_CLIENT_ID);
-  params.append("redirect_uri", callback);
-  params.append("refresh_token", token);
+  // params.append("grant_type", "refresh_token");
+  // params.append("client_id", TWITTER_CLIENT_ID);
+  // params.append("redirect_uri", callback);
+  // params.append("refresh_token", refresh_token);
 
-  const response = await fetch(url, { method: "POST", body: params });
-  const json = await response.json();
-  return json;
+  // const response = await fetch(url, { method: "POST", body: params });
+  // const json = await response.json();
+  const config = {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept-Encoding": "gzip,deflate,compress",
+      Authorization:
+        "Basic " + btoa(`${TWITTER_CLIENT_ID}:${TWITTER_CLIENT_SECRET}`),
+    },
+  };
+
+  const axios_resp = await axios.post(url, data, config);
+  return axios_resp.data;
 };
 
 // TODO: needs work
@@ -116,9 +127,9 @@ exports.getTwitterUserDetails = async (access_token) => {
 
 exports.getTwitterUserFollowing = async (userID, access_token) => {
   try {
-    const url = `https://api.twitter.com/2/users/${userID}/following`;
-
-    // TODO: INCREASE MAX RESULT OF FOLLOWING LIST TO 100->1000
+    const url = `https://api.twitter.com/2/users/${userID}/following?max_results=1000`;
+    console.log({ access_token });
+    // TEST: INCREASE MAX RESULT OF FOLLOWING LIST TO 100->1000
     const config = {
       headers: {
         "Content-Type": "application/json",

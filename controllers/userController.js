@@ -272,6 +272,8 @@ exports.connectTwitter = async (req, res) => {
     const data = await exchangeTwitterToken(code);
     const user_data = await getTwitterUserDetails(data.access_token);
 
+    console.log(user_data);
+
     user.twitter = {
       id: user_data.data.id,
       name: user_data.data.name,

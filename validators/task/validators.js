@@ -100,31 +100,36 @@ module.exports = {
   FOLLOWS_ON_TWITTER: {
     parameters: [
       {
-        field: "listingID",
-        name: "Listing ID",
+        field: "twitterUsername",
+        name: "Twitter Username",
         type: String,
         required: true,
       },
       { field: "userID", name: "User ID", type: String, required: false },
     ],
     areValidArguments: function (arguments) {
-      if ("listingID" in arguments) {
+      if ("twitterUsername" in arguments) {
         return true;
       }
       return false;
     },
     exec: async function (arguments) {
-      // TODO: This validator might need to be rewriten
-      // after new Listing model
+      // TODO: START BY ADDING TEMPLATE AND TEST:
       // NOTE: optimize find by using select
-      const { listingID, userID } = arguments;
+      // here any twitter account can be validated not just a listing's twtr account
+      const { twitterUsername, userID } = arguments;
       const user = await User.findById(userID).select(
-        "+twitter.refresh_token +twitter.following"
+        "+twitter.access_token +twitter.refresh_token +twitter.following"
       );
-      const listing = await Dao.findById(listingID);
-      const twitterUserName = listing.twitter_link;
+      if (!user.twitter) {
+        console.log(
+          `FOLLOWS_ON_TWITTER: user's [${user._id}] twitter not found connected `
+        );
+        return false;
+      }
+
       const followsOnTwitter = await user.followsTwitterAccount(
-        twitterUserName
+        twitterUsername
       );
 
       if (!followsOnTwitter) {
