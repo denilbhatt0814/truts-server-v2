@@ -472,6 +472,7 @@ function calculateProfileCompletion(doc) {
     { name: "photo", rewardXP: 500 },
     { name: "discord", rewardXP: 500 },
     { name: "tags", rewardXP: 500 },
+    { name: "twitter", rewardXP: 500 },
   ];
 
   let fieldsFilled = 0;
