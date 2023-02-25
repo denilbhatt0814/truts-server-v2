@@ -379,14 +379,7 @@ userSchema.methods.followsTwitterAccount = async function (twitterUserName) {
     // TODO: if such a username not exist on twitter
     // if (twitterUserName == null) return true;
 
-    // PRE-CHECK IF ALREADY FOLLOWING
-    let alreadyFollowsAccount = this.twitter.following.find(
-      (account) => twitterUserName == account.username
-    );
-    if (alreadyFollowsAccount) {
-      return true;
-    }
-    // ELSE QUERY TWITTER FOR LATEST FOLLOWINGS/DETAILS
+    // QUERY TWITTER FOR LATEST FOLLOWINGS/DETAILS
 
     // If token has expired
     if (Date.now() >= this.twitter.token_expiry) {
