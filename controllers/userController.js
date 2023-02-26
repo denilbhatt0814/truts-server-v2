@@ -378,7 +378,7 @@ exports.verifyWallet = async (req, res) => {
       return new HTTPError(res, 401, "User w/ provided public_key not found");
     }
 
-    let evm_verified, sol_verified;
+    let evm_verified, sol_verified, near_verified;
     const message = user.wallets.nonce;
     switch (chain) {
       case "EVM":
@@ -393,17 +393,19 @@ exports.verifyWallet = async (req, res) => {
           bs58.decode(public_key)
         );
         break;
-
+      case "NEAR":
+        near_verified = true;
+        break;
       default:
         return new HTTPError(
           res,
           400,
-          "chain must be either one of: ['EVM', 'SOL']",
+          "chain must be either one of: ['EVM', 'SOL', 'NEAR']",
           "invalid chain enum"
         );
     }
 
-    if (evm_verified || sol_verified) {
+    if (evm_verified || sol_verified || near_verified) {
       user.wallets.verified = true;
       user.wallets.chain = chain;
       user.markModified("wallets");

@@ -25,7 +25,7 @@ const {
 const walletSchema = new mongoose.Schema({
   chain: {
     type: String,
-    enum: ["EVM", "SOL"],
+    enum: ["EVM", "SOL", "NEAR"],
   },
   address: {
     type: String,
