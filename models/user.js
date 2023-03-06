@@ -150,6 +150,7 @@ const userSchema = new mongoose.Schema(
     discord: discordSchema,
     // TODO: twitter can bring affects in completion tags
     twitter: twitterSchema,
+    // TODO: default this to undefined for not existing if empty
     tags: [
       {
         type: mongoose.Schema.ObjectId,

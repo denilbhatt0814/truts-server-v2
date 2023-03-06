@@ -4,6 +4,8 @@ const Dao = require("../../models/dao");
 const { refreshToken } = require("../../utils/discordHelper");
 const HTTPError = require("../../utils/httpError");
 const { default: mongoose } = require("mongoose");
+const { ALCHEMY_API_KEY } = require("../../config/config");
+const { default: axios } = require("axios");
 
 module.exports = {
   validator1: {
@@ -136,6 +138,67 @@ module.exports = {
         return false;
       }
       return true;
+    },
+  },
+  // TEST:
+  HOLDER_OF_NFT_IN_COLLECTION: {
+    parameters: [
+      {
+        field: "chainID",
+        name: "Chain ID",
+        type: String,
+        required: true,
+      },
+      {
+        field: "contractAddress",
+        name: "Contract Address",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("contractAddress" in arguments && "chainID" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    exec: async function (arguments) {
+      // NOTE: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
+
+      const { chainID, contractAddress, userID } = arguments;
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDER_OF_NFT_IN_COLLECTION: user's [${user._id}] wallet not found connected `
+        );
+        return false;
+      }
+
+      // CHAIN LOGIC
+      let chainMapping = {
+        1: "eth-mainnet",
+        137: "polygon-mainnet",
+        42161: "arb-mainnet",
+        10: "opt-mainnet",
+      };
+
+      const options = {
+        method: "GET",
+        url: `https://${chainMapping[chainID]}.g.alchemy.com/nft/v2/${ALCHEMY_API_KEY}/isHolderOfCollection`,
+        params: {
+          wallet: user.wallets.address,
+          contractAddress: contractAddress,
+        },
+        headers: { accept: "application/json" },
+      };
+      const axios_resp = await axios.request(options);
+      const holdsNFT = axios_resp.data.isHolderOfCollection;
+
+      if (holdsNFT) {
+        return true;
+      }
+      return false;
     },
   },
 };

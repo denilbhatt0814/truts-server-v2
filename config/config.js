@@ -50,4 +50,8 @@ module.exports = {
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
   AWS_REGION: process.env.AWS_REGION || "",
+
+  /* ALCHEMY CONFIGS */
+  ALCHEMY_API_KEY:
+    process.env.ALCHEMY_API_KEY || "gFX2bqqEuU9H1Ph9nZ_j_5g6ZfwV9xue",
 };
