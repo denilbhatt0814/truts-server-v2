@@ -16,6 +16,7 @@ const {
   getTwitterUserDetails,
   getTwitterUserFollowing,
 } = require("../utils/twitterHelper");
+const { publishEvent } = require("../utils/pubSub");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -48,7 +49,7 @@ const guildSchema = new mongoose.Schema({
   id: {
     type: String,
     // NOTE: This unique creates an index in DB on collection initialization : remove it if it causes errors
-    unique: [true, "user already is linked to this guild"],
+    // unique: [true, "user already is linked to this guild"],
     required: [true, "missing guild id"],
   },
   name: String,
@@ -181,9 +182,28 @@ const userSchema = new mongoose.Schema(
 
 // HOOKS on User model
 userSchema.post("findOneAndUpdate", async function (doc) {
+  if (doc.updatedAt.getTime() === doc.createdAt.getTime()) {
+    await publishEvent(
+      "user:create",
+      JSON.stringify({
+        data: doc,
+        meta: {
+          loginBy: doc.googleId ? "google" : doc.wallets ? "wallet" : "unknown",
+        },
+      })
+    );
+  }
   const completionStatus = calculateProfileCompletion(doc);
   // removed wallet complusion
   if (doc.googleId && doc.discord && doc.username) {
+    if (doc.isCompleted == false) {
+      await publishEvent(
+        "user:isCompleted",
+        JSON.stringify({
+          data: doc,
+        })
+      );
+    }
     doc.isCompleted = true;
   } else {
     doc.isCompleted = false;

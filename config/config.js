@@ -6,6 +6,12 @@ module.exports = {
   MONGO_URI:
     process.env.MONGO_URI ||
     "mongodb+srv://denilbhatt:itsMeDenil08@cluster0.x4u1j4r.mongodb.net/test?retryWrites=true&w=majority",
+  REDIS_HOST:
+    process.env.REDIS_HOST ||
+    "redis-12627.c80.us-east-1-2.ec2.cloud.redislabs.com",
+  REDIS_PORT: process.env.REDIS_PORT || 12627,
+  REDIS_PASSWORD:
+    process.env.REDIS_PASSWORD || "Keh4dCrtEDmUfjpKTh6bkhw2hKCuGB4a",
 
   /* AUTH CONFIGS */
   JWT_SECRET: process.env.JWT_SECRET || "thisismyjwtsecret",

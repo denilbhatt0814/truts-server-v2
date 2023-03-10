@@ -4,6 +4,7 @@ const Dao = require("../models/dao");
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const User = require("../models/user");
+const { publishEvent } = require("../utils/pubSub");
 
 exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
@@ -74,6 +75,34 @@ exports.addReview = async (req, res) => {
     await listing.save({ session });
     await review.save({ session });
     await session.commitTransaction();
+    // emit event for new review
+    try {
+      await publishEvent(
+        "review:create",
+        JSON.stringify({
+          data: {
+            review,
+            user: {
+              name: user.name,
+              username: user.username,
+              photo: user.photo,
+            },
+            listing: {
+              _id: listing._id,
+              name: listing.name,
+              slug: listing.slug,
+              photo: { logo: { secure_url: listing.photo.logo.secure_url } },
+              reviews: {
+                rating: listing.reviews.rating,
+                count: listing.reviews.count,
+              },
+            },
+          },
+        })
+      );
+    } catch (error) {
+      console.log("Error: Publishing review event");
+    }
     return new HTTPResponse(res, true, 201, "review added successfully", null, {
       review,
       listing: { _id: listing._id, name: listing.name, slug: listing.slug },
