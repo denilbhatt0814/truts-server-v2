@@ -24,7 +24,10 @@ exports.createMission = async (req, res) => {
     // TODO: VERIFY IF LISTING EXISTS - another middleware
 
     // cleansing and verification of tasks
-    await cleanseAndVerifyTasks(res, tasks);
+    const verification = await cleanseAndVerifyTasks(res, tasks);
+    if (verification instanceof HTTPError) {
+      return;
+    }
 
     const mission = await Mission.create({
       name,

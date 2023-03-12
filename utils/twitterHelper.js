@@ -112,11 +112,14 @@ exports.getTwitterUserDetails = async (access_token) => {
       },
     };
     const axios_resp_profile = await axios.get(url, config);
-
-    const axios_resp_following = await axios.get(url, config);
+    const twitterUserId = axios_resp_profile.data.data.id;
+    const following_url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
+    const axios_resp_following = await axios.get(following_url, config);
     // TODO: CAN CLUB 2 QUERIES W/ PROMISE.ALL OR USE THE SAME FUNC I.E BELOW
+    // But that would need twitterUserID thus need to have 2 flows
+    // use Promise.all if have twitterUserId else go in sequence
     return {
-      ...axios_resp_profile.data,
+      ...axios_resp_profile.data.data,
       following: axios_resp_following.data.data,
     };
   } catch (error) {
@@ -125,11 +128,10 @@ exports.getTwitterUserDetails = async (access_token) => {
   }
 };
 
-exports.getTwitterUserFollowing = async (userID, access_token) => {
+exports.getTwitterUserFollowing = async (twitterUserId, access_token) => {
   try {
-    const url = `https://api.twitter.com/2/users/${userID}/following?max_results=1000`;
+    const url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
     console.log({ access_token });
-    // TEST: INCREASE MAX RESULT OF FOLLOWING LIST TO 100->1000
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -143,6 +145,65 @@ exports.getTwitterUserFollowing = async (userID, access_token) => {
     return followingList;
   } catch (error) {
     console.log("TwitterError: unable to fetch following list of user");
+    throw error;
+  }
+};
+
+exports.checkUserHasRetweeted = async (
+  twitterUserId,
+  tweetID,
+  access_token
+) => {
+  try {
+    // NOTE: the API has limit of retrieving 100 users who have retweeted
+    // at a time, if we don't find our user there, we'll have to query next pages
+    // until we find if our user has retweeted. If not find till end then return false
+    let url = `https://api.twitter.com/2/tweets/${tweetID}/retweeted_by?max_results=100`;
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    let axios_resp = await axios.get(url, config);
+    let hasRetweeted = false;
+    let retweetedByList = axios_resp.data.data;
+    console.log(axios_resp.data);
+    if (!retweetedByList) {
+      return hasRetweeted;
+    }
+    let twitterUser = retweetedByList.find(
+      (twitterAccount) => twitterAccount.id == twitterUserId
+    );
+    console.log({ twitterUser });
+    if (twitterUser) {
+      hasRetweeted = true;
+    } else if (!twitterUser && !axios_resp.data.meta.next_token) {
+      hasRetweeted = false;
+    } else {
+      let nextToken = axios_resp.data.meta.next_token;
+      while (!twitterUser && nextToken) {
+        url = `https://api.twitter.com/2/tweets/${tweetID}/retweeted_by?max_results=100&pagination_token=${nextToken}`;
+        axios_resp = await axios.get(url, config);
+        console.log(axios_resp.data);
+        retweetedByList = axios_resp.data.data;
+        if (!retweetedByList) {
+          return hasRetweeted;
+        }
+        twitterUser = retweetedByList.find(
+          (twitterAccount) => twitterAccount.id == twitterUserId
+        );
+        console.log({ twitterUser });
+        hasRetweeted = twitterUser ? true : false;
+        nextToken = axios_resp.data.meta.next_token;
+      }
+    }
+    return hasRetweeted;
+  } catch (error) {
+    console.log(
+      `TwitterError: unable to fetch retweeted by for tweet[${tweetID}]`
+    );
     throw error;
   }
 };

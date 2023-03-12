@@ -6,6 +6,7 @@ const HTTPError = require("../../utils/httpError");
 const { default: mongoose } = require("mongoose");
 const { ALCHEMY_API_KEY } = require("../../config/config");
 const { default: axios } = require("axios");
+const { checkUserHasRetweeted } = require("../../utils/twitterHelper");
 
 module.exports = {
   validator1: {
@@ -116,7 +117,6 @@ module.exports = {
       return false;
     },
     exec: async function (arguments) {
-      // TODO: START BY ADDING TEMPLATE AND TEST:
       // NOTE: optimize find by using select
       // here any twitter account can be validated not just a listing's twtr account
       const { twitterUsername, userID } = arguments;
@@ -140,7 +140,54 @@ module.exports = {
       return true;
     },
   },
-  // TEST:
+  RETWEET_ON_TWITTER: {
+    parameters: [
+      {
+        field: "tweetID",
+        name: "Tweet Id",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("tweetID" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    exec: async function (arguments) {
+      // TODO: START BY ADDING TEMPLATE AND TEST:
+      const { tweetID, userID } = arguments;
+      const user = await User.findById(userID).select(
+        "+twitter.access_token +twitter.refresh_token"
+      );
+      if (!user.twitter) {
+        console.log(
+          `RETWEET_ON_TWITTER: user's [${user._id}] twitter not found connected `
+        );
+        return false;
+      }
+
+      // logic to check if user has retweeted
+      // If token has expired
+      if (Date.now() + 60000 >= user.twitter.token_expiry) {
+        await user.updateTwitterDetails();
+      }
+
+      // function to make a query -> check if user in 1st 100
+      // else requery w/ pagination token
+      const hasRetweeted = await checkUserHasRetweeted(
+        user.twitter.id,
+        tweetID,
+        user.twitter.access_token
+      );
+
+      return hasRetweeted;
+    },
+  },
+
+  // TEST: works for EVM need to add SOL
   HOLDER_OF_NFT_IN_COLLECTION: {
     parameters: [
       {

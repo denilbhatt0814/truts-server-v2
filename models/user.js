@@ -346,6 +346,7 @@ userSchema.methods.isPartOfGuild = async function (guildID) {
 };
 
 // TWITTER USER METHODS
+// TODO: can have a small method just to update tokens
 userSchema.methods.updateTwitterDetails = async function () {
   try {
     // 1. REFRESH TOKEN
@@ -364,7 +365,8 @@ userSchema.methods.updateTwitterDetails = async function () {
     const twitterUser = await getTwitterUserDetails(
       accessResponse.access_token
     );
-    console.log({ twitterUser });
+    console.log({ twitterUser, msg: "updated twitter details" });
+
     // 4. STORE NEW DETAILS
     this.twitter = {
       id: twitterUser.id,

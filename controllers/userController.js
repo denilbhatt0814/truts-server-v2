@@ -464,37 +464,6 @@ exports.verifyWallet = async (req, res) => {
   }
 };
 
-// TEST: AREA
-// 1. whom do i follow
-exports.getWhomIFollowOnTwitter = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select(
-      "+twitter.access_token"
-    );
-    const id = user.twitter.id;
-    console.log(user);
-
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.twitter.access_token}`,
-      },
-    };
-
-    const axios_resp = await axios.get(
-      `https://api.twitter.com/2/users/${id}/following`,
-      config
-    );
-
-    return new HTTPResponse(res, true, 200, null, null, {
-      list: axios_resp.data,
-    });
-  } catch (error) {
-    console.log("getWhomIFollowOnTwitter: ", error);
-    return new HTTPError(res, 500, error, "internal server error");
-  }
-};
-
 // ------ USER CONTROLLER (PRIVATE) ------
 exports.getMyUserDetails = async (req, res) => {
   return new HTTPResponse(res, true, 200, null, null, { user: req.user });
