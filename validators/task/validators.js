@@ -7,6 +7,7 @@ const { default: mongoose } = require("mongoose");
 const { ALCHEMY_API_KEY } = require("../../config/config");
 const { default: axios } = require("axios");
 const { checkUserHasRetweeted } = require("../../utils/twitterHelper");
+const checkIsOwner = require("../../utils/solanaNFT");
 
 module.exports = {
   validator1: {
@@ -241,6 +242,52 @@ module.exports = {
       };
       const axios_resp = await axios.request(options);
       const holdsNFT = axios_resp.data.isHolderOfCollection;
+
+      if (holdsNFT) {
+        return true;
+      }
+      return false;
+    },
+  },
+  HOLDER_OF_SOL_NFT: {
+    parameters: [
+      {
+        field: "firstVerifiedCreator",
+        name: "First Verified Creator Address",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("firstVerifiedCreator" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    exec: async function (arguments) {
+      // NOTE: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
+
+      const { firstVerifiedCreator, userID } = arguments;
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user's [${user._id}] wallet not found connected `
+        );
+        return false;
+      }
+
+      if (user.wallets.chain != "SOL") {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user's [${user._id}] wallet is not on SOL`
+        );
+        return false;
+      }
+
+      const holdsNFT = await checkIsOwner(
+        user.wallets.address,
+        firstVerifiedCreator
+      );
 
       if (holdsNFT) {
         return true;

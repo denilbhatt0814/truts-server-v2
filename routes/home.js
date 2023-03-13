@@ -4,8 +4,8 @@ const router = require("express").Router();
 router.route("/").get(home);
 // router.route("/test").get(async (req, res) => {
 //   try {
-//     const isverified = await RETWEET_ON_TWITTER.exec({
-//       tweetID: "1634625223059460096",
+//     const isverified = await HOLDER_OF_SOL_NFT.exec({
+//       firstVerifiedCreator: "GMerst9KRfW6sCTpPiVNZFbmTmupeaFca2gTUgBuQAj",
 //       userID: "63f39c64a07edbfd8eb50ce6",
 //     });
 //     res.send({ isverified });
