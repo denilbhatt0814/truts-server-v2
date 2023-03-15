@@ -133,7 +133,7 @@ exports.getTwitterUserDetails = async (access_token) => {
 exports.getTwitterUserFollowing = async (twitterUserId, access_token) => {
   try {
     let url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
-    console.log({ access_token });
+    // console.log({ access_token });
     const config = {
       headers: {
         "Content-Type": "application/json",
