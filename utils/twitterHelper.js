@@ -113,14 +113,16 @@ exports.getTwitterUserDetails = async (access_token) => {
     };
     const axios_resp_profile = await axios.get(url, config);
     const twitterUserId = axios_resp_profile.data.data.id;
-    const following_url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
-    const axios_resp_following = await axios.get(following_url, config);
+    const followingList = await this.getTwitterUserFollowing(
+      twitterUserId,
+      access_token
+    );
     // TODO: CAN CLUB 2 QUERIES W/ PROMISE.ALL OR USE THE SAME FUNC I.E BELOW
     // But that would need twitterUserID thus need to have 2 flows
     // use Promise.all if have twitterUserId else go in sequence
     return {
       ...axios_resp_profile.data.data,
-      following: axios_resp_following.data.data,
+      following: followingList,
     };
   } catch (error) {
     console.log("TwitterError: unable to fetch latest deatils of user");
@@ -130,7 +132,7 @@ exports.getTwitterUserDetails = async (access_token) => {
 
 exports.getTwitterUserFollowing = async (twitterUserId, access_token) => {
   try {
-    const url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
+    let url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
     console.log({ access_token });
     const config = {
       headers: {
@@ -139,8 +141,17 @@ exports.getTwitterUserFollowing = async (twitterUserId, access_token) => {
       },
     };
 
-    const axios_resp = await axios.get(url, config);
-    const followingList = axios_resp.data.data;
+    let axios_resp = await axios.get(url, config);
+    let followingList = axios_resp.data.data;
+    let nextToken = axios_resp.data.meta.next_token;
+
+    while (nextToken) {
+      url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000&pagination_token=${nextToken}`;
+      axios_resp = await axios.get(url, config);
+      followingList.push(...axios_resp.data.data);
+      nextToken = axios_resp.data.meta.next_token;
+    }
+
     console.log(followingList);
     return followingList;
   } catch (error) {
