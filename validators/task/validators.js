@@ -6,7 +6,10 @@ const HTTPError = require("../../utils/httpError");
 const { default: mongoose } = require("mongoose");
 const { ALCHEMY_API_KEY } = require("../../config/config");
 const { default: axios } = require("axios");
-const { checkUserHasRetweeted } = require("../../utils/twitterHelper");
+const {
+  checkUserHasRetweeted,
+  checkUserHasLiked,
+} = require("../../utils/twitterHelper");
 const checkIsOwner = require("../../utils/solanaNFT");
 
 module.exports = {
@@ -158,7 +161,6 @@ module.exports = {
       return false;
     },
     exec: async function (arguments) {
-      // TODO: START BY ADDING TEMPLATE AND TEST:
       const { tweetID, userID } = arguments;
       const user = await User.findById(userID).select(
         "+twitter.access_token +twitter.refresh_token"
@@ -185,6 +187,51 @@ module.exports = {
       );
 
       return hasRetweeted;
+    },
+  },
+  LIKE_ON_TWITTER: {
+    parameters: [
+      {
+        field: "tweetID",
+        name: "Tweet Id",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("tweetID" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    exec: async function (arguments) {
+      const { tweetID, userID } = arguments;
+      const user = await User.findById(userID).select(
+        "+twitter.access_token +twitter.refresh_token"
+      );
+      if (!user.twitter) {
+        console.log(
+          `LIKE_ON_TWITTER: user's [${user._id}] twitter not found connected `
+        );
+        return false;
+      }
+
+      // logic to check if user has liked
+      // If token has expired
+      if (Date.now() + 60000 >= user.twitter.token_expiry) {
+        await user.updateTwitterDetails();
+      }
+
+      // function to make a query -> check if tweet in 1st 100
+      // else requery w/ pagination token
+      const hasLiked = await checkUserHasLiked(
+        user.twitter.id,
+        tweetID,
+        user.twitter.access_token
+      );
+
+      return hasLiked;
     },
   },
 

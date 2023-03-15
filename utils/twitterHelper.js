@@ -215,6 +215,50 @@ exports.checkUserHasRetweeted = async (
     console.log(
       `TwitterError: unable to fetch retweeted by for tweet[${tweetID}]`
     );
-    throw error;
+    return false;
+  }
+};
+
+exports.checkUserHasLiked = async (twitterUserId, tweetID, access_token) => {
+  try {
+    let url = `https://api.twitter.com/2/tweets/${tweetID}/liking_users?max_results=100`;
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    let axios_resp = await axios.get(url, config);
+    let likingUsers = axios_resp.data.data;
+
+    if (!likingUsers) {
+      return false;
+    }
+    let hasLiked = likingUsers.find(
+      (likingUser) => likingUser.id == twitterUserId
+    );
+
+    let nextToken = axios_resp.data.meta.next_token;
+    while (nextToken && !hasLiked) {
+      url = `https://api.twitter.com/2/tweets/${tweetID}/liking_users?max_results=100&pagination_token=${nextToken}`;
+
+      axios_resp = await axios.get(url, config);
+      likingUsers = axios_resp.data.data;
+
+      if (!likingUsers) {
+        return false;
+      }
+      hasLiked = likingUsers.find(
+        (likingUser) => likingUser.id == twitterUserId
+      );
+
+      nextToken = axios_resp.data.meta.next_token;
+    }
+
+    return !!hasLiked; // !! -> convert object's existance to boolean
+  } catch (error) {
+    console.log(`TwitterError: unable to fetch liked by for tweet[${tweetID}]`);
+    return false;
   }
 };
