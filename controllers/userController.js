@@ -275,9 +275,9 @@ exports.connectTwitter = async (req, res) => {
     console.log(user_data);
 
     user.twitter = {
-      id: user_data.data.id,
-      name: user_data.data.name,
-      username: user_data.data.username,
+      id: user_data.id,
+      name: user_data.name,
+      username: user_data.username,
       access_token: data.access_token,
       refresh_token: data.refresh_token,
       token_expiry: new Date(Date.now() + data.expires_in * 1000), // expires_in is in seconds
