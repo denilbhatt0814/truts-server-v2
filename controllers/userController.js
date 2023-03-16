@@ -32,6 +32,7 @@ const {
   getTwitterUserDetails,
 } = require("../utils/twitterHelper");
 const { default: axios } = require("axios");
+const { XpTxn } = require("../models/xpTxn");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -1389,6 +1390,65 @@ exports.getUserTrutsXP_Public = async (req, res) => {
   } catch (error) {
     console.log("getUserTrutsXP_Public: ", error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getUserLeaderboard_Public = async (req, res) => {
+  try {
+    const limit = req.query.limit ?? 10;
+    const agg = [
+      {
+        $group: {
+          _id: "$user",
+          totalXP: {
+            $sum: "$value",
+          },
+          latestXPTxn: {
+            $max: "$createdAt",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $project: {
+          "user._id": 1,
+          "user.photo": 1,
+          "user.name": 1,
+          "user.username": 1,
+          totalXP: 1,
+          latestXPTxn: 1,
+        },
+      },
+      {
+        $sort: {
+          totalXP: -1,
+          latestXPTxn: 1,
+        },
+      },
+      {
+        $limit: parseInt(limit),
+      },
+    ];
+    const leaderboard = await XpTxn.aggregate(agg);
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: leaderboard.length,
+      leaderboard,
+    });
+  } catch (error) {
+    console.log("getListingLeaderboard_Public: ", error);
   }
 };
 

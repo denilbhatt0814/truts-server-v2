@@ -281,7 +281,7 @@ exports.getListingLeaderboard_Public = async (req, res) => {
     ];
 
     const leaderboard = await User_Mission.aggregate(agg);
-    return new HTTPResponse(res, true, 200, {
+    return new HTTPResponse(res, true, 200, null, null, {
       count: leaderboard.length,
       leaderboard,
     });

@@ -28,6 +28,7 @@ const {
   getUserCompletedMissions_Public,
   getUserReviews,
   getMyReferralDetails,
+  getUserLeaderboard_Public,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -100,6 +101,7 @@ router
   .get(getMatchWithListedGuilds_Public);
 
 // TEST:
+router.route("/public/users/leaderboard").get(getUserLeaderboard_Public);
 router.route("/public/user/:username/reviews").get(getUserReviews_Public);
 
 router.route("/public/user/:username/truts-xp").get(getUserTrutsXP_Public);
