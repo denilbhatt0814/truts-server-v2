@@ -3,6 +3,7 @@ const { Review } = require("../models/newReview");
 const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
+const { User_Mission } = require("../models/user_mission");
 
 exports.getListing = async (req, res) => {
   try {
@@ -208,6 +209,84 @@ exports.getListingReviews_Public = async (req, res) => {
     });
   } catch (error) {
     console.log("getListingReviews_Public: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getListingLeaderboard_Public = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const limit = req.query.limit ?? 10;
+
+    const listing = await Dao.findById(listingID).select({ _id: 1 });
+    if (!listing) {
+      return new HTTPError(
+        res,
+        404,
+        `listing[${listingID}] does not exit`,
+        "listing not found"
+      );
+    }
+
+    const agg = [
+      {
+        $match: {
+          listing: mongoose.Types.ObjectId(listingID),
+          isCompleted: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$user",
+          totalListingXP: {
+            $sum: "$listingXP",
+          },
+          latestCompletedAt: {
+            $max: "$completedAt",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $project: {
+          "user._id": 1,
+          "user.photo": 1,
+          "user.name": 1,
+          "user.username": 1,
+          totalListingXP: 1,
+          latestCompletedAt: 1,
+        },
+      },
+      {
+        $sort: {
+          totalListingXP: -1,
+          latestCompletedAt: 1,
+        },
+      },
+      {
+        $limit: parseInt(limit),
+      },
+    ];
+
+    const leaderboard = await User_Mission.aggregate(agg);
+    return new HTTPResponse(res, true, 200, {
+      count: leaderboard.length,
+      leaderboard,
+    });
+  } catch (error) {
+    console.log("getListingLeaderboard_Public: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
