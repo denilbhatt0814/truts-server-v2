@@ -4,6 +4,7 @@ const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
+const WhereClause = require("../utils/whereClause");
 
 exports.getListing = async (req, res) => {
   try {
@@ -12,6 +13,26 @@ exports.getListing = async (req, res) => {
     return new HTTPResponse(res, true, 200, null, null, { listing });
   } catch (error) {
     console.log("getListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getListings = async (req, res) => {
+  try {
+    const resultperpage = parseInt(req.query.limit) || 10;
+    const bigQ = req.query;
+
+    // const filteredDaoCount = daos.length;
+    return new HTTPResponse(res, true, 200, "GOOD", null, {
+      // count: count,
+      // totalCount,
+      // listings: results,
+      // count,
+      // totalPages,
+      ...req.pagination,
+    });
+  } catch (error) {
+    console.log("getListings: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
