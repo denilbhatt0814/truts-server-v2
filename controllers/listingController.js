@@ -311,3 +311,87 @@ exports.getListingLeaderboard_Public = async (req, res) => {
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
+
+// TEMP CODE:
+// THIS MUST BE REPLACED SOON:
+exports.getListingCountInAChain = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $unwind: {
+          path: "$chain",
+        },
+      },
+      {
+        $group: {
+          _id: "$chain",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          chain: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          chain: 1,
+        },
+      },
+    ];
+    const result = await Dao.aggregate(agg);
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+  } catch (error) {
+    console.log("getListingCountInAChain: ", error);
+  }
+};
+
+exports.getListingCountInACategory = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $unwind: {
+          path: "$dao_category",
+        },
+      },
+      {
+        $group: {
+          _id: "$dao_category",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          category: 1,
+        },
+      },
+    ];
+    const result = await Dao.aggregate(agg);
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+  } catch (error) {
+    console.log("getListingCountInACategory: ", error);
+  }
+};
+
+// say i have a collection "Projects" of documents in mongo which has a field "chains" that holds array of chain e.g EVM, SOL, etc.
+// Now I wish to run a query to retrive all the chains and count of projects under a chain using mongoose.js write JS code for it
