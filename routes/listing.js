@@ -9,11 +9,12 @@ const {
   getListingCountInACategory,
 } = require("../controllers/listingController");
 const paginateRequest = require("../middlewares/paginate");
+const cacheRoute = require("../middlewares/cacheRoute");
 const { isLoggedIn } = require("../middlewares/user");
 const Listing = require("../models/dao");
 
 router.route("/listings").get(paginateRequest(Listing), getListings);
-router.route("/listings/chains").get(getListingCountInAChain);
+router.route("/listings/chains").get(cacheRoute, getListingCountInAChain);
 router.route("/listings/categories").get(getListingCountInACategory);
 router.route("/listing/:slug").get(getListing);
 

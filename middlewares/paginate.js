@@ -75,7 +75,6 @@ const paginateRequest = (Model) => {
 
     // here make PROMISE for the countDoc query
     let totalCount = Model.countDocuments(filterObject);
-    const totalPages = Math.ceil(totalCount / resultPerPage);
 
     let result = Model.find(filterObject)
       .sort(sortObject)
@@ -85,6 +84,8 @@ const paginateRequest = (Model) => {
     const promiseResolve = await Promise.all([totalCount, result]);
     totalCount = promiseResolve[0];
     result = promiseResolve[1];
+
+    const totalPages = Math.ceil(totalCount / resultPerPage);
 
     req.pagination = {
       count: result.length,

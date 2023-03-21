@@ -4,7 +4,6 @@ const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
-const WhereClause = require("../utils/whereClause");
 
 exports.getListing = async (req, res) => {
   try {
@@ -19,16 +18,7 @@ exports.getListing = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const resultperpage = parseInt(req.query.limit) || 10;
-    const bigQ = req.query;
-
-    // const filteredDaoCount = daos.length;
-    return new HTTPResponse(res, true, 200, "GOOD", null, {
-      // count: count,
-      // totalCount,
-      // listings: results,
-      // count,
-      // totalPages,
+    return new HTTPResponse(res, true, 200, null, null, {
       ...req.pagination,
     });
   } catch (error) {
