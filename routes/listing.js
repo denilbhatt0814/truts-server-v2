@@ -9,7 +9,7 @@ const {
   getListingCountInACategory,
 } = require("../controllers/listingController");
 const paginateRequest = require("../middlewares/paginate");
-const cacheRoute = require("../middlewares/cacheRoute");
+// const cacheRoute = require("../middlewares/cacheRoute");
 const { isLoggedIn } = require("../middlewares/user");
 const Listing = require("../models/dao");
 
