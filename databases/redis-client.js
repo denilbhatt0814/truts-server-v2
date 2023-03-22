@@ -11,16 +11,31 @@ const redisClient = redis.createClient({
   socket: {
     host: REDIS_HOST,
     port: REDIS_PORT,
+    reconnectStrategy: (retries) => {
+      if (retries > 30) {
+        console.log("Too many retries on REDIS. Connection Terminated");
+        return new Error("Too many retries.");
+      } else {
+        return Math.min(retries * 150, 2000);
+      }
+    },
   },
 });
 
-redisClient
-  .connect()
-  .then(() => {
-    console.log("Redis connected succesfully..!!");
-  })
-  .catch((error) => {
+redisClient.connect();
+
+redisClient.on("connect", () => {
+  redisClient.isConnected = true;
+  console.log("Redis connected succesfully..!!");
+});
+
+redisClient.on("error", (error) => {
+  try {
+    redisClient.isConnected = false;
     console.log("RedisConnect:", error);
-  });
+  } catch (error) {
+    console.log("RedisConnect", error);
+  }
+});
 
 module.exports = redisClient;

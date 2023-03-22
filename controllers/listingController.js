@@ -4,6 +4,8 @@ const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
+const WhereClause = require("../utils/whereClause");
+const redisClient = require("../databases/redis-client");
 
 exports.getListing = async (req, res) => {
   try {
@@ -18,9 +20,17 @@ exports.getListing = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    return new HTTPResponse(res, true, 200, null, null, {
+    const response = new HTTPResponse(res, true, 200, null, null, {
       ...req.pagination,
     });
+
+    redisClient.setEx(
+      req.originalUrl,
+      30 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+
+    return response;
   } catch (error) {
     console.log("getListings: ", error);
     return new HTTPError(res, 500, error, "internal server error");
@@ -334,10 +344,16 @@ exports.getListingCountInAChain = async (req, res) => {
       },
     ];
     const result = await Dao.aggregate(agg);
-    return new HTTPResponse(res, true, 200, null, null, {
+    const response = new HTTPResponse(res, true, 200, null, null, {
       count: result.length,
       result,
     });
+    redisClient.setEx(
+      req.originalUrl,
+      30 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
   } catch (error) {
     console.log("getListingCountInAChain: ", error);
   }
@@ -374,10 +390,16 @@ exports.getListingCountInACategory = async (req, res) => {
     ];
     const result = await Dao.aggregate(agg);
 
-    return new HTTPResponse(res, true, 200, null, null, {
+    const response = new HTTPResponse(res, true, 200, null, null, {
       count: result.length,
       result,
     });
+    redisClient.setEx(
+      req.originalUrl,
+      30 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
   } catch (error) {
     console.log("getListingCountInACategory: ", error);
   }
