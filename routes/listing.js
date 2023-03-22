@@ -8,13 +8,20 @@ const {
   getListingCountInAChain,
   getListingCountInACategory,
 } = require("../controllers/listingController");
+const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
 const { isLoggedIn } = require("../middlewares/user");
 const Listing = require("../models/dao");
 
-router.route("/listings").get(paginateRequest(Listing), getListings);
-router.route("/listings/chains").get(getListingCountInAChain);
-router.route("/listings/categories").get(getListingCountInACategory);
+router
+  .route("/listings")
+  .get(cacheRoute, paginateRequest(Listing), getListings);
+// NOTE: CacheRoute could be modified after bringing on
+//        add a community feature to this server
+router.route("/listings/chains").get(cacheRoute, getListingCountInAChain);
+router
+  .route("/listings/categories")
+  .get(cacheRoute, getListingCountInACategory);
 router.route("/listing/:slug").get(getListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
