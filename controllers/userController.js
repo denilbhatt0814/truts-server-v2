@@ -563,6 +563,69 @@ exports.updateUserDeatils = async (req, res) => {
   }
 };
 
+exports.updateUserSocialLinks = async (req, res) => {
+  try {
+    const { platform, link } = req.body;
+    let user = await User.findById(req.user._id).populate("tags");
+
+    const indexOfSocial = user.socials
+      ? user.socials.findIndex((social) => social.platform == platform)
+      : false;
+
+    if (indexOfSocial != -1) {
+      user.socials[indexOfSocial] = { platform, link };
+    } else {
+      user.socials = user.socials ?? [];
+      user.socials.push({ platform, link });
+    }
+    user = await user.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "social link added/updated successfully",
+      null,
+      { user }
+    );
+  } catch (error) {
+    console.log("updateSocialLinks: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.deleteUserSocialLinks = async (req, res) => {
+  try {
+    const { platform } = req.body;
+    let user = await User.findById(req.user._id).populate("tags");
+
+    const indexOfSocial = user.socials
+      ? user.socials.findIndex((social) => social.platform == platform)
+      : false;
+
+    if (indexOfSocial == -1) {
+      return new HTTPResponse(
+        res,
+        false,
+        304,
+        null,
+        `${platform} is not linked with user[${user._id}]`
+      );
+    }
+
+    user = await User.findOneAndUpdate(
+      { _id: req.user._id },
+      { $pull: { socials: { platform } } },
+      { new: true }
+    );
+
+    return new HTTPResponse(res, true, 200, null, null, { user });
+  } catch (error) {
+    console.log("deleteUserSocialLinks: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.getMyMatchWithListedGuilds = async (req, res) => {
   try {
     let user = await User.findById(req.user._id, { "discord.guilds": 1 });

@@ -29,6 +29,8 @@ const {
   getUserReviews,
   getMyReferralDetails,
   getUserLeaderboard_Public,
+  updateUserSocialLinks,
+  deleteUserSocialLinks,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -70,6 +72,10 @@ router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
 router.route("/user/referral").get(isLoggedIn, getMyReferralDetails);
 
 // Edit Profile related routes
+router
+  .route("/user/socials")
+  .post(isLoggedIn, updateUserSocialLinks)
+  .delete(isLoggedIn, deleteUserSocialLinks);
 router.route("/user/update").patch(isLoggedIn, updateUserDeatils);
 router.route("/user/set/username").patch(isLoggedIn, setMyUsername);
 router

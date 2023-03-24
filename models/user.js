@@ -116,6 +116,25 @@ const twitterSchema = new mongoose.Schema({
   token_expiry: Date,
 });
 
+const socialSchema = new mongoose.Schema({
+  platform: {
+    type: String,
+    enum: ["FACEBOOK", "GITHUB", "INSTAGRAM", "MEDIUM", "REDDIT", "DRIBBBLE"],
+    required: [
+      true,
+      "Please mention social media platform for linking to user, enums: [ FACEBOOK,  GITHUB,  INSTAGRAM,  MEDIUM,  REDDIT,  DRIBBBLE ]",
+    ],
+  },
+  link: {
+    type: String,
+    required: [
+      true,
+      "Please enter the link to social media platform that you are trying to add to this profile.",
+    ],
+    maxLength: [100, "Length of social media link must be less than 100"],
+  },
+});
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -158,6 +177,9 @@ const userSchema = new mongoose.Schema(
         ref: "UserIntrestTag",
       },
     ],
+    // TODO: Adding Socials
+    socials: { type: [socialSchema], default: undefined },
+
     completionStatus: {
       type: Number,
       default: 0.0,
