@@ -583,15 +583,15 @@ exports.verifyMultiWallet = async (req, res) => {
     }
 
     if (evm_verified || sol_verified || near_verified || flow_verified) {
+      /**
+       * NOTE: using findOneAndUpdate
+       *      for generating/updating users referral code = wallet address
+       */
       user = await User.findOneAndUpdate(
         { "wallets.address": public_key },
         { $set: { "wallets.$.verified": true, "wallets.$.chain": chain } },
         { new: true, session }
       );
-      /**
-       * NOTE: using save rather than updateOne as, we a hook on save
-       *      for generating/updating users referral code = wallet address
-       */
 
       // link all previous reviews w/ wallet address to truts account
       try {
@@ -743,7 +743,7 @@ exports.updateUserSocialLinks = async (req, res) => {
 
     const indexOfSocial = user.socials
       ? user.socials.findIndex((social) => social.platform == platform)
-      : false;
+      : -1;
 
     if (indexOfSocial != -1) {
       user.socials[indexOfSocial] = { platform, link };
