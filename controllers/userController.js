@@ -1330,7 +1330,7 @@ exports.getUserDetails_Public = async (req, res) => {
         googleId: 0,
         "wallets.nonce": 0,
         "discord.discriminator": 0,
-        "discord.id": 0,
+        // "discord.id": 0,
         "discord.token_expiry": 0,
       }
     ).populate("tags");
