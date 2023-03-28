@@ -40,7 +40,11 @@ const walletSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  nonce: String,
+  nonce: { type: String, select: false },
+  isPrimary: {
+    type: Boolean,
+    default: false,
+  },
   // tokenExpiry: Date,
   // TODO: primary - flag
 });
@@ -151,7 +155,14 @@ const userSchema = new mongoose.Schema(
     },
     // TODO: Change me back to array of wallets
     // wallets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wallet" }],
-    wallets: walletSchema,
+    // wallets: walletSchema,
+
+    // UNDER-WORK:
+    wallets: {
+      type: [walletSchema],
+      default: undefined,
+    },
+
     email: {
       type: String,
       validator: [validator.isEmail, "Please provide email in correct format"],
@@ -215,6 +226,27 @@ userSchema.post("findOneAndUpdate", async function (doc) {
       })
     );
   }
+
+  // TEST: for multi wallet
+  if (this.isModified("wallets")) {
+    const wallet = this.wallets.find((wallet) => wallet.isPrimary);
+    if (wallet.verified) {
+      await Referral.updateOne(
+        { generatedBy: mongoose.Types.ObjectId(this._id) },
+        {
+          generatedBy: this._id,
+          code: wallet.address,
+          // baseXP: 500, created a default
+        },
+        {
+          upsert: true,
+          setDefaultsOnInsert: true,
+        }
+      );
+      console.log("Updated referral w/ primary wallet");
+    }
+  }
+
   const completionStatus = calculateProfileCompletion(doc);
   // removed wallet complusion
   if (doc.googleId && doc.discord && doc.username) {
@@ -253,7 +285,7 @@ userSchema.post("findOneAndUpdate", async function (doc) {
 
 userSchema.pre("save", async function (next) {
   // NOTE: needs MOD on multi wallet integration
-  // TEST:
+  // TEST: NOT NEEDED WITH MULTI WALLET
   if (this.isModified("wallets")) {
     if (this.wallets.verified) {
       await Referral.updateOne(

@@ -23,6 +23,7 @@ const referralSchema = new mongoose.Schema(
     },
     baseXP: {
       type: Number,
+      default: 500,
       required: [true, "Please allocate XP for referral"],
     },
   },
