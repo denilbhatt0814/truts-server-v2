@@ -570,7 +570,7 @@ exports.updateUserSocialLinks = async (req, res) => {
 
     const indexOfSocial = user.socials
       ? user.socials.findIndex((social) => social.platform == platform)
-      : false;
+      : -1;
 
     if (indexOfSocial != -1) {
       user.socials[indexOfSocial] = { platform, link };
