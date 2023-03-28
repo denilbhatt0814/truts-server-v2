@@ -1440,7 +1440,10 @@ exports.getUserReviews_Public = async (req, res) => {
 
     let reviews = await Review.find({
       user: mongoose.Types.ObjectId(user._id),
-    }).populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
+    }).populate({
+      path: "listing",
+      select: { dao_name: 1, dao_logo: 1, slug: 1 },
+    });
 
     reviews = reviews.map((review) => {
       if (!review.user) {
