@@ -364,73 +364,6 @@ exports.loginViaWallet = async (req, res) => {
   }
 };
 
-// UNDER-WORK: for multi wallet
-// this time API for connect wallet and login via wallet won't remain
-// same
-// login and signup could be to gether;
-// add/connect wallet will be seperate
-// but will use same underlying verify wallet
-exports.loginViaMultiWallet = async (req, res) => {
-  try {
-    const address = req.query.address;
-    if (!address) {
-      return new HTTPError(
-        res,
-        400,
-        "missing address in params",
-        "invalid input"
-      );
-    }
-
-    let msg = "LOGIN || SIGNUP W/ WALLET";
-    console.log(msg);
-
-    // update/insert user's wallet details
-    const options = {
-      upsert: true, // Perform an upsert operation
-      new: true, // Return the updated document, instead of the original
-      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
-    };
-
-    const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
-      WALLET_NONCE_LENGTH
-    )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
-
-    // check if a user exists and add new nonce
-    let existingUser = await User.findOneAndUpdate(
-      { "wallets.address": address },
-      { $set: { "wallets.$.nonce": nonce } },
-      { new: true }
-    );
-    let user = existingUser;
-    // if the user not found returns null -> create new user
-    if (!existingUser) {
-      // For creating new account
-      user = await user.findOneAndUpdate(
-        { "wallets.address": address },
-        {
-          $set: {
-            wallets: [{ address: address, nonce: nonce, isPrimary: true }],
-          },
-        },
-        options
-      );
-    }
-
-    // return nonce
-    return new HTTPResponse(res, true, 200, msg, null, {
-      nonce: nonce,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      msg: "internal server error",
-      error: error,
-    });
-  }
-};
-
 exports.verifyWallet = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -529,6 +462,77 @@ exports.verifyWallet = async (req, res) => {
     await session.endSession();
     console.log(error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// UNDER-WORK: for multi wallet
+// this time API for connect wallet and login via wallet won't remain
+// same
+// login and signup could be to gether;
+// add/connect wallet will be seperate
+// but will use same underlying verify wallet
+// TEST:
+exports.loginViaMultiWallet = async (req, res) => {
+  // NOTE: now we also need chain in login query
+  try {
+    const { address, chain } = req.query;
+    if (!address) {
+      return new HTTPError(
+        res,
+        400,
+        "missing address in params",
+        "invalid input"
+      );
+    }
+
+    let msg = "LOGIN || SIGNUP W/ WALLET";
+    console.log(msg);
+
+    // update/insert user's wallet details
+    const options = {
+      upsert: true, // Perform an upsert operation
+      new: true, // Return the updated document, instead of the original
+      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
+    };
+
+    const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
+      WALLET_NONCE_LENGTH
+    )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
+
+    // check if a user exists and add new nonce
+    let existingUser = await User.findOneAndUpdate(
+      { "wallets.address": address },
+      { $set: { "wallets.$.nonce": nonce } },
+      { new: true }
+    );
+    let user = existingUser;
+    // if the user not found returns null -> create new user
+    if (!existingUser) {
+      // For creating new account
+      user = await user.findOneAndUpdate(
+        { "wallets.address": address },
+        {
+          $set: {
+            wallets: [
+              { address: address, nonce: nonce, chain: chain, isPrimary: true },
+            ],
+          },
+        },
+        options
+      );
+    }
+
+    // return nonce
+    return new HTTPResponse(res, true, 200, msg, null, {
+      nonce: nonce,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      msg: "internal server error",
+      error: error,
+    });
   }
 };
 
@@ -634,6 +638,158 @@ exports.verifyMultiWallet = async (req, res) => {
     await session.abortTransaction();
     await session.endSession();
     console.log(error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST:
+// NOTE: PROTECTED
+exports.addNewWallet = async (req, res) => {
+  try {
+    const user = req.user;
+    const { address, chain } = req.query;
+
+    // someone already doesn't hold it (COULD ALSO USE VERIFICATION)
+    const holderOfWallet = await User.findOne({ "wallets.address": address });
+    if (holderOfWallet) {
+      let msg =
+        holderOfWallet._id == req.user._id
+          ? "user has already linked this wallet"
+          : "this wallet is already linked to other user";
+      return new HTTPError(res, 409, msg, "wallet already linked");
+    }
+
+    // check if user already holds a wallet of same chain
+    const existingChainWallet = user.wallets.find(
+      (wallet) => wallet.chain == chain
+    );
+
+    if (existingChainWallet) {
+      return new HTTPError(
+        res,
+        409,
+        "user already has wallet linked to truts with this chain",
+        "only one wallet per chain"
+      );
+    }
+
+    // if its a fresh wallet of a diff chain
+    const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
+      WALLET_NONCE_LENGTH
+    )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
+
+    user = await User.findOneAndUpdate(
+      { _id: user._id },
+      {
+        $push: {
+          wallets: { address: address, nonce: nonce, chain: chain },
+        },
+      },
+      { new: true, setDefaultsOnInsert: true }
+    );
+
+    console.log(`Adding new wallet -> ${chain}:${address}`);
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      "wallet added to profile succesfully",
+      null,
+      { nonce: nonce }
+    );
+  } catch (error) {
+    console.log("addNewWallet: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST:
+// NOTE: PROTECTED
+exports.setPrimaryWallet = async (req, res) => {
+  try {
+    const { address } = req.body; // new primary address
+    let user = req.user;
+
+    // TODO: check if user holds the wallet
+    const holderOfWallet = await User.findOne({ "wallet.address": address });
+
+    // if no one holds the wallet or the wallet is hold by other user
+    if (!holderOfWallet || holderOfWallet._id != user._id) {
+      return new HTTPError(
+        res,
+        401,
+        `user[${user._id}] is not holder of the wallet[${address}]`,
+        "resource not found OR unauthorized access"
+      );
+    }
+
+    // if all good then make all the wallet except "address" as non primary
+    user.wallets.forEach((wallet) => {
+      wallet.isPrimary = wallet.address == address ? true : false;
+    });
+    user.markModified("wallets");
+    user = await user.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `wallet[${address}] is set to primary`,
+      null,
+      { user }
+    );
+  } catch (error) {
+    console.log("setPrimaryWallet: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST:
+// NOTE: PROTECTED // TODO: can make it to have address in body
+exports.removeAWallet = async (req, res) => {
+  try {
+    const { address } = req.query;
+    let user = req.user;
+
+    // check if wallet linked to user
+    let wallet = user.wallets.find((wallet) => wallet.address == address);
+    if (!wallet) {
+      return new HTTPError(
+        res,
+        404,
+        `wallet[${address}] not linked in user[${user._id}]`,
+        "resource not found"
+      );
+    }
+
+    // if remove request is for primary wallet
+    if (wallet.isPrimary) {
+      return new HTTPError(
+        res,
+        403,
+        "removing primary wallet is not allowed",
+        "action not allowed"
+      );
+    }
+
+    // if alright then remove wallet
+    user = await User.findOneAndUpdate(
+      { _id: user._id },
+      { $pull: { wallet: { address: address } } },
+      { new: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `wallet[${address}] removed successfully`,
+      null,
+      { user }
+    );
+  } catch (error) {
+    console.log("removeAWallet: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -1905,156 +2061,156 @@ const attachReferral = async (user, code, session) => {
 
 // ----- MULTI WALLET MANAGEMENT -----
 // TEST:
-exports.addNewWallet = async (req, res) => {
-  const session = await mongoose.startSession();
-  try {
-    const address = req.query.address;
+// exports.addNewWallet = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   try {
+//     const address = req.query.address;
 
-    const wallet_exists = await Wallet.findOne({ address });
-    if (wallet_exists) {
-      session.endSession();
-      return new HTTPError(
-        res,
-        400,
-        "try a different wallet address",
-        "The given wallet address already exists"
-      );
-    }
+//     const wallet_exists = await Wallet.findOne({ address });
+//     if (wallet_exists) {
+//       session.endSession();
+//       return new HTTPError(
+//         res,
+//         400,
+//         "try a different wallet address",
+//         "The given wallet address already exists"
+//       );
+//     }
 
-    session.startTransaction();
+//     session.startTransaction();
 
-    const newWallet = await Wallet.create(
-      {
-        address: address,
-        nonce: randomString(WALLET_NONCE_LENGTH),
-      },
-      { session }
-    );
+//     const newWallet = await Wallet.create(
+//       {
+//         address: address,
+//         nonce: randomString(WALLET_NONCE_LENGTH),
+//       },
+//       { session }
+//     );
 
-    let user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $push: { wallets: newWallet } },
-      { session }
-    );
-    await user.save();
+//     let user = await User.findByIdAndUpdate(
+//       req.user.id,
+//       { $push: { wallets: newWallet } },
+//       { session }
+//     );
+//     await user.save();
 
-    await session.commitTransaction();
-    session.endSession();
+//     await session.commitTransaction();
+//     session.endSession();
 
-    return new HTTPResponse(res, true, 200, msg, null, {
-      nonce: newWallet.nonce,
-    });
-  } catch (error) {
-    session.endSession();
-    return new HTTPError(res, 500, error, "internal server error");
-  }
-};
+//     return new HTTPResponse(res, true, 200, msg, null, {
+//       nonce: newWallet.nonce,
+//     });
+//   } catch (error) {
+//     session.endSession();
+//     return new HTTPError(res, 500, error, "internal server error");
+//   }
+// };
 
-// TEST:
-exports.verifyNewWallet = async (req, res) => {
-  try {
-    const { public_key, signature } = req.body;
+// // TEST:
+// exports.verifyNewWallet = async (req, res) => {
+//   try {
+//     const { public_key, signature } = req.body;
 
-    let user = await User.findOne({
-      wallets: { $elemMatch: { address: public_key } },
-    }).populate({
-      path: "wallets",
-      match: { address: public_key },
-    });
+//     let user = await User.findOne({
+//       wallets: { $elemMatch: { address: public_key } },
+//     }).populate({
+//       path: "wallets",
+//       match: { address: public_key },
+//     });
 
-    // If no user with given public_key
-    if (user._id != req.user.id) {
-      return new HTTPError(
-        res,
-        401,
-        "User doesn't have access to this public_key"
-      );
-    }
-    if (!user) {
-      return new HTTPError(res, 404, "User w/ provided public_key not found");
-    }
+//     // If no user with given public_key
+//     if (user._id != req.user.id) {
+//       return new HTTPError(
+//         res,
+//         401,
+//         "User doesn't have access to this public_key"
+//       );
+//     }
+//     if (!user) {
+//       return new HTTPError(res, 404, "User w/ provided public_key not found");
+//     }
 
-    const hash = ethers.utils.hashMessage(user.wallets[0].nonce);
-    const signing_address = ethers.utils.recoverAddress(hash, signature);
+//     const hash = ethers.utils.hashMessage(user.wallets[0].nonce);
+//     const signing_address = ethers.utils.recoverAddress(hash, signature);
 
-    if (signing_address == public_key) {
-      await Wallet.findByIdAndUpdate(user.wallets[0]._id, {
-        verified: true,
-      });
-      user = await User.findById(user._id).populate("tags", "wallets");
-      cookieToken(user, res);
-    } else {
-      return new HTTPError(
-        res,
-        400,
-        "signature doesn't belong to this public key'",
-        "invalid verification"
-      );
-    }
-  } catch (error) {
-    console.log(error);
-    return new HTTPError(res, 500, error, "internal server error");
-  }
-};
+//     if (signing_address == public_key) {
+//       await Wallet.findByIdAndUpdate(user.wallets[0]._id, {
+//         verified: true,
+//       });
+//       user = await User.findById(user._id).populate("tags", "wallets");
+//       cookieToken(user, res);
+//     } else {
+//       return new HTTPError(
+//         res,
+//         400,
+//         "signature doesn't belong to this public key'",
+//         "invalid verification"
+//       );
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return new HTTPError(res, 500, error, "internal server error");
+//   }
+// };
 
-// TEST:
-exports.setPrimaryWallet = async (req, res) => {
-  const session = await mongoose.startSession();
-  try {
-    const { address } = req.body;
+// // TEST:
+// exports.setPrimaryWallet = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   try {
+//     const { address } = req.body;
 
-    let user = await User.findOne({
-      wallets: { $elemMatch: { address } },
-    }).populate({ path: "wallets", match: { address } });
+//     let user = await User.findOne({
+//       wallets: { $elemMatch: { address } },
+//     }).populate({ path: "wallets", match: { address } });
 
-    if (!user) {
-      return new HTTPError(
-        res,
-        404,
-        "no user linked to this address",
-        "user not found"
-      );
-    }
-    if (user._id != req.user.id) {
-      return new HTTPError(
-        res,
-        401,
-        "The address doesn't belong to this user",
-        "unauthorized access"
-      );
-    }
+//     if (!user) {
+//       return new HTTPError(
+//         res,
+//         404,
+//         "no user linked to this address",
+//         "user not found"
+//       );
+//     }
+//     if (user._id != req.user.id) {
+//       return new HTTPError(
+//         res,
+//         401,
+//         "The address doesn't belong to this user",
+//         "unauthorized access"
+//       );
+//     }
 
-    await session.startTransaction();
+//     await session.startTransaction();
 
-    // find current primary
-    user = await User.findById(user._id).populate({
-      path: "wallets",
-      match: { isPrimary: true },
-    });
+//     // find current primary
+//     user = await User.findById(user._id).populate({
+//       path: "wallets",
+//       match: { isPrimary: true },
+//     });
 
-    // make current false
-    await Wallet.findOneAndUpdate(
-      { address: user.wallets[0].address },
-      { isPrimary: false }
-    );
+//     // make current false
+//     await Wallet.findOneAndUpdate(
+//       { address: user.wallets[0].address },
+//       { isPrimary: false }
+//     );
 
-    // set new primary
-    await Wallet.findOneAndUpdate({ address: address }, { isPrimary: true });
+//     // set new primary
+//     await Wallet.findOneAndUpdate({ address: address }, { isPrimary: true });
 
-    await session.commitTransaction();
-    await session.endSession();
+//     await session.commitTransaction();
+//     await session.endSession();
 
-    user = await User.findById(req.user.id).populate("tags", "wallets");
-    return new HTTPResponse(
-      res,
-      true,
-      200,
-      "New primary account is set",
-      null,
-      { user }
-    );
-  } catch (error) {
-    await session.endSession();
-    return new HTTPError(res, 500, error, "internal server error");
-  }
-};
+//     user = await User.findById(req.user.id).populate("tags", "wallets");
+//     return new HTTPResponse(
+//       res,
+//       true,
+//       200,
+//       "New primary account is set",
+//       null,
+//       { user }
+//     );
+//   } catch (error) {
+//     await session.endSession();
+//     return new HTTPError(res, 500, error, "internal server error");
+//   }
+// };

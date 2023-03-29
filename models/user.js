@@ -227,7 +227,8 @@ userSchema.post("findOneAndUpdate", async function (doc) {
     );
   }
 
-  // TEST: for multi wallet
+  // TEST: THIS MIGHT NOT WORK AS ITS A POST FIND ONE AND UPDATE
+  // TODO: WRITE A PRE HOOK FOR SAME
   if (this.isModified("wallets")) {
     const wallet = this.wallets.find((wallet) => wallet.isPrimary);
     if (wallet.verified) {
@@ -284,22 +285,24 @@ userSchema.post("findOneAndUpdate", async function (doc) {
 });
 
 userSchema.pre("save", async function (next) {
-  // NOTE: needs MOD on multi wallet integration
-  // TEST: NOT NEEDED WITH MULTI WALLET
+  // TEST: TEST FOR PRIMARY SWITCHING AND NEW ADD
+  // TODO: SAME THING FOR FIRST WALLET CONNECT
   if (this.isModified("wallets")) {
-    if (this.wallets.verified) {
+    const wallet = this.wallets.find((wallet) => wallet.isPrimary);
+    if (wallet.verified) {
       await Referral.updateOne(
         { generatedBy: mongoose.Types.ObjectId(this._id) },
         {
           generatedBy: this._id,
-          code: this.wallets.address,
-          baseXP: 500,
+          code: wallet.address,
+          // baseXP: 500, created a default
         },
         {
           upsert: true,
+          setDefaultsOnInsert: true,
         }
       );
-      console.log("Updated referral");
+      console.log("Updated referral w/ primary wallet");
     }
   }
 
