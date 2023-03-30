@@ -656,7 +656,7 @@ exports.addNewWallet = async (req, res) => {
       WALLET_NONCE_LENGTH
     )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
 
-    if (!user.wallets || user.wallets == []) {
+    if (!user.wallets || user.wallets.length == 0) {
       // if logedin but has no wallets
       query = {
         $set: {
