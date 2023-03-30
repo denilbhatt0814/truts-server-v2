@@ -60,6 +60,7 @@ router.route("/login/google").post(loginViaGoogle);
 
 router.route("/logout").get(logout);
 
+// ------ WALLET ROUTES (FUTURE) ------
 // first link and verification / login
 router.route("/login/wallet").get(loginViaMultiWallet);
 router.route("/login/wallet/verify").post(verifyMultiWallet);
@@ -73,13 +74,6 @@ router
   .route("/user/wallet/verify-change")
   .post(isLoggedIn, verifyChangedWallet);
 router.route("/user/wallet/:address").delete(isLoggedIn, removeAWallet);
-
-// ------ WALLET ROUTES (FUTURE) ------
-// TEST: need to test these new routes
-// router.route("/user/wallet/connect").get(isLoggedIn, addNewWallet);
-// router.route("/user/wallet/verify").post(isLoggedIn, verifyWallet);
-// router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
-// TODO: delete a wallet
 
 // ------NOTE: USER ROUTES : when Authenticated ------
 router.route("/user").get(isLoggedIn, getMyUserDetails);

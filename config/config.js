@@ -5,7 +5,7 @@ module.exports = {
   /* DB CONFIGS */
   MONGO_URI:
     process.env.MONGO_URI ||
-    "mongodb+srv://denilbhatt:itsMeDenil08@cluster0.x4u1j4r.mongodb.net/test?retryWrites=true&w=majority",
+    "mongodb+srv://denilbhatt:WHplonw4Cqn3zU0x@cluster0.x4u1j4r.mongodb.net/test?retryWrites=true&w=majority",
   REDIS_HOST:
     process.env.REDIS_HOST ||
     "localhost" ||
