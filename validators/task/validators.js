@@ -235,7 +235,7 @@ module.exports = {
     },
   },
 
-  // TEST: works for EVM need to add SOL
+  // TEST: need to test in Multi-Wallet
   HOLDER_OF_NFT_IN_COLLECTION: {
     parameters: [
       {
@@ -259,13 +259,25 @@ module.exports = {
       return false;
     },
     exec: async function (arguments) {
-      // NOTE: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
+      // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
 
       const { chainID, contractAddress, userID } = arguments;
       const user = await User.findById(userID, { wallets: 1 });
       if (!user.wallets) {
         console.log(
-          `HOLDER_OF_NFT_IN_COLLECTION: user's [${user._id}] wallet not found connected `
+          `HOLDER_OF_NFT_IN_COLLECTION: user[${user._id}] has no wallet connected`
+        );
+        return false;
+      }
+
+      // then search for EVM wallet
+      const EVM_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "EVM" && wallet.verified
+      );
+
+      if (!EVM_Wallet) {
+        console.log(
+          `HOLDER_OF_NFT_IN_COLLECTION: user's [${user._id}] EVM wallet not found connected`
         );
         return false;
       }
@@ -282,7 +294,7 @@ module.exports = {
         method: "GET",
         url: `https://${chainMapping[chainID]}.g.alchemy.com/nft/v2/${ALCHEMY_API_KEY}/isHolderOfCollection`,
         params: {
-          wallet: user.wallets.address,
+          wallet: EVM_Wallet.address,
           contractAddress: contractAddress,
         },
         headers: { accept: "application/json" },
@@ -313,26 +325,29 @@ module.exports = {
       return false;
     },
     exec: async function (arguments) {
-      // NOTE: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
+      // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
 
       const { firstVerifiedCreator, userID } = arguments;
       const user = await User.findById(userID, { wallets: 1 });
       if (!user.wallets) {
         console.log(
-          `HOLDER_OF_SOL_NFT: user's [${user._id}] wallet not found connected `
+          `HOLDER_OF_SOL_NFT: user[${user._id}] has no wallet connected `
         );
         return false;
       }
 
-      if (user.wallets.chain != "SOL") {
+      const SOL_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "SOL" && wallet.verified
+      );
+      if (!SOL_Wallet) {
         console.log(
-          `HOLDER_OF_SOL_NFT: user's [${user._id}] wallet is not on SOL`
+          `HOLDER_OF_SOL_NFT: user's [${user._id}] SOL wallet not found connected`
         );
         return false;
       }
 
       const holdsNFT = await checkIsOwner(
-        user.wallets.address,
+        SOL_Wallet.address,
         firstVerifiedCreator
       );
 
