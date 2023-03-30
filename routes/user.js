@@ -31,6 +31,13 @@ const {
   getUserLeaderboard_Public,
   updateUserSocialLinks,
   deleteUserSocialLinks,
+  loginViaMultiWallet,
+  verifyMultiWallet,
+  addNewWallet,
+  removeAWallet,
+  changeWallet,
+  verifyChangedWallet,
+  verifyNewMultiWallet,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -53,8 +60,19 @@ router.route("/login/google").post(loginViaGoogle);
 
 router.route("/logout").get(logout);
 
-router.route("/login/wallet").get(loginViaWallet);
-router.route("/login/wallet/verify").post(verifyWallet);
+// first link and verification / login
+router.route("/login/wallet").get(loginViaMultiWallet);
+router.route("/login/wallet/verify").post(verifyMultiWallet);
+
+// adding new wallet and verify
+router.route("/user/wallet/new").post(isLoggedIn, addNewWallet);
+router.route("/user/wallet/verify-new").post(isLoggedIn, verifyNewMultiWallet);
+router.route("/user/wallet/primary").patch(isLoggedIn, setPrimaryWallet);
+router.route("/user/wallet/change").patch(isLoggedIn, changeWallet);
+router
+  .route("/user/wallet/verify-change")
+  .post(isLoggedIn, verifyChangedWallet);
+router.route("/user/wallet/:address").delete(isLoggedIn, removeAWallet);
 
 // ------ WALLET ROUTES (FUTURE) ------
 // TEST: need to test these new routes

@@ -227,27 +227,6 @@ userSchema.post("findOneAndUpdate", async function (doc) {
     );
   }
 
-  // TEST: THIS MIGHT NOT WORK AS ITS A POST FIND ONE AND UPDATE
-  // TODO: WRITE A PRE HOOK FOR SAME
-  if (this.isModified("wallets")) {
-    const wallet = this.wallets.find((wallet) => wallet.isPrimary);
-    if (wallet.verified) {
-      await Referral.updateOne(
-        { generatedBy: mongoose.Types.ObjectId(this._id) },
-        {
-          generatedBy: this._id,
-          code: wallet.address,
-          // baseXP: 500, created a default
-        },
-        {
-          upsert: true,
-          setDefaultsOnInsert: true,
-        }
-      );
-      console.log("Updated referral w/ primary wallet");
-    }
-  }
-
   const completionStatus = calculateProfileCompletion(doc);
   // removed wallet complusion
   if (doc.googleId && doc.discord && doc.username) {

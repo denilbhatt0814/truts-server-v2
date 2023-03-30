@@ -33,6 +33,7 @@ const {
 } = require("../utils/twitterHelper");
 const { default: axios } = require("axios");
 const { XpTxn } = require("../models/xpTxn");
+const redisClient = require("../databases/redis-client");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -548,54 +549,30 @@ exports.verifyMultiWallet = async (req, res) => {
 
     // If no user with given public_key
     if (!user) {
-      return new HTTPError(res, 401, "User w/ provided public_key not found");
+      return new HTTPError(res, 404, "User w/ provided public_key not found");
     }
 
     const { nonce } = user.wallets.find(
       (wallet) => wallet.address == public_key
     );
 
-    let evm_verified, sol_verified, near_verified, flow_verified;
-    const message = nonce;
-    switch (chain) {
-      case "EVM":
-        const hash = ethers.utils.hashMessage(message);
-        const signing_address = ethers.utils.recoverAddress(hash, signature);
-        evm_verified = signing_address == public_key;
-        break;
-      case "SOL":
-        sol_verified = nacl.sign.detached.verify(
-          new TextEncoder().encode(message),
-          bs58.decode(signature),
-          bs58.decode(public_key)
-        );
-        break;
-      // TODO:: these 2 auth are hacky; needs to be more secure
-      case "NEAR":
-        near_verified = true;
-        break;
-      case "FLOW":
-        flow_verified = true;
-        break;
-      default:
-        return new HTTPError(
-          res,
-          400,
-          "chain must be either one of: ['EVM', 'SOL', 'NEAR', 'FLOW']",
-          "invalid chain enum"
-        );
-    }
+    const walletIsVerified = walletVerifier(
+      res,
+      public_key,
+      signature,
+      chain,
+      nonce
+    );
+    if (walletIsVerified instanceof HTTPError) return;
 
-    if (evm_verified || sol_verified || near_verified || flow_verified) {
-      /**
-       * NOTE: using findOneAndUpdate
-       *      for generating/updating users referral code = wallet address
-       */
-      user = await User.findOneAndUpdate(
-        { "wallets.address": public_key },
-        { $set: { "wallets.$.verified": true, "wallets.$.chain": chain } },
-        { new: true, session }
+    if (walletIsVerified) {
+      let walletIdx = user.wallets.findIndex(
+        (wallet) => wallet.address == public_key
       );
+      user.wallets[walletIdx].verified = true;
+      user.wallets[walletIdx].chain = chain;
+      user.markModified("wallets");
+      await user.save({ session });
 
       // link all previous reviews w/ wallet address to truts account
       try {
@@ -647,9 +624,10 @@ exports.verifyMultiWallet = async (req, res) => {
 exports.addNewWallet = async (req, res) => {
   try {
     const user = req.user;
-    const { address, chain } = req.query;
+    const { address, chain } = req.body;
+    let query;
 
-    // someone already doesn't hold it (COULD ALSO USE VERIFICATION)
+    // check: someone already doesn't hold it
     const holderOfWallet = await User.findOne({ "wallets.address": address });
     if (holderOfWallet) {
       let msg =
@@ -678,15 +656,27 @@ exports.addNewWallet = async (req, res) => {
       WALLET_NONCE_LENGTH
     )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
 
-    user = await User.findOneAndUpdate(
-      { _id: user._id },
-      {
+    if (!user.wallets || user.wallets == []) {
+      // if logedin but has no wallets
+      query = {
+        $set: {
+          wallets: [
+            { address: address, chain: chain, nonce: nonce, isPrimary: true },
+          ],
+        },
+      };
+    } else {
+      query = {
         $push: {
           wallets: { address: address, nonce: nonce, chain: chain },
         },
-      },
-      { new: true, setDefaultsOnInsert: true }
-    );
+      };
+    }
+
+    user = await User.findOneAndUpdate({ _id: user._id }, query, {
+      new: true,
+      setDefaultsOnInsert: true,
+    });
 
     console.log(`Adding new wallet -> ${chain}:${address}`);
 
@@ -704,14 +694,108 @@ exports.addNewWallet = async (req, res) => {
   }
 };
 
+// NOTE: PROTECTED
+exports.verifyNewMultiWallet = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    let user = req.user;
+    const { public_key, signature, chain } = req.body;
+
+    let holderOfWallet = await User.findOne({ "wallets.address": public_key })
+      .select("+wallets.nonce")
+      .session(session);
+
+    // If no user with given public_key
+    if (!holderOfWallet) {
+      return new HTTPError(res, 404, "User w/ provided public_key not found");
+    }
+    if (holderOfWallet._id != user._id) {
+      return new HTTPError(
+        res,
+        401,
+        `wallet[${public_key}] is not linked to user[${user._id}]`,
+        "unauthorized access"
+      );
+    }
+
+    const { nonce } = user.wallets.find(
+      (wallet) => wallet.address == public_key
+    );
+
+    const walletIsVerified = walletVerifier(
+      res,
+      public_key,
+      signature,
+      chain,
+      nonce
+    );
+    if (walletIsVerified instanceof HTTPError) return;
+
+    if (walletIsVerified) {
+      let walletIdx = user.wallets.findIndex(
+        (wallet) => wallet.address == public_key
+      );
+      user.wallets[walletIdx].verified = true;
+      user.wallets[walletIdx].chain = chain;
+      user.markModified("wallets");
+      user = await user.save({ session });
+
+      // link all previous reviews w/ wallet address to truts account
+      try {
+        await Review.updateMany(
+          {
+            "oldData.public_address": public_key,
+            user: null,
+          },
+          {
+            $set: { user: mongoose.Types.ObjectId(user._id) },
+          },
+          {
+            new: true,
+            session,
+          }
+        );
+      } catch (error) {
+        console.log("verifyWallet->LinkReview: ", error);
+      }
+
+      await session.commitTransaction();
+      await session.endSession();
+      return new HTTPResponse(
+        res,
+        true,
+        201,
+        "linked a new wallet successfully",
+        null,
+        { user }
+      );
+    } else {
+      await session.abortTransaction();
+      await session.endSession();
+      return new HTTPError(
+        res,
+        400,
+        "signature doesn't belong to this public key'",
+        "invalid verification"
+      );
+    }
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    console.log(error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 // TEST:
 // NOTE: PROTECTED
 exports.setPrimaryWallet = async (req, res) => {
   try {
-    const { address } = req.body; // new primary address
     let user = req.user;
+    const { address } = req.body; // new primary address
 
-    // TODO: check if user holds the wallet
+    // check if user holds the wallet
     const holderOfWallet = await User.findOne({ "wallet.address": address });
 
     // if no one holds the wallet or the wallet is hold by other user
@@ -749,8 +833,17 @@ exports.setPrimaryWallet = async (req, res) => {
 // NOTE: PROTECTED // TODO: can make it to have address in body
 exports.removeAWallet = async (req, res) => {
   try {
-    const { address } = req.query;
     let user = req.user;
+    const { address } = req.params;
+
+    if (!address) {
+      return new HTTPError(
+        res,
+        400,
+        "missing address in query params for deletion",
+        "missing data"
+      );
+    }
 
     // check if wallet linked to user
     let wallet = user.wallets.find((wallet) => wallet.address == address);
@@ -793,6 +886,151 @@ exports.removeAWallet = async (req, res) => {
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
+
+// NOTE: PROTECTED
+exports.changeWallet = async (req, res) => {
+  try {
+    const user = req.user;
+    const { address, chain } = req.body;
+
+    let existingWallet = user.wallets.find((wallet) => wallet.chain == chain);
+    if (!existingWallet) {
+      return new HTTPError(
+        res,
+        404,
+        `user doesn't have ${chain} wallet linked`,
+        "resource not found"
+      );
+    }
+
+    const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
+      WALLET_NONCE_LENGTH
+    )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
+
+    // add this address with nonce in memory
+    await redisClient.setEx(`changeWallet:${chain}:${address}`, 60 * 3, nonce);
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "wallet change initiated, now verify new wallet",
+      null,
+      { nonce }
+    );
+  } catch (error) {
+    console.log("changeWallet: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// NOTE: PROTECTED
+exports.verifyChangedWallet = async (req, res) => {
+  try {
+    const user = req.user;
+    const { public_key, signature, chain } = req.body;
+
+    const nonce = await redisClient.get(`changeWallet:${chain}:${public_key}`);
+
+    if (!nonce) {
+      return new HTTPError(
+        res,
+        404,
+        `wallet[${public_key}] is not linked`,
+        "resource not found"
+      );
+    }
+
+    const walletIsVerified = walletVerifier(
+      res,
+      public_key,
+      signature,
+      chain,
+      nonce
+    );
+    if (walletIsVerified instanceof HTTPError) return;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    if (walletIsVerified) {
+      const walletIdx = user.wallets.findIndex(
+        (wallet) => wallet.chain == chain
+      );
+      user.wallets[walletIdx].address = public_key;
+      user.wallets[walletIdx].nonce = nonce;
+      user.wallets[walletIdx].verified = true;
+      user.markModified("wallets");
+      user = await user.save({ session });
+
+      // link all previous reviews w/ wallet address to truts account
+      try {
+        await Review.updateMany(
+          {
+            "oldData.public_address": public_key,
+            user: null,
+          },
+          {
+            $set: { user: mongoose.Types.ObjectId(user._id) },
+          },
+          {
+            new: true,
+            session,
+          }
+        );
+      } catch (error) {
+        console.log("verifyWallet->LinkReview: ", error);
+      }
+      await session.commitTransaction();
+      await session.endSession();
+      await redisClient.del(`changeWallet:${chain}:${public_key}`);
+      return new HTTPResponse(
+        res,
+        true,
+        200,
+        `${chain} wallet changed successfully`,
+        null,
+        { user }
+      );
+    }
+  } catch (error) {
+    console.log("verifyChangedWallet: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+function walletVerifier(res, public_key, signature, chain, message) {
+  // let evm_verified, sol_verified, near_verified, flow_verified;
+  switch (chain) {
+    case "EVM":
+      const hash = ethers.utils.hashMessage(message);
+      const signing_address = ethers.utils.recoverAddress(hash, signature);
+      return signing_address == public_key;
+
+    case "SOL":
+      return nacl.sign.detached.verify(
+        new TextEncoder().encode(message),
+        bs58.decode(signature),
+        bs58.decode(public_key)
+      );
+
+    // TODO:: these 2 auth are hacky; needs to be more secure
+    case "NEAR":
+      // near_verified = true;
+      // break;
+      return true;
+    case "FLOW":
+      // flow_verified = true;
+      // break;
+      return true;
+    default:
+      return new HTTPError(
+        res,
+        400,
+        "chain must be either one of: ['EVM', 'SOL', 'NEAR', 'FLOW']",
+        "invalid chain enum"
+      );
+  }
+}
 
 // ------ USER CONTROLLER (PRIVATE) ------
 exports.getMyUserDetails = async (req, res) => {
