@@ -24,7 +24,7 @@ exports.getListings = async (req, res) => {
       ...req.pagination,
     });
 
-    redisClient.setEx(
+    await redisClient.setEx(
       req.originalUrl,
       30 * 60, // 30mins
       JSON.stringify(response.getResponse())
@@ -348,7 +348,7 @@ exports.getListingCountInAChain = async (req, res) => {
       count: result.length,
       result,
     });
-    redisClient.setEx(
+    await redisClient.setEx(
       req.originalUrl,
       30 * 60, // 30mins
       JSON.stringify(response.getResponse())
@@ -394,7 +394,7 @@ exports.getListingCountInACategory = async (req, res) => {
       count: result.length,
       result,
     });
-    redisClient.setEx(
+    await redisClient.setEx(
       req.originalUrl,
       30 * 60, // 30mins
       JSON.stringify(response.getResponse())
