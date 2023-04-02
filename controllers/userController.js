@@ -486,29 +486,13 @@ exports.loginViaMultiWallet = async (req, res) => {
       );
     }
 
-    let msg = "LOGIN || SIGNUP W/ WALLET";
-    console.log(msg);
-
-    // update/insert user's wallet details
-    const options = {
-      upsert: true, // Perform an upsert operation
-      new: true, // Return the updated document, instead of the original
-      setDefaultsOnInsert: true, // Set default values for any missing fields in the original document
-    };
-
     const nonce = `You are signing in on truts.xyz with your wallet address: ${address}.\nHere's the unique identifier: ${randomString(
       WALLET_NONCE_LENGTH
     )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
 
     // check if a user exists and add new nonce
-    let existingUser = await User.findOneAndUpdate(
-      { "wallets.address": address },
-      { $set: { "wallets.$.nonce": nonce } },
-      { new: true }
-    );
-    let user = existingUser;
-    // if the user not found returns null -> create new user
-    if (!existingUser) {
+    let user = await User.findOne({ "wallet.address": address });
+    if (!user) {
       // For creating new account
       user = await user.findOneAndUpdate(
         { "wallets.address": address },
@@ -519,9 +503,19 @@ exports.loginViaMultiWallet = async (req, res) => {
             ],
           },
         },
-        options
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } else {
+      // if a user with that wallet exists
+      user = await User.findOneAndUpdate(
+        { "wallets.address": address },
+        { $set: { "wallets.$.nonce": nonce } },
+        { new: true }
       );
     }
+
+    let msg = "LOGIN || SIGNUP W/ WALLET";
+    console.log(msg);
 
     // return nonce
     return new HTTPResponse(res, true, 200, msg, null, {
