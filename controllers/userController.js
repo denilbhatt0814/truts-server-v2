@@ -492,6 +492,7 @@ exports.loginViaMultiWallet = async (req, res) => {
 
     // check if a user exists and add new nonce
     let user = await User.findOne({ "wallets.address": address });
+    let msg = "LOGIN || SIGNUP W/ WALLET";
     if (!user) {
       // For creating new account
       user = await User.findOneAndUpdate(
@@ -505,23 +506,17 @@ exports.loginViaMultiWallet = async (req, res) => {
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+      msg = "SIGNUP W/ WALLET";
     } else {
-      // if a user with that wallet exists
-      // user = await User.findOneAndUpdate(
-      //   { "wallets.address": address },
-      //   { $set: { "wallets.$.nonce": nonce } },
-      //   { new: true }
-      // );
-      // TEST:
       let walletIdx = user.wallets.findIndex(
         (wallet) => wallet.address == address
       );
       user.wallets[walletIdx].nonce = nonce;
       user.markModified("wallets");
       user = await user.save();
+      msg = "LOGIN W/ WALLET";
     }
 
-    let msg = "LOGIN || SIGNUP W/ WALLET";
     console.log(msg);
 
     // return nonce
