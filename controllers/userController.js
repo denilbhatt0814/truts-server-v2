@@ -491,10 +491,10 @@ exports.loginViaMultiWallet = async (req, res) => {
     )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
 
     // check if a user exists and add new nonce
-    let user = await User.findOne({ "wallet.address": address });
+    let user = await User.findOne({ "wallets.address": address });
     if (!user) {
       // For creating new account
-      user = await user.findOneAndUpdate(
+      user = await User.findOneAndUpdate(
         { "wallets.address": address },
         {
           $set: {
@@ -507,11 +507,18 @@ exports.loginViaMultiWallet = async (req, res) => {
       );
     } else {
       // if a user with that wallet exists
-      user = await User.findOneAndUpdate(
-        { "wallets.address": address },
-        { $set: { "wallets.$.nonce": nonce } },
-        { new: true }
+      // user = await User.findOneAndUpdate(
+      //   { "wallets.address": address },
+      //   { $set: { "wallets.$.nonce": nonce } },
+      //   { new: true }
+      // );
+      // TEST:
+      let walletIdx = user.wallets.findIndex(
+        (wallet) => wallet.address == address
       );
+      user.wallets[walletIdx].nonce = nonce;
+      user.markModified("wallets");
+      user = await user.save();
     }
 
     let msg = "LOGIN || SIGNUP W/ WALLET";
