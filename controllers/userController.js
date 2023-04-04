@@ -792,10 +792,13 @@ exports.setPrimaryWallet = async (req, res) => {
     const { address } = req.body; // new primary address
 
     // check if user holds the wallet
-    const holderOfWallet = await User.findOne({ "wallet.address": address });
+    const holderOfWallet = await User.findOne({ "wallets.address": address });
 
     // if no one holds the wallet or the wallet is hold by other user
-    if (!holderOfWallet || holderOfWallet._id != user._id) {
+    if (
+      !holderOfWallet ||
+      holderOfWallet._id.toString() != user._id.toString()
+    ) {
       return new HTTPError(
         res,
         401,
