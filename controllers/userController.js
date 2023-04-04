@@ -702,10 +702,6 @@ exports.verifyNewMultiWallet = async (req, res) => {
       .select("+wallets.nonce")
       .session(session);
 
-
-
-    console.log(holderOfWallet, user);
-
     // If no user with given public_key
     if (!holderOfWallet) {
       return new HTTPError(res, 404, "User w/ provided public_key not found");
@@ -719,20 +715,16 @@ exports.verifyNewMultiWallet = async (req, res) => {
       );
     }
 
-
-
-    const wallet = holderOfWallet.wallets.find(
+    const { nonce } = holderOfWallet.wallets.find(
       (wallet) => wallet.address == public_key
     );
-
-    console.log(wallet)
 
     const walletIsVerified = walletVerifier(
       res,
       public_key,
       signature,
       chain,
-      wallet.nonce
+      nonce
     );
     if (walletIsVerified instanceof HTTPError) return;
 
