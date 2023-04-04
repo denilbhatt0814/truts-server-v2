@@ -363,7 +363,7 @@ userSchema.methods.updateDiscordGuilds = async function () {
 userSchema.methods.isPartOfGuild = async function (guildID) {
   try {
     // if listing has no discord
-    if (guildID == null) return true;
+    if (guildID == "null") return true;
 
     // If token has expired
     if (Date.now() >= this.discord.token_expiry) {
