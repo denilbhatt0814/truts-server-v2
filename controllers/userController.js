@@ -865,7 +865,7 @@ exports.removeAWallet = async (req, res) => {
     // if alright then remove wallet
     user = await User.findOneAndUpdate(
       { _id: user._id },
-      { $pull: { wallet: { address: address } } },
+      { $pull: { wallets: { address: address } } },
       { new: true }
     );
 
