@@ -923,7 +923,7 @@ exports.changeWallet = async (req, res) => {
 // NOTE: PROTECTED
 exports.verifyChangedWallet = async (req, res) => {
   try {
-    const user = req.user;
+    let user = req.user;
     const { public_key, signature, chain } = req.body;
 
     const nonce = await redisClient.get(`changeWallet:${chain}:${public_key}`);
