@@ -652,6 +652,15 @@ exports.addNewWallet = async (req, res) => {
       WALLET_NONCE_LENGTH
     )}.\n\nSigning this doesn't authorize any approvals or funds transfers`;
 
+    // UNDER-WORK:
+
+    // add this address with nonce in memory
+    await redisClient.setEx(
+      `addWallet:${user._id}:${chain}:${address}`,
+      60 * 3,
+      nonce
+    );
+
     if (!user.wallets || user.wallets.length == 0) {
       // if logedin but has no wallets
       query = {
@@ -673,6 +682,8 @@ exports.addNewWallet = async (req, res) => {
       new: true,
       setDefaultsOnInsert: true,
     });
+
+    // TODO: take this to cache
 
     console.log(`Adding new wallet -> ${chain}:${address}`);
 
@@ -698,15 +709,21 @@ exports.verifyNewMultiWallet = async (req, res) => {
     let user = req.user;
     const { public_key, signature, chain } = req.body;
 
-    let holderOfWallet = await User.findOne({ "wallets.address": public_key })
-      .select("+wallets.nonce")
-      .session(session);
+    // TODO:
+    const nonce = await redisClient.get(
+      `addWallet:${user._id}:${chain}:${public_key}`
+    );
 
-    // If no user with given public_key
-    if (!holderOfWallet) {
-      return new HTTPError(res, 404, "User w/ provided public_key not found");
-    }
-    if (holderOfWallet._id.toString() != user._id.toString()) {
+    // UNDER-WORK:
+    // let holderOfWallet = await User.findOne({ "wallets.address": public_key })
+    //   .select("+wallets.nonce")
+    //   .session(session);
+
+    // // If no user with given public_key
+    // if (!holderOfWallet) {
+    //   return new HTTPError(res, 404, "User w/ provided public_key not found");
+    // }
+    if (!nonce) {
       return new HTTPError(
         res,
         401,
@@ -715,9 +732,9 @@ exports.verifyNewMultiWallet = async (req, res) => {
       );
     }
 
-    const { nonce } = holderOfWallet.wallets.find(
-      (wallet) => wallet.address == public_key
-    );
+    // const { nonce } = holderOfWallet.wallets.find(
+    //   (wallet) => wallet.address == public_key
+    // );
 
     const walletIsVerified = walletVerifier(
       res,
@@ -729,12 +746,40 @@ exports.verifyNewMultiWallet = async (req, res) => {
     if (walletIsVerified instanceof HTTPError) return;
 
     if (walletIsVerified) {
-      let walletIdx = user.wallets.findIndex(
-        (wallet) => wallet.address == public_key
-      );
-      user.wallets[walletIdx].verified = true;
-      user.wallets[walletIdx].chain = chain;
-      user.markModified("wallets");
+      if (!user.wallets || user.wallets.length == 0) {
+        // if logedin but has no wallets
+        query = {
+          $set: {
+            wallets: [
+              {
+                address: address,
+                chain: chain,
+                nonce: nonce,
+                isPrimary: true,
+                verified: true,
+              },
+            ],
+          },
+        };
+      } else {
+        query = {
+          $push: {
+            wallets: {
+              address: address,
+              nonce: nonce,
+              chain: chain,
+              verified: true,
+            },
+          },
+        };
+      }
+
+      user = await User.findOneAndUpdate({ _id: user._id }, query, {
+        new: true,
+        setDefaultsOnInsert: true,
+        session,
+      });
+      // user.markModified("wallets");
       user = await user.save({ session });
 
       // link all previous reviews w/ wallet address to truts account

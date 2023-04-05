@@ -45,8 +45,6 @@ const walletSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // tokenExpiry: Date,
-  // TODO: primary - flag
 });
 
 const guildSchema = new mongoose.Schema({
