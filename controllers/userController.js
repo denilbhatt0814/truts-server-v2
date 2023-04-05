@@ -661,27 +661,27 @@ exports.addNewWallet = async (req, res) => {
       nonce
     );
 
-    if (!user.wallets || user.wallets.length == 0) {
-      // if logedin but has no wallets
-      query = {
-        $set: {
-          wallets: [
-            { address: address, chain: chain, nonce: nonce, isPrimary: true },
-          ],
-        },
-      };
-    } else {
-      query = {
-        $push: {
-          wallets: { address: address, nonce: nonce, chain: chain },
-        },
-      };
-    }
+    // if (!user.wallets || user.wallets.length == 0) {
+    //   // if logedin but has no wallets
+    //   query = {
+    //     $set: {
+    //       wallets: [
+    //         { address: address, chain: chain, nonce: nonce, isPrimary: true },
+    //       ],
+    //     },
+    //   };
+    // } else {
+    //   query = {
+    //     $push: {
+    //       wallets: { address: address, nonce: nonce, chain: chain },
+    //     },
+    //   };
+    // }
 
-    user = await User.findOneAndUpdate({ _id: user._id }, query, {
-      new: true,
-      setDefaultsOnInsert: true,
-    });
+    // user = await User.findOneAndUpdate({ _id: user._id }, query, {
+    //   new: true,
+    //   setDefaultsOnInsert: true,
+    // });
 
     // TODO: take this to cache
 
@@ -752,7 +752,7 @@ exports.verifyNewMultiWallet = async (req, res) => {
           $set: {
             wallets: [
               {
-                address: address,
+                address: public_key,
                 chain: chain,
                 nonce: nonce,
                 isPrimary: true,
@@ -765,7 +765,7 @@ exports.verifyNewMultiWallet = async (req, res) => {
         query = {
           $push: {
             wallets: {
-              address: address,
+              address: public_key,
               nonce: nonce,
               chain: chain,
               verified: true,
