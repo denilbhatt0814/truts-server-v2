@@ -634,9 +634,12 @@ exports.addNewWallet = async (req, res) => {
     }
 
     // check if user already holds a wallet of same chain
-    const existingChainWallet = user.wallets.find(
-      (wallet) => wallet.chain == chain
-    );
+    let existingChainWallet;
+    if (user.wallets) {
+      existingChainWallet = user.wallets.find(
+        (wallet) => wallet.chain == chain
+      );
+    }
 
     if (existingChainWallet) {
       return new HTTPError(
@@ -660,30 +663,6 @@ exports.addNewWallet = async (req, res) => {
       60 * 3,
       nonce
     );
-
-    // if (!user.wallets || user.wallets.length == 0) {
-    //   // if logedin but has no wallets
-    //   query = {
-    //     $set: {
-    //       wallets: [
-    //         { address: address, chain: chain, nonce: nonce, isPrimary: true },
-    //       ],
-    //     },
-    //   };
-    // } else {
-    //   query = {
-    //     $push: {
-    //       wallets: { address: address, nonce: nonce, chain: chain },
-    //     },
-    //   };
-    // }
-
-    // user = await User.findOneAndUpdate({ _id: user._id }, query, {
-    //   new: true,
-    //   setDefaultsOnInsert: true,
-    // });
-
-    // TODO: take this to cache
 
     console.log(`Adding new wallet -> ${chain}:${address}`);
 
@@ -714,15 +693,6 @@ exports.verifyNewMultiWallet = async (req, res) => {
       `addWallet:${user._id}:${chain}:${public_key}`
     );
 
-    // UNDER-WORK:
-    // let holderOfWallet = await User.findOne({ "wallets.address": public_key })
-    //   .select("+wallets.nonce")
-    //   .session(session);
-
-    // // If no user with given public_key
-    // if (!holderOfWallet) {
-    //   return new HTTPError(res, 404, "User w/ provided public_key not found");
-    // }
     if (!nonce) {
       return new HTTPError(
         res,
@@ -731,10 +701,6 @@ exports.verifyNewMultiWallet = async (req, res) => {
         "unauthorized access"
       );
     }
-
-    // const { nonce } = holderOfWallet.wallets.find(
-    //   (wallet) => wallet.address == public_key
-    // );
 
     const walletIsVerified = walletVerifier(
       res,
