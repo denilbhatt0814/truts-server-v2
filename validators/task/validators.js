@@ -357,4 +357,16 @@ module.exports = {
       return false;
     },
   },
+  JOINED_TELEGRAM: {
+    exec: function () {
+      return true;
+    },
+    parameters: [{ url: String }],
+    areValidArguments: function (arguments) {
+      if ("url" in arguments) {
+        return true;
+      }
+      return false;
+    },
+  },
 };
