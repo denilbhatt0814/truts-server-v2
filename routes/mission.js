@@ -6,6 +6,7 @@ const {
   claimMissionCompletion,
   myAttemptedMissionStatus,
   getMissionCompletedBy,
+  checkTaskDependency,
 } = require("../controllers/missionController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -25,6 +26,14 @@ router.get(
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
+
+// UNDER-WORK:
+// dependency checking
+router.get(
+  "/mission/:missionID/task-dependency-check/:taskID",
+  isLoggedIn,
+  checkTaskDependency
+);
 
 // mission claim
 router.get("/mission/:missionID/claim", isLoggedIn, claimMissionCompletion);

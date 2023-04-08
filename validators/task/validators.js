@@ -12,11 +12,64 @@ const {
 } = require("../../utils/twitterHelper");
 const checkIsOwner = require("../../utils/solanaNFT");
 
+function getValue(obj, path) {
+  const fields = path.split(".");
+  let value = obj;
+  for (let field of fields) {
+    if (value.hasOwnProperty(field)) {
+      value = value[field];
+    } else {
+      return undefined;
+    }
+  }
+  return value;
+}
+
+const dependecyCheckers = {
+  DISCORD_ACCOUNT: {
+    exec: function (user) {
+      return "discord" in user && user.discord.id ? true : false;
+    },
+  },
+  TWITTER_ACCOUNT: {
+    exec: function (user) {
+      return "twitter" in user && user.twitter.id && user.twitter.username
+        ? true
+        : false;
+    },
+  },
+  EVM_WALLET: {
+    exec: function (user) {
+      return user.wallets?.find(
+        (wallet) => wallet.chain == "EVM" && wallet.verified
+      )
+        ? true
+        : false;
+    },
+  },
+  SOL_WALLET: {
+    exec: function (user) {
+      return user.wallets?.find(
+        (wallet) => wallet.chain == "SOL" && wallet.verified
+      )
+        ? true
+        : false;
+    },
+  },
+  TELEGRAM_ACCOUNT: {
+    // TODO: no way to check this RN
+    exec: function (user) {
+      return true;
+    },
+  },
+};
+
 module.exports = {
   validator1: {
     exec: function (data1, data2) {},
     parameters: [{ data1: String }, { data2: Number }],
     areValidArguments: function (arguments) {},
+    getDependecyStatus: async function (data) {},
   },
   REVIEWED_IN_LISTING: {
     parameters: [
@@ -70,6 +123,30 @@ module.exports = {
       }
       return false;
     },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "DISCORD_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
     exec: async function (arguments) {
       // TODO: This validator might need to be rewriten
       // after new Listing model
@@ -120,6 +197,30 @@ module.exports = {
       }
       return false;
     },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TWITTER_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
     exec: async function (arguments) {
       // NOTE: optimize find by using select
       // here any twitter account can be validated not just a listing's twtr account
@@ -159,6 +260,30 @@ module.exports = {
         return true;
       }
       return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TWITTER_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
     },
     exec: async function (arguments) {
       const { tweetID, userID } = arguments;
@@ -204,6 +329,30 @@ module.exports = {
         return true;
       }
       return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TWITTER_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
     },
     exec: async function (arguments) {
       const { tweetID, userID } = arguments;
@@ -257,6 +406,30 @@ module.exports = {
         return true;
       }
       return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
     },
     exec: async function (arguments) {
       // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
@@ -324,6 +497,30 @@ module.exports = {
       }
       return false;
     },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
     exec: async function (arguments) {
       // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
 
@@ -367,6 +564,30 @@ module.exports = {
         return true;
       }
       return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TELEGRAM_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
     },
   },
 };
