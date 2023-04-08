@@ -258,6 +258,60 @@ exports.performTask = async (req, res) => {
   }
 };
 
+// UNDER-WORK: dependency checking
+exports.checkTaskDependency = async (req, res) => {
+  try {
+    // PARSE TASK ID & USER ID (userID from authenticated route)
+    const taskID = req.params.taskID;
+    const missionID = req.params.missionID;
+    const userID = req.user._id;
+
+    let mission = await Mission.findOne({
+      "tasks._id": mongoose.Types.ObjectId(taskID),
+    }).populate("tasks.taskTemplate");
+
+    if (!mission) {
+      return new HTTPError(
+        res,
+        400,
+        `No mission refering to taskID: ${taskID}`,
+        "mission not found"
+      );
+    }
+
+    if (missionID != mission._id) {
+      return new HTTPError(
+        res,
+        400,
+        `task[${taskID}] does not belong to mission[${missionID}]`,
+        "illegal task to mission reference"
+      );
+    }
+
+    // NOTE: COULD USE CACHING FOR THIS MISSION-TASK METADATA
+    //        AS WE'LL NEED MULTIPLE CALLS FOR DEP CHECK
+    // TODO: CHANGES HERE:
+    // pass in all the data required to check dependecies
+    // return status of all dependencies
+    const task = mission.tasks.find((task) => task._id == taskID);
+    const taskValidator = taskValidators[task.taskTemplate.validator];
+    const data = { userID };
+    const dependencyStatus = await taskValidator.getDependecyStatus(data);
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Dependecy Status for taskID: ${taskID} [mission: ${mission._id}]`,
+      null,
+      { dependencyStatus }
+    );
+  } catch (error) {
+    console.log("checkTaskDependency: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.claimMissionCompletion = async (req, res) => {
   const session = await mongoose.startSession();
   try {

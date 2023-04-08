@@ -87,6 +87,30 @@ module.exports = {
       }
       return false;
     },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "DISCORD_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      const user = await User.findById(data.userID);
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
     exec: async function (arguments) {
       // TODO: This validator might need to be rewriten
       // after new review module
