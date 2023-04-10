@@ -17,6 +17,7 @@ const {
   getTwitterUserFollowing,
 } = require("../utils/twitterHelper");
 const { publishEvent } = require("../utils/pubSub");
+const redisClient = require("../databases/redis-client");
 
 /**
  * NOTE: If any new field is added or updated in userSchema
@@ -258,6 +259,7 @@ userSchema.post("findOneAndUpdate", async function (doc) {
     );
   }
   doc.completionStatus = completionStatus.percentage;
+  await redisClient.del(`USER:VALIDATORS:$${doc._id}`);
   await doc.save();
 });
 
@@ -296,6 +298,8 @@ userSchema.pre("save", async function (next) {
       }
     }
   }
+
+  await redisClient.del(`USER:VALIDATORS:$${this._id}`);
   next();
 });
 

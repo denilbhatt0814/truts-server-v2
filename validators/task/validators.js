@@ -11,6 +11,7 @@ const {
   checkUserHasLiked,
 } = require("../../utils/twitterHelper");
 const checkIsOwner = require("../../utils/solanaNFT");
+const redisClient = require("../../databases/redis-client");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -28,12 +29,12 @@ function getValue(obj, path) {
 const dependecyCheckers = {
   DISCORD_ACCOUNT: {
     exec: function (user) {
-      return "discord" in user && user.discord.id ? true : false;
+      return user.discord && user.discord.id ? true : false;
     },
   },
   TWITTER_ACCOUNT: {
     exec: function (user) {
-      return "twitter" in user && user.twitter.id && user.twitter.username
+      return user.twitter && user.twitter.id && user.twitter.username
         ? true
         : false;
     },
@@ -100,7 +101,23 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      // TEST:
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+        console.log("Added to cache");
+      } else {
+        user = JSON.parse(userFromCache);
+        console.log("from cache");
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -160,7 +177,24 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      // TEST:
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+        console.log("Added to cache");
+      } else {
+        user = JSON.parse(userFromCache);
+        console.log("from cache");
+      }
+
       if (!user) {
         return dependencyStatus;
       }
@@ -234,7 +268,20 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -298,7 +345,20 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -367,7 +427,20 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -444,7 +517,20 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -533,8 +619,20 @@ module.exports = {
       if (!data.userID) {
         return dependencyStatus;
       }
-
-      const user = await User.findById(data.userID);
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
       if (!user) {
         return dependencyStatus;
       }
@@ -602,7 +700,23 @@ module.exports = {
         return dependencyStatus;
       }
 
-      const user = await User.findById(data.userID);
+      // TEST:
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+        console.log("Added to cache");
+      } else {
+        user = JSON.parse(userFromCache);
+        console.log("from cache");
+      }
       if (!user) {
         return dependencyStatus;
       }

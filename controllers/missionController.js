@@ -8,6 +8,7 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
 const { XpTxn } = require("../models/xpTxn");
+const redisClient = require("../databases/redis-client");
 
 /**
  * NOTE: TODO:  ADD TIMESTAMPS IN ALL SCHEMAS
@@ -266,9 +267,20 @@ exports.checkTaskDependency = async (req, res) => {
     const missionID = req.params.missionID;
     const userID = req.user._id;
 
-    let mission = await Mission.findOne({
-      "tasks._id": mongoose.Types.ObjectId(taskID),
-    }).populate("tasks.taskTemplate");
+    let mission;
+    let missionFromCache = await redisClient.get(`MISSION:TASK:${missionID}`);
+    if (!missionFromCache) {
+      mission = await Mission.findOne({
+        "tasks._id": mongoose.Types.ObjectId(taskID),
+      }).populate("tasks.taskTemplate");
+      await redisClient.setEx(
+        `MISSION:TASK:${missionID}`,
+        60 * 3,
+        JSON.stringify(mission)
+      );
+    } else {
+      mission = JSON.parse(missionFromCache);
+    }
 
     if (!mission) {
       return new HTTPError(
