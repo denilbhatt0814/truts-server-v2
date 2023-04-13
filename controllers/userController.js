@@ -466,13 +466,6 @@ exports.verifyWallet = async (req, res) => {
   }
 };
 
-// UNDER-WORK: for multi wallet
-// this time API for connect wallet and login via wallet won't remain
-// same
-// login and signup could be to gether;
-// add/connect wallet will be seperate
-// but will use same underlying verify wallet
-// TEST:
 exports.loginViaMultiWallet = async (req, res) => {
   // NOTE: now we also need chain in login query
   try {
@@ -615,8 +608,6 @@ exports.verifyMultiWallet = async (req, res) => {
   }
 };
 
-// TEST:
-// NOTE: PROTECTED
 exports.addNewWallet = async (req, res) => {
   try {
     let user = req.user;
@@ -795,7 +786,6 @@ exports.verifyNewMultiWallet = async (req, res) => {
   }
 };
 
-// TEST:
 // NOTE: PROTECTED
 exports.setPrimaryWallet = async (req, res) => {
   try {
@@ -839,7 +829,6 @@ exports.setPrimaryWallet = async (req, res) => {
   }
 };
 
-// TEST:
 // NOTE: PROTECTED // TODO: can make it to have address in body
 exports.removeAWallet = async (req, res) => {
   try {
@@ -1045,6 +1034,42 @@ function walletVerifier(res, public_key, signature, chain, message) {
 // ------ USER CONTROLLER (PRIVATE) ------
 exports.getMyUserDetails = async (req, res) => {
   return new HTTPResponse(res, true, 200, null, null, { user: req.user });
+};
+
+exports.getMyProfileStatus = async (req, res) => {
+  try {
+    const user = req.user;
+
+    let foundEVMWallet = false;
+    let foundSOLWallet = false;
+    for (
+      let i = 0;
+      user.wallets &&
+      i < user.wallets.length &&
+      (!foundEVMWallet || !foundSOLWallet);
+      i++
+    ) {
+      if (user.wallets[i].chain == "EVM") {
+        foundEVMWallet = true;
+      } else if (user.wallets[i].chain == "SOL") {
+        foundSOLWallet = true;
+      }
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      user: {
+        discord: user.discord ? true : false,
+        twitter: user.twitter ? true : false,
+        wallet: {
+          EVM: foundEVMWallet,
+          SOL: foundSOLWallet,
+        },
+      },
+    });
+  } catch (error) {
+    console.log("getMyProfileStatus: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
 };
 
 exports.setMyUsername = async (req, res) => {

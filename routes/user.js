@@ -38,6 +38,7 @@ const {
   changeWallet,
   verifyChangedWallet,
   verifyNewMultiWallet,
+  getMyProfileStatus,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -82,6 +83,8 @@ router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
 router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
 router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
 router.route("/user/referral").get(isLoggedIn, getMyReferralDetails);
+
+router.route("/user/profile/status").get(isLoggedIn, getMyProfileStatus);
 
 // Edit Profile related routes
 router
