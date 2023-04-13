@@ -114,3 +114,38 @@ exports.addReview = async (req, res) => {
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
+
+exports.getReviewByID = async (req, res) => {
+  try {
+    const reviewID = req.params.reviewID;
+    if (!reviewID) {
+      return new HTTPError(
+        res,
+        400,
+        "please input appropriate reviewID",
+        "invalid input"
+      );
+    }
+
+    const review = await Review.findById(reviewID)
+      .select({ oldData: 0 })
+      .populate({ path: "user", select: { photo: 1, username: 1, name: 1 } })
+      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
+
+    if (!review) {
+      return new HTTPError(
+        res,
+        404,
+        `review[${reviewID}] doesn't exist`,
+        "resource not found"
+      );
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      review,
+    });
+  } catch (error) {
+    console.log("getReviewByID: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
