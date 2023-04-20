@@ -19,6 +19,16 @@ const user_missionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Mission",
     },
+    // TODO: think would you really need this or can work with
+    //       Mission ref ?
+    missionType: {
+      type: String,
+      enum: ["TASKS", "QUIZ"],
+      required: [
+        true,
+        "Please mention the type of mission. eg: ['TASKS', 'QUIZ']",
+      ],
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -37,6 +47,11 @@ const user_missionSchema = new mongoose.Schema(
      * eg: { '6ce123ea3': "INCOMPLETE", '2ce857ea4': "COMPLETE"}
      */
     tasks: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    // TODO: maitains status of solved questions
+    questions: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
