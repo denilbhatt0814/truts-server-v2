@@ -11,9 +11,11 @@ const missionSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, "Please provide a description for mission"],
+      default: "",
     },
     // TODO: must type in creation of mission as well
+    // TODO: make assign to all current missions
+    // TODO: add visiblity field
     type: {
       type: String,
       enum: ["TASKS", "QUIZ"],

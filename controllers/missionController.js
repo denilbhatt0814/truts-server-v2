@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const { Mission } = require("../models/mission");
-const { Dao } = require("../models/dao");
+const Listing = require("../models/dao");
 const { MissionTag } = require("../models/missionTag");
 const { TaskTemplate } = require("../models/taskTemplate");
 const { User_Mission } = require("../models/user_mission");
@@ -11,7 +11,7 @@ const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
 
 /**
- * NOTE: TODO:  ADD TIMESTAMPS IN ALL SCHEMAS
+ * NOTE:
  * THIS COMPLETE FEATURE OF MISSIONS REQUIRES TO PROTECTED
  * UNDER AUTH BY ADMIN OR LISTING MANAGER
  */
@@ -19,8 +19,16 @@ const redisClient = require("../databases/redis-client");
 exports.createMission = async (req, res) => {
   try {
     const listingID = req.body.listingID;
-    const { name, description, tags, tasks, listingXP, startDate, endDate } =
-      req.body;
+    const {
+      name,
+      description,
+      type,
+      tags,
+      tasks,
+      listingXP,
+      startDate,
+      endDate,
+    } = req.body;
 
     // TODO: VERIFY IF LISTING EXISTS - another middleware
 
@@ -46,6 +54,52 @@ exports.createMission = async (req, res) => {
     });
   } catch (error) {
     console.log("createMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.createMissionV2 = async (req, res) => {
+  try {
+    const listingID = req.body.listingID;
+    const { name, type } = req.body;
+
+    // TODO: check if listing exist
+    const listingExist = await Listing.findById(listingID);
+    if (!listingExist) {
+      return new HTTPError(
+        res,
+        404,
+        `listing[${listingID}] doesn't exist`,
+        "resource not found"
+      );
+    }
+
+    // create mission w/ just name and type
+    const newMission = await Mission.create({
+      name,
+      type,
+      listing: listingExist.id,
+    });
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      "misison created successfully",
+      null,
+      { mission: newMission }
+    );
+  } catch (error) {
+    console.log("createMissionV2: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TODO:
+exports.deleteMission = async (req, res) => {
+  try {
+  } catch (error) {
+    console.log("deleteMission: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -121,12 +175,7 @@ exports.myAttemptedMissionStatus = async (req, res) => {
       /** NOTE: THE RESPONSE HERE IS HARD CODED, MUST BE UPDATED
        * IF ANY MOD. IN USER_MISSION SCHEMA
        */
-      // return new HTTPError(
-      //   res,
-      //   400,
-      //   `user[${userID}] has not attempted mission[${missionID}] OR mission does not exit`,
-      //   "mission not attempted"
-      // );
+
       const mission = await Mission.findById(missionID);
       if (!mission) {
         return new HTTPError(
@@ -136,10 +185,26 @@ exports.myAttemptedMissionStatus = async (req, res) => {
           "mission not found"
         );
       }
-      let tasks = {};
-      mission.tasks.forEach((task) => {
-        tasks[task._id] = "INCOMPLETE";
-      });
+
+      let tasks, questions;
+      if (mission.type == "TASKS") {
+        tasks = {};
+        mission.tasks.forEach((task) => {
+          tasks[task._id] = "INCOMPLETE";
+        });
+      } else if (mission.type == "QUIZ") {
+        questions = {};
+        mission.questions.forEach((question) => {
+          questions[question._id] = {
+            answerByUser: null,
+            correctAnswer: null,
+            status: "UNANSWERED",
+            isCorrect: null,
+            listingXP: null,
+          };
+        });
+      }
+
       return new HTTPResponse(
         res,
         true,
@@ -152,6 +217,7 @@ exports.myAttemptedMissionStatus = async (req, res) => {
             user: userID,
             listing: mission.listing,
             tasks,
+            questions,
             isCompleted: false,
           },
         }
@@ -176,14 +242,21 @@ exports.performTask = async (req, res) => {
       "tasks._id": mongoose.Types.ObjectId(taskID),
     }).populate("tasks.taskTemplate");
 
-    console.log(mission);
-
     if (!mission) {
       return new HTTPError(
         res,
         400,
         `No mission refering to taskID: ${taskID}`,
         "mission not found"
+      );
+    }
+
+    if (mission.type != "TASKS") {
+      return new HTTPError(
+        res,
+        400,
+        `mission[${missionID}] is not of QUIZ type`,
+        "bad request"
       );
     }
 
@@ -325,15 +398,16 @@ exports.checkTaskDependency = async (req, res) => {
 };
 
 exports.claimMissionCompletion = async (req, res) => {
+  // TODO: handle quizes here
   const session = await mongoose.startSession();
   try {
     const missionID = req.params.missionID;
     const userID = req.user._id;
 
     await session.startTransaction();
-    const mission = await Mission.findById(missionID).populate(
-      "tasks.taskTemplate"
-    );
+
+    // UNDER-WORK:
+    let mission = await Mission.findById(missionID);
 
     let attemptedMission = await User_Mission.findOne({
       user: mongoose.Types.ObjectId(userID),
@@ -363,22 +437,43 @@ exports.claimMissionCompletion = async (req, res) => {
     }
 
     // If attempted -> verify completion of each task - Also add trutsXP
+    // HANDLE: QUIZ & TASK seperately
     let trutsXP = 0;
-    mission.tasks.forEach((task) => {
-      const attemptedTask = attemptedMission.tasks[task._id];
-      if (attemptedTask != "COMPLETE") {
-        return new HTTPError(
-          res,
-          400,
-          `task[${task._id}] is not complete in mission[${missionID}]`,
-          "mission incomplete"
-        );
-      }
-      trutsXP += task.taskTemplate.trutsXP;
-    });
-    // allocate XPs
-    attemptedMission.listingXP = mission.listingXP;
-    attemptedMission.trutsXP = trutsXP;
+    if (mission.type == "TASKS") {
+      mission = await mission.populate("tasks.taskTemplate");
+      mission.tasks.forEach((task) => {
+        const attemptedTask = attemptedMission.tasks[task._id];
+        if (attemptedTask != "COMPLETE") {
+          return new HTTPError(
+            res,
+            400,
+            `task[${task._id}] is not complete in mission[${missionID}]`,
+            "mission incomplete"
+          );
+        }
+        trutsXP += task.taskTemplate.trutsXP;
+      });
+      // allocate XPs
+      attemptedMission.listingXP = mission.listingXP;
+      attemptedMission.trutsXP = trutsXP;
+    } else if (mission.type == "QUIZ") {
+      mission.questions.forEach((question) => {
+        const response = attemptedMission.questions[question._id];
+        if (response.status != "ANSWERED") {
+          return new HTTPError(
+            res,
+            400,
+            `question[${question._id}] is not answered in mission[${missionID}]`,
+            "mission incomplete"
+          );
+        }
+        trutsXP += response.listingXP;
+      });
+      // allocate XPs
+      // TODO: MOD required when seperating trutsXP & listingXP
+      attemptedMission.listingXP = trutsXP;
+      attemptedMission.trutsXP = trutsXP;
+    }
 
     // if no return -> All tasks completed
     attemptedMission.isCompleted = true;

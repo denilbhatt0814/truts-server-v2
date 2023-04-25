@@ -36,14 +36,14 @@ exports.questionSchema = new mongoose.Schema(
       default: undefined,
     },
     answer: {
-      type: String,
+      type: mongoose.Schema.Types.Mixed,
       required: [true, "Please provide a appropriate answer"],
       select: false,
-      // TODO: can have a validator for answers to be like: `TEXT:Orange`, `SCQ:1`, `MCQ:1,2,3`
+      // String for Text, Int for SCQ and int[] for MCQ
     },
     listingXP: {
       type: Number,
-      required: [true, "Please allocate listingXP to this task template"],
+      required: [true, "Please allocate listingXP to this question"],
     },
   },
   {

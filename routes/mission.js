@@ -8,6 +8,7 @@ const {
   getMissionCompletedBy,
   checkTaskDependency,
 } = require("../controllers/missionController");
+const { answerToQuestion } = require("../controllers/quizController");
 const { isLoggedIn } = require("../middlewares/user");
 
 const router = require("express").Router();
@@ -26,8 +27,12 @@ router.get(
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
+router.get(
+  "/mission/:missionID/question-answer/:questionID",
+  isLoggedIn,
+  answerToQuestion
+);
 
-// UNDER-WORK:
 // dependency checking
 router.get(
   "/mission/:missionID/task-dependency-check/:taskID",
