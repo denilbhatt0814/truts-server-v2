@@ -45,6 +45,13 @@ exports.questionSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please allocate listingXP to this question"],
     },
+    sequenceNum: {
+      type: Number,
+      required: [
+        true,
+        "Please allocate appropriate sequence number to this question",
+      ],
+    },
   },
   {
     timestamps: true,

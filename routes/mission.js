@@ -2,20 +2,28 @@ const {
   createMission,
   getMissions,
   getOneMission,
-  performTask,
+
   claimMissionCompletion,
   myAttemptedMissionStatus,
   getMissionCompletedBy,
-  checkTaskDependency,
+  createMissionV2,
 } = require("../controllers/missionController");
-const { answerToQuestion } = require("../controllers/quizController");
+const {
+  answerToQuestion,
+  addQuestionToMission,
+} = require("../controllers/quizController");
+const {
+  performTask,
+  checkTaskDependency,
+  addOneTaskToMission,
+} = require("../controllers/taskController");
 const { isLoggedIn } = require("../middlewares/user");
 
 const router = require("express").Router();
 
 // TEST: ALL MISSION ROUTES AND CONTROLLERS ARE TO BE TESTED
 // /mission?listingID= for all mission of a listing
-router.route("/mission").get(getMissions).post(createMission);
+router.route("/mission").get(getMissions).post(createMissionV2);
 router.route("/mission/:missionID").get(getOneMission);
 router.route("/mission/:missionID/completed-by").get(getMissionCompletedBy);
 
@@ -24,6 +32,9 @@ router.get(
   isLoggedIn,
   myAttemptedMissionStatus
 );
+
+router.route("/mission/:missionID/task").post(addOneTaskToMission);
+router.route("/mission/:missionID/quiz").post(addQuestionToMission);
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);

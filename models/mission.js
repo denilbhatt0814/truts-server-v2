@@ -46,7 +46,8 @@ const missionSchema = new mongoose.Schema(
     },
     listingXP: {
       type: Number,
-      required: [true, "Please allocate listingXP to this mission"],
+      // required: [true, "Please allocate listingXP to this mission"],
+      default: 0,
     },
     startDate: {
       type: Date,
@@ -55,7 +56,7 @@ const missionSchema = new mongoose.Schema(
     endDate: Date,
     visible: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   {

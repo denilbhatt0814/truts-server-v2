@@ -2,16 +2,20 @@ const { default: mongoose } = require("mongoose");
 const { Mission } = require("../models/mission");
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
+const { User_Mission } = require("../models/user_mission");
 
 // NOTE: protected by admin|manager
 exports.addQuestionToMission = async (req, res) => {
   try {
     // TEST:
     const missionID = req.params.missionID;
-    const { prompt, type, id, options, answer, listingXP } = req.body;
+    const { prompt, type, id, options, answer, listingXP, sequenceNum } =
+      req.body;
+
+    // TODO: add question orderNumber
 
     // verify if mission exists
-    const mission = await Mission.findById(missionID);
+    let mission = await Mission.findById(missionID);
     if (!mission) {
       return new HTTPError(
         res,
@@ -32,12 +36,28 @@ exports.addQuestionToMission = async (req, res) => {
     }
 
     // verify inputs
-    if (!prompt || !type || !id || !answer) {
+    if (!prompt || !type || !answer) {
       return new HTTPError(
         res,
         400,
-        "Missing field. {prompt, type, id, options?, answer, listingXP?}",
+        "Missing field. {prompt, type, options?, answer, listingXP?, sequenceNum?}",
         "invalid input"
+      );
+    }
+
+    if (!sequenceNum) {
+      const maxsequenceNum = mission.questions.reduce((max, question) => {
+        return question.sequenceNum > max ? question.sequenceNum : max;
+      }, 0);
+      sequenceNum = maxsequenceNum + 1;
+    } else if (
+      mission.questions.some((question) => question.sequenceNum == sequenceNum)
+    ) {
+      return new HTTPError(
+        res,
+        400,
+        `sequenceNum: ${sequenceNum} already exists`,
+        "invalid sequence number for question"
       );
     }
 
@@ -64,12 +84,12 @@ exports.addQuestionToMission = async (req, res) => {
 
     // if all good create the question and add to mission
     const newQuestion = {
-      id,
       prompt,
       type,
       options,
       answer,
       listingXP,
+      sequenceNum,
     };
 
     // TEST:
@@ -78,6 +98,7 @@ exports.addQuestionToMission = async (req, res) => {
     }
 
     mission.questions.push(newQuestion);
+    mission.markModified("questions");
     mission = await mission.save();
     return new HTTPResponse(
       res,
@@ -176,6 +197,15 @@ exports.answerToQuestion = async (req, res) => {
         questions,
       });
     } else {
+      if (!attemptedMission.questions[questionID]) {
+        attemptedMission.questions[questionID] = {
+          answerByUser: null,
+          correctAnswer: null,
+          status: "UNANSWERED",
+          isCorrect: null,
+          listingXP: null,
+        };
+      }
       const response = attemptedMission.questions[questionID];
       if (response.status == "ANSWERED") {
         return new HTTPError(
@@ -205,7 +235,7 @@ exports.answerToQuestion = async (req, res) => {
       200,
       `questionID: ${questionID} [mission: ${mission._id}] answered sucessfully. (isCorrect: ${isCorrect})`,
       null,
-      { attemptedMission }
+      { attemptedMission, isCorrect }
     );
   } catch (error) {
     console.log("answeredToQuestion: ", error);
@@ -246,17 +276,22 @@ function verifyAnswer(question, answerByUser) {
  * */
 function verifyOptions(options) {
   // Contains prompt and id -> need to verify if all ids are unique
+  console.log({ options });
   let occuredOptionId = [];
 
-  for (const option in options) {
+  for (const optionIdx in options) {
+    const option = options[optionIdx];
+    console.log({ option });
     // Fields existing check
     if (!option.prompt || !option.id) {
+      console.log("MISSING SMTHNG");
       return false;
     }
 
     // check correct option id -> avoid duplicates & must be in range
     // option id starts from 1-len(options)
     if (option.id in occuredOptionId || option.id > options.length) {
+      console.log("ILLEGAL ID");
       return false;
     } else {
       occuredOptionId.push(option.id);
@@ -281,7 +316,7 @@ function verifyAnswerFormat(type, answer, options) {
       return verifyTextAnswer(answer);
     case "SCQ":
       return verifySCQAnswer(answer, options);
-    case "TEXT":
+    case "MCQ":
       return verifyMCQAnswer(answer, options);
 
     default:

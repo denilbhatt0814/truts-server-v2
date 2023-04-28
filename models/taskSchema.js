@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const validator = require("validator");
 exports.taskSchema = new mongoose.Schema(
   {
     stepNum: {
