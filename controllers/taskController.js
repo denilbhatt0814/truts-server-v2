@@ -6,6 +6,7 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
 const { User_Mission } = require("../models/user_mission");
+const redisClient = require("../databases/redis-client");
 
 // TODO: complete here from cleanseAndVerifyOfTask
 // TEST: also add routes

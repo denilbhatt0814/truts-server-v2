@@ -38,7 +38,7 @@ router.route("/mission/:missionID/quiz").post(addQuestionToMission);
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
-router.get(
+router.post(
   "/mission/:missionID/question-answer/:questionID",
   isLoggedIn,
   answerToQuestion
