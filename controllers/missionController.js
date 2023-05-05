@@ -9,6 +9,8 @@ const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
 const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
+const Coupon = require("../models/coupon");
+const { UD_MISSION_ID } = require("../config/config");
 
 /**
  * NOTE: TODO:  ADD TIMESTAMPS IN ALL SCHEMAS
@@ -417,6 +419,88 @@ exports.claimMissionCompletion = async (req, res) => {
   }
 };
 
+exports.specialClaimMissionCompletion = async (req, res) => {
+  try {
+    const userID = req.user._id;
+    const missionID = req.params.missionID;
+
+    if (missionID != UD_MISSION_ID) {
+      return new HTTPError(
+        res,
+        403,
+        `mission[${missionID}] is not allowed for special claim`,
+        `not allowed for special claim`
+      );
+    }
+
+    const claimedSpecialMission = await User_Mission.findOne({
+      user: mongoose.Types.ObjectId(userID),
+      mission: mongoose.Types.ObjectId(missionID),
+      isCompleted: true,
+    }).populate({ path: "mission", select: { listing: 1 } });
+
+    if (!claimedSpecialMission) {
+      return new HTTPError(
+        res,
+        405,
+        `user[${userID}] has not completed/claimed mission[${missionID}]`,
+        `not allowed for special claim`
+      );
+    }
+
+    const claimCount = await Coupon.countDocuments({
+      listing: claimedSpecialMission.mission.listing,
+      collection: "DEFAULT", // TODO: needs some work
+      claimedBy: mongoose.Types.ObjectId(userID),
+    });
+    if (claimCount != 0) {
+      return new HTTPError(
+        res,
+        409,
+        `user[${userID}] has already made special claim`,
+        "remaking special claim"
+      );
+    }
+
+    const availableCouponCount = await Coupon.countDocuments({
+      listing: claimedSpecialMission.mission.listing,
+      collection: "DEFAULT",
+      claimed: false,
+    });
+
+    if (availableCouponCount == 0) {
+      return new HTTPResponse(
+        res,
+        true,
+        204,
+        `No more coupons available`,
+        null,
+        {}
+      );
+    }
+
+    //TODO: get a unclaimed coupon -> attach user to it
+    const newCoupon = await Coupon.findOneAndUpdate(
+      {
+        listing: claimedSpecialMission.mission.listing,
+        collection: "DEFAULT", // TODO: needs some work
+        claimed: false,
+      },
+      {
+        claimedBy: mongoose.Types.ObjectId(userID),
+        claimed: true,
+      },
+      { new: true }
+    );
+
+    // return coupon in response
+    return new HTTPResponse(res, true, 201, "special claim succesfull", null, {
+      coupon: newCoupon,
+    });
+  } catch (error) {
+    console.log("specialClaimMissionCompletion: ", error);
+  }
+};
 // KINDA MIDDLEWARE
 const cleanseAndVerifyTasks = async (res, tasks) => {
   let existingSteps = [];

@@ -7,6 +7,7 @@ const {
   myAttemptedMissionStatus,
   getMissionCompletedBy,
   checkTaskDependency,
+  specialClaimMissionCompletion,
 } = require("../controllers/missionController");
 const { isLoggedIn } = require("../middlewares/user");
 
@@ -37,5 +38,10 @@ router.get(
 
 // mission claim
 router.get("/mission/:missionID/claim", isLoggedIn, claimMissionCompletion);
+router.get(
+  "/mission/:missionID/special-claim",
+  isLoggedIn,
+  specialClaimMissionCompletion
+);
 
 module.exports = router;
