@@ -9,8 +9,8 @@ exports.addQuestionToMission = async (req, res) => {
   try {
     // TEST:
     const missionID = req.params.missionID;
-    const { prompt, type, id, options, answer, listingXP, sequenceNum } =
-      req.body;
+    let sequenceNum = req.body.sequenceNum;
+    const { prompt, type, id, options, answer, listingXP } = req.body;
 
     // TODO: add question orderNumber
 
@@ -43,6 +43,10 @@ exports.addQuestionToMission = async (req, res) => {
         "Missing field. {prompt, type, options?, answer, listingXP?, sequenceNum?}",
         "invalid input"
       );
+    }
+
+    if (!mission.questions) {
+      mission.questions = {};
     }
 
     if (!sequenceNum) {
