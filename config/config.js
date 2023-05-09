@@ -64,5 +64,5 @@ module.exports = {
   HELIUS_API_KEY:
     process.env.HELIUS_API_KEY || "d5117e1d-6932-4b04-bc4e-62128c792fc2",
 
-  UD_MISSION_ID: process.env.UD_MISSION_ID || "63eb59449e5b513028939440",
+  UD_MISSION_ID: process.env.UD_MISSION_ID || "645a472eac01844d7b41279d",
 };
