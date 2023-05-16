@@ -18,13 +18,30 @@ const {
   checkTaskDependency,
   addOneTaskToMission,
 } = require("../controllers/taskController");
+const cacheRoute = require("../middlewares/cacheRoute");
+const paginateRequest = require("../middlewares/paginate");
 const { isLoggedIn } = require("../middlewares/user");
+const { Mission } = require("../models/mission");
 
 const router = require("express").Router();
 
 // TEST: ALL MISSION ROUTES AND CONTROLLERS ARE TO BE TESTED
 // /mission?listingID= for all mission of a listing
-router.route("/mission").get(getMissions).post(createMissionV2);
+router
+  .route("/mission")
+  .get(
+    cacheRoute,
+    paginateRequest(Mission, [
+      {
+        path: "listing",
+        from: "daos",
+        select: { dao_name: 1, dao_logo: 1, chain: 1 },
+      },
+      { path: "tags", from: "missiontags" },
+    ]),
+    getMissions
+  )
+  .post(createMissionV2);
 router.route("/mission/:missionID").get(getOneMission);
 router.route("/mission/:missionID/completed-by").get(getMissionCompletedBy);
 

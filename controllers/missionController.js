@@ -108,25 +108,49 @@ exports.deleteMission = async (req, res) => {
 
 exports.getMissions = async (req, res) => {
   try {
-    // UNDER-WORK: querying in this could be optimized | This is temperory
-    let searchQ = { visible: true };
-    if ("listingID" in req.query) {
-      searchQ.listing = mongoose.Types.ObjectId(req.query.listingID);
-    }
-
-    let missions = await Mission.find(searchQ)
-      .populate("tags")
-      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } })
-      .select({ tasks: 0 });
-    return new HTTPResponse(res, true, 200, null, null, {
-      count: missions.length,
-      missions,
+    req.pagination.result.forEach((mission) => {
+      delete mission["tasks"];
+      delete mission["questions"];
     });
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      ...req.pagination,
+    });
+
+    // TODO: change cache time after testing
+    await redisClient.setEx(
+      req.originalUrl,
+      60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+
+    return response;
   } catch (error) {
     console.log("getMissions: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
+// exports.getMissions = async (req, res) => {
+//   try {
+//     // UNDER-WORK: querying in this could be optimized | This is temperory
+//     let searchQ = { visible: true };
+//     if ("listingID" in req.query) {
+//       searchQ.listing = mongoose.Types.ObjectId(req.query.listingID);
+//     }
+
+//     let missions = await Mission.find(searchQ)
+//       .populate("tags")
+//       .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } })
+//       .select({ tasks: 0 });
+//     return new HTTPResponse(res, true, 200, null, null, {
+//       count: missions.length,
+//       missions,
+//     });
+//   } catch (error) {
+//     console.log("getMissions: ", error);
+//     return new HTTPError(res, 500, error, "internal server error");
+//   }
+// };
 
 exports.getOneMission = async (req, res) => {
   try {
