@@ -40,6 +40,11 @@ const user_missionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    // TODO: maitains status of solved questions
+    questions: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     trutsXP: {
       type: Number,
     },
