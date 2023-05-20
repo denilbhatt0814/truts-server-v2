@@ -53,15 +53,6 @@ exports.addOneTaskToMission = async (req, res) => {
       stepNum,
     };
 
-    // check validation details match taskTemplates
-    const verification = await cleanseAndVerifyTasks(res, [
-      newTask,
-      ...mission.tasks,
-    ]);
-    if (verification instanceof HTTPError) {
-      return;
-    }
-
     if (!mission.tasks) {
       mission.tasks = [];
     } else {
@@ -74,6 +65,15 @@ exports.addOneTaskToMission = async (req, res) => {
           `invalid stepNum`
         );
       }
+    }
+
+    // check validation details match taskTemplates
+    const verification = await cleanseAndVerifyTasks(res, [
+      newTask,
+      ...mission.tasks,
+    ]);
+    if (verification instanceof HTTPError) {
+      return;
     }
 
     mission.tasks.push(newTask);
