@@ -12,8 +12,6 @@ exports.addQuestionToMission = async (req, res) => {
     let sequenceNum = req.body.sequenceNum;
     const { prompt, type, id, options, answer, listingXP } = req.body;
 
-    // TODO: add question orderNumber
-
     // verify if mission exists
     let mission = await Mission.findById(missionID);
     if (!mission) {
@@ -46,7 +44,7 @@ exports.addQuestionToMission = async (req, res) => {
     }
 
     if (!mission.questions) {
-      mission.questions = {};
+      mission.questions = [];
     }
 
     if (!sequenceNum) {
@@ -96,14 +94,10 @@ exports.addQuestionToMission = async (req, res) => {
       sequenceNum,
     };
 
-    // TEST:
-    if (!mission.questions) {
-      mission.questions = [];
-    }
-
     mission.questions.push(newQuestion);
     mission.markModified("questions");
     mission = await mission.save();
+
     return new HTTPResponse(
       res,
       true,
