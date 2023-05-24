@@ -111,6 +111,13 @@ exports.getMissions = async (req, res) => {
     req.pagination.result.forEach((mission) => {
       delete mission["tasks"];
       delete mission["questions"];
+      // TODO: update this after change in Dao Model
+      mission.listing.name = mission.listing.dao_name;
+      mission.listing.photo = {
+        logo: {
+          secure_url: mission.listing.dao_logo,
+        },
+      };
     });
 
     const response = new HTTPResponse(res, true, 200, null, null, {
