@@ -27,14 +27,7 @@ exports.isLoggedIn = async (req, res, next) => {
     // if no such user found
     if (!user) {
       req.user = {};
-      return next(
-        new HTTPError(
-          res,
-          401,
-          "invalid token",
-          "Unauthorized client error - no such user"
-        )
-      );
+      return next(new HTTPError(res, 404, "invalid token", "user not found"));
     }
 
     // add user to request object for further use
@@ -49,6 +42,10 @@ exports.isLoggedIn = async (req, res, next) => {
           "Auth token expired: please login again",
           "TokenExpired"
         )
+      );
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      return next(
+        new HTTPError(res, 401, "invalid token", "Unauthorized client error")
       );
     }
     console.log("LoggedIn: ", error);
