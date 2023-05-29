@@ -58,6 +58,10 @@ const missionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    trending: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
