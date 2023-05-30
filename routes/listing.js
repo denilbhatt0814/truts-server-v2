@@ -7,6 +7,7 @@ const {
   getListings,
   getListingCountInAChain,
   getListingCountInACategory,
+  getListingMissions_Public,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -29,6 +30,13 @@ router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
 router
   .route("/public/listing/:listingID/reviews")
   .get(getListingReviews_Public);
+
+// TODO: authenicated get missions for marking is completed in advance to match
+// router.route("/listing/:listingID/missions").get(isLoggedIn, getListingReviews);
+router
+  .route("/public/listing/:listingID/missions")
+  .get(getListingMissions_Public);
+
 router
   .route("/public/listing/:listingID/leaderboard")
   .get(getListingLeaderboard_Public);

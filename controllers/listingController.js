@@ -6,6 +6,7 @@ const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
 const WhereClause = require("../utils/whereClause");
 const redisClient = require("../databases/redis-client");
+const { Mission } = require("../models/mission");
 
 exports.getListing = async (req, res) => {
   try {
@@ -230,6 +231,45 @@ exports.getListingReviews_Public = async (req, res) => {
     });
   } catch (error) {
     console.log("getListingReviews_Public: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getListingMissions_Public = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+
+    const listing = await Dao.findById(listingID).select({
+      _id: 1,
+      dao_name: 1,
+      dao_logo: 1,
+      slug: 1,
+    });
+    if (!listing) {
+      return new HTTPError(
+        res,
+        404,
+        `listing[${listingID}] does not exit`,
+        "listing not found"
+      );
+    }
+
+    const missions = await Mission.find({ listing: listing._id })
+      .sort({ trending: 1, createdAt: -1 })
+      .populate("tags");
+
+    missions.forEach((mission) => {
+      mission.listing = listing;
+      mission.questions = undefined;
+      mission.tasks = undefined;
+    });
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: missions.length,
+      missions,
+    });
+  } catch (error) {
+    console.log("getListingMissions_Public: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
