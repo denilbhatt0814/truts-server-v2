@@ -118,6 +118,8 @@ exports.getMissions = async (req, res) => {
           secure_url: mission.listing.dao_logo,
         },
       };
+      // TODO: update this if adding multiple tags to misison
+      mission.tags = [mission.tags];
     });
 
     const response = new HTTPResponse(res, true, 200, null, null, {
