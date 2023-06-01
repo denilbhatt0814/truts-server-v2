@@ -167,7 +167,10 @@ exports.getOneMission = async (req, res) => {
 
     const mission = await Mission.findById(missionID)
       .populate("tags")
-      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
+      .populate({
+        path: "listing",
+        select: { dao_name: 1, dao_logo: 1, slug: 1 },
+      });
 
     return new HTTPResponse(res, true, 200, null, null, { mission });
   } catch (error) {
