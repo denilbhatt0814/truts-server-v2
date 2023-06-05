@@ -254,7 +254,7 @@ exports.getListingMissions_Public = async (req, res) => {
       );
     }
 
-    const missions = await Mission.find({ listing: listing._id })
+    const missions = await Mission.find({ listing: listing._id, visible: true })
       .sort({ trending: 1, createdAt: -1 })
       .populate("tags");
 
