@@ -30,8 +30,18 @@ exports.getListing = async (req, res) => {
 // TODO: update listing thing
 exports.getListings = async (req, res) => {
   try {
+    let { count, result, meta } = req.pagination;
+
+    // NOTE: this is the most stupid way to do this: TRY TO OPTIMIZE IT
+    const listingIDs = result.map((listing) => listing._id);
+    result = await Listing.find({ _id: { $in: listingIDs } }).populate(
+      "socials"
+    );
+
     const response = new HTTPResponse(res, true, 200, null, null, {
-      ...req.pagination,
+      count,
+      result,
+      meta,
     });
 
     await redisClient.setEx(
