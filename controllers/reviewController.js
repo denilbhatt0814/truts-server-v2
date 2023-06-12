@@ -5,6 +5,7 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const User = require("../models/user");
 const { publishEvent } = require("../utils/pubSub");
+const { Listing } = require("../models/listing");
 
 exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
@@ -15,7 +16,9 @@ exports.addReview = async (req, res) => {
     const user = await User.findById(userID).select("+discord.refresh_token");
 
     // CHECK: if listing exists
-    const listing = await Dao.findById(listingID);
+    // const listing = await Dao.findById(listingID);
+    // TEST:
+    const listing = await Listing.findById(listingID).populate("socials");
     if (!listing) {
       return new HTTPError(
         res,
@@ -39,14 +42,26 @@ exports.addReview = async (req, res) => {
       );
     }
 
-    // CHECK: if user part of discord server
-    const partOfGuild = await user.isPartOfGuild(listing.guild_id);
-    if (!partOfGuild) {
-      return new HTTPError(
-        res,
-        403,
-        `user[${userID} is not part of guild[${listing.guild_id}]`
+    // TEST:
+    // look for guild_id in listing
+    const listingsDiscord = listing.socials?.find(
+      (social) => social.platform === "DISCORD"
+    );
+    // If no Discord in listing then no Check
+    if (listingsDiscord) {
+      // CHECK: if user part of discord server
+      const partOfGuild = await user.isPartOfGuild(
+        listingsDiscord.meta.guild_id
       );
+      if (!partOfGuild) {
+        return new HTTPError(
+          res,
+          403,
+          `user[${userID} is not part of guild[${listingsDiscord.meta.guild_id}]`
+        );
+      }
+    } else {
+      console.log(`addReview: No discord linked to listing[${listing._id}]`);
     }
 
     // create review
@@ -58,6 +73,7 @@ exports.addReview = async (req, res) => {
       meta: meta, // object structure in model
     });
 
+    // TEST:
     // update listing's rating and reviewCount and metas
     for (const mkey in review.meta) {
       // NOTE: this piece of code must be above update of review count
@@ -130,7 +146,9 @@ exports.getReviewByID = async (req, res) => {
     const review = await Review.findById(reviewID)
       .select({ oldData: 0 })
       .populate({ path: "user", select: { photo: 1, username: 1, name: 1 } })
-      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
+      .populate({ path: "listing", select: { name: 1, photo: 1, slug: 1 } });
+    // TEST:
+    // .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
 
     if (!review) {
       return new HTTPError(

@@ -11,7 +11,7 @@ const couponSchema = new mongoose.Schema({
   },
   listing: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Dao",
+    ref: "Listing",
     required: [
       true,
       "A coupon must be linked with a listing. Provide listingID",

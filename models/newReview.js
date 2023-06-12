@@ -16,7 +16,7 @@ const reviewSchema = new mongoose.Schema(
     },
     listing: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Dao",
+      ref: "Listing",
     },
     // TODO: can be updated to have dynamic questions
     meta: {

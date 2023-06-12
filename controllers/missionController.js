@@ -1,6 +1,8 @@
 const { default: mongoose } = require("mongoose");
 const { Mission } = require("../models/mission");
-const Listing = require("../models/dao");
+// TEST:
+// const Listing = require("../models/dao");
+const { Listing } = require("../models/listing");
 const { MissionTag } = require("../models/missionTag");
 const { TaskTemplate } = require("../models/taskTemplate");
 const { User_Mission } = require("../models/user_mission");
@@ -111,13 +113,14 @@ exports.getMissions = async (req, res) => {
     req.pagination.result.forEach((mission) => {
       delete mission["tasks"];
       delete mission["questions"];
-      // TODO: update this after change in Dao Model
-      mission.listing.name = mission.listing.dao_name;
-      mission.listing.photo = {
-        logo: {
-          secure_url: mission.listing.dao_logo,
-        },
-      };
+      // TEST: update this after change in Dao Model
+      // mission.listing.name = mission.listing.dao_name;
+      // mission.listing.photo = {
+      //   logo: {
+      //     secure_url: mission.listing.dao_logo,
+      //   },
+      // };
+
       // TODO: update this if adding multiple tags to misison
       mission.tags = [mission.tags];
     });
@@ -169,7 +172,9 @@ exports.getOneMission = async (req, res) => {
       .populate("tags")
       .populate({
         path: "listing",
-        select: { dao_name: 1, dao_logo: 1, slug: 1 },
+        // select: { dao_name: 1, dao_logo: 1, slug: 1 },
+        // TEST:
+        select: { name: 1, photo: 1, slug: 1 },
       });
 
     return new HTTPResponse(res, true, 200, null, null, { mission });

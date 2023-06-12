@@ -8,6 +8,7 @@ const {
   getListingCountInAChain,
   getListingCountInACategory,
   getListingMissions_Public,
+  addNewListing,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -17,7 +18,8 @@ const Listing = require("../models/dao");
 
 router
   .route("/listings")
-  .get(cacheRoute, paginateRequest(Listing), getListings);
+  .get(cacheRoute, paginateRequest(Listing), getListings)
+  .post(isLoggedIn, addNewListing);
 // NOTE: CacheRoute could be modified after bringing on
 //        add a community feature to this server
 router.route("/listings/chains").get(cacheRoute, getListingCountInAChain);
