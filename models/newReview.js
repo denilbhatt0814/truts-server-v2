@@ -44,6 +44,10 @@ const reviewSchema = new mongoose.Schema(
       public_address: String,
       guild_id: String,
     },
+    photo: {
+      id: { type: String },
+      secure_url: { type: String },
+    },
   },
   {
     timestamps: true,

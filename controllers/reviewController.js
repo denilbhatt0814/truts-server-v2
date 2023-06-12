@@ -5,6 +5,8 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const User = require("../models/user");
 const { publishEvent } = require("../utils/pubSub");
+const uploadToS3 = require("../utils/uploadToS3");
+const sharp = require("sharp");
 
 exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
@@ -147,5 +149,52 @@ exports.getReviewByID = async (req, res) => {
   } catch (error) {
     console.log("getReviewByID: ", error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.generateReviewOG = async (req, res) => {
+  try {
+    const reviewID = req.params.reviewID;
+    const base64Image = req.body.image;
+
+    let existingReview = await Review.findById(reviewID);
+    if (!existingReview) {
+      return new HTTPError(
+        res,
+        404,
+        `review[${reviewID}] doesn't exist`,
+        "resource not found"
+      );
+    }
+
+    // Convert base64 to Buffer
+    const base64ImageContent = base64Image.replace(
+      /^data:image\/\w+;base64,/,
+      ""
+    );
+    const inputBuffer = Buffer.from(base64ImageContent, "base64");
+    const convertedBuff = await sharp(inputBuffer).toFormat("webp").toBuffer();
+
+    const saveResp = await uploadToS3(
+      "truts-reviews",
+      reviewID + ".webp",
+      convertedBuff
+    );
+
+    existingReview.photo = {
+      id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
+      secure_url: saveResp.object_url,
+    };
+
+    await existingReview.save();
+
+    return new HTTPResponse(res, true, 201, `OG created successfully!`, null, {
+      photo: {
+        secure_url: saveResp.object_url,
+      },
+    });
+  } catch (error) {
+    console.log("generateReviewOG: ", error);
+    return new HTTPError(res, 500, error, "internal server errro");
   }
 };

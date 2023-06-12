@@ -157,6 +157,7 @@ exports.getListingReviews = async (req, res) => {
           _id: 1,
           rating: 1,
           comment: 1,
+          photo: 1,
           vote: 1,
           voteState: 1,
           user: {
@@ -209,7 +210,10 @@ exports.getListingReviews_Public = async (req, res) => {
 
     let reviews = await Review.find({
       listing: mongoose.Types.ObjectId(listingID),
-    }).populate({ path: "user", select: { _id: 1, name: 1, username: 1 } });
+    }).populate({
+      path: "user",
+      select: { _id: 1, name: 1, username: 1, photo: 1 },
+    });
 
     reviews = reviews.map((review) => {
       if (!review.user) {
