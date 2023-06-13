@@ -63,6 +63,12 @@ const dependecyCheckers = {
       return true;
     },
   },
+  INSTAGRAM_ACCOUNT: {
+    // TODO: no way to check this RN
+    exec: function (user) {
+      return true;
+    },
+  },
 };
 
 module.exports = {
@@ -677,6 +683,58 @@ module.exports = {
     },
   },
   JOINED_TELEGRAM: {
+    exec: function () {
+      return true;
+    },
+    parameters: [{ url: String }],
+    areValidArguments: function (arguments) {
+      if ("url" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TELEGRAM_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      // TEST:
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+        console.log("Added to cache");
+      } else {
+        user = JSON.parse(userFromCache);
+        console.log("from cache");
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+  },
+  FOLLOWS_ON_INSTAGRAM: {
     exec: function () {
       return true;
     },
