@@ -686,7 +686,10 @@ module.exports = {
     exec: function () {
       return true;
     },
-    parameters: [{ url: String }],
+    parameters: [
+      { field: "url", name: "URL", type: String, required: true },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
     areValidArguments: function (arguments) {
       if ("url" in arguments) {
         return true;
@@ -738,7 +741,10 @@ module.exports = {
     exec: function () {
       return true;
     },
-    parameters: [{ url: String }],
+    parameters: [
+      { field: "url", name: "URL", type: String, required: true },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
     areValidArguments: function (arguments) {
       if ("url" in arguments) {
         return true;
