@@ -35,7 +35,7 @@ router
       {
         path: "listing",
         from: "listings",
-        select: { name: 1, photo: 1, chains: 1 },
+        select: { name: 1, photo: 1, chains: 1, slug: 1 },
       },
       { path: "tags", from: "missiontags" },
     ]),

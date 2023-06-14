@@ -1482,14 +1482,17 @@ exports.getMyReviews = async (req, res) => {
             username: 1,
             photo: 1,
           },
+          // TEST:
           listing: {
             _id: 1,
-            name: "$listing.dao_name",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            name: 1,
+            photo: 1,
+            // name: "$listing.dao_name",
+            // photo: {
+            //   logo: {
+            //     secure_url: "$listing.dao_logo",
+            //   },
+            // },
             slug: 1,
           },
           createdAt: 1,

@@ -147,8 +147,6 @@ exports.getReviewByID = async (req, res) => {
       .select({ oldData: 0 })
       .populate({ path: "user", select: { photo: 1, username: 1, name: 1 } })
       .populate({ path: "listing", select: { name: 1, photo: 1, slug: 1 } });
-    // TEST:
-    // .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
 
     if (!review) {
       return new HTTPError(

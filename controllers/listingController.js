@@ -17,8 +17,7 @@ const { publishEvent } = require("../utils/pubSub");
 exports.getListing = async (req, res) => {
   try {
     const slug = req.params.slug;
-    // const listing = await Dao.findOne({ slug });
-    // TEST:
+
     const listing = await Listing.findOne({ slug }).populate("socials");
     return new HTTPResponse(res, true, 200, null, null, { listing });
   } catch (error) {
@@ -68,9 +67,7 @@ exports.getListings = async (req, res) => {
  * },
  * }
  */
-
-// TEST:
-exports.getSupportedSocials = async (req, res) => {
+exports.getSupportedPlatforms = async (req, res) => {
   try {
     return new HTTPResponse(res, true, 200, null, null, { supportedPlatforms });
   } catch (error) {
@@ -163,8 +160,6 @@ exports.getListingReviews = async (req, res) => {
     const userID = req.user._id;
     const listingID = req.params.listingID;
 
-    // const listing = await Dao.findById(listingID);
-    // TEST:
     const listing = await Listing.findById(listingID);
     if (!listing) {
       return new HTTPError(
@@ -324,8 +319,6 @@ exports.getListingReviews_Public = async (req, res) => {
   try {
     const listingID = req.params.listingID;
 
-    // const listing = await Dao.findById(listingID).select({ _id: 1 });
-    // TEST:
     const listing = await Listing.findById(listingID).select({ _id: 1 });
     if (!listing) {
       return new HTTPError(
@@ -338,7 +331,10 @@ exports.getListingReviews_Public = async (req, res) => {
 
     let reviews = await Review.find({
       listing: mongoose.Types.ObjectId(listingID),
-    }).populate({ path: "user", select: { _id: 1, name: 1, username: 1 } });
+    }).populate({
+      path: "user",
+      select: { _id: 1, name: 1, username: 1, photo: 1 },
+    });
 
     reviews = reviews.map((review) => {
       if (!review.user) {
@@ -368,13 +364,6 @@ exports.getListingMissions_Public = async (req, res) => {
   try {
     const listingID = req.params.listingID;
 
-    // const listing = await Dao.findById(listingID).select({
-    //   _id: 1,
-    //   dao_name: 1,
-    //   dao_logo: 1,
-    //   slug: 1,
-    // });
-    // TEST:
     const listing = await Listing.findById(listingID).select({
       _id: 1,
       name: 1,
@@ -497,12 +486,12 @@ exports.getListingCountInAChain = async (req, res) => {
     const agg = [
       {
         $unwind: {
-          path: "$chain",
+          path: "$chains",
         },
       },
       {
         $group: {
-          _id: "$chain",
+          _id: "$chains",
           count: {
             $sum: 1,
           },
@@ -521,8 +510,7 @@ exports.getListingCountInAChain = async (req, res) => {
         },
       },
     ];
-    // const result = await Dao.aggregate(agg);
-    // TEST:
+
     const result = await Listing.aggregate(agg);
     const response = new HTTPResponse(res, true, 200, null, null, {
       count: result.length,
@@ -544,15 +532,11 @@ exports.getListingCountInACategory = async (req, res) => {
     const agg = [
       {
         $unwind: {
-          // path: "$dao_category",
-          // TEST:
           path: "$categories",
         },
       },
       {
         $group: {
-          // _id: "$dao_category",
-          // TEST:
           _id: "$categories",
           count: {
             $sum: 1,
@@ -572,8 +556,7 @@ exports.getListingCountInACategory = async (req, res) => {
         },
       },
     ];
-    // const result = await Dao.aggregate(agg);
-    // TEST:
+
     const result = await Listing.aggregate(agg);
 
     const response = new HTTPResponse(res, true, 200, null, null, {
