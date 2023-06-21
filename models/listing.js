@@ -58,6 +58,19 @@ const listingSchema = new mongoose.Schema(
         },
       },
     },
+    meta: {
+      twitter_followers: {
+        type: Number,
+        default: 0,
+        select: false,
+      },
+      discord_members: {
+        type: Number,
+        default: 0,
+        select: false,
+      },
+      select: false,
+    },
     reviews: {
       rating: { type: Number, default: 0 },
       count: {
