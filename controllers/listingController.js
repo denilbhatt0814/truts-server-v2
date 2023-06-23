@@ -7,6 +7,7 @@ const { User_Mission } = require("../models/user_mission");
 const WhereClause = require("../utils/whereClause");
 const redisClient = require("../databases/redis-client");
 const { Mission } = require("../models/mission");
+const { XpTxn } = require("../models/xpTxn");
 const {
   supportedPlatforms,
   Listing_Social,
@@ -30,12 +31,6 @@ exports.getListing = async (req, res) => {
 exports.getListings = async (req, res) => {
   try {
     let { count, result, meta } = req.pagination;
-
-    // NOTE: this is the most stupid way to do this: TRY TO OPTIMIZE IT
-    const listingIDs = result.map((listing) => listing._id);
-    result = await Listing.find({ _id: { $in: listingIDs } }).populate(
-      "socials"
-    );
 
     const response = new HTTPResponse(res, true, 200, null, null, {
       count,
@@ -111,7 +106,7 @@ exports.addNewListing = async (req, res) => {
       categories,
       chains,
       slug,
-      submitter: user._id,
+      submission: { submitter: user._id, submitterIsRewarded: false }, // TEST:
     });
     await newListing.save({ session });
     console.log({ newListing });
@@ -126,7 +121,8 @@ exports.addNewListing = async (req, res) => {
     console.log("finding new listing...");
     newListing = await Listing.findOne({ _id: newListing._id })
       .populate("socials")
-      .populate("submitter", { username: 1, name: 1, photo: 1 });
+      .populate("submission.submitter", { username: 1, name: 1, photo: 1 });
+    // TODO: update DISNOTIFY action here
 
     console.log({ newListing });
     // TEST: trigger event: for disnotify and service
@@ -151,6 +147,96 @@ exports.addNewListing = async (req, res) => {
     console.log(error);
     await session.abortTransaction();
     await session.endSession();
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.verifyListing = async (req, res) => {
+  const session = await mongoose.startSession();
+  await session.startTransaction();
+  try {
+    const { listingID } = req.body;
+    const userID = req.user._id;
+
+    // check if listing exists
+    let existingListing = await Listing.findById(listingID).session(session);
+    if (!existingListing) {
+      await session.abortTransaction();
+      await session.endSession();
+      return new HTTPError(
+        res,
+        404,
+        `Listing[${listingID}] doesn't exist`,
+        "listing not found"
+      );
+    }
+    if (existingListing.verified) {
+      await session.abortTransaction();
+      await session.endSession();
+      return new HTTPResponse(
+        res,
+        true,
+        200,
+        `Listing[${listingID}] was already verified`,
+        null,
+        { listing: existingListing }
+      );
+    }
+
+    let submittersReward;
+    if (
+      existingListing.submission.type === "USER" &&
+      !existingListing.submission.submitterIsRewarded
+    ) {
+      // reward the submitter
+      submittersReward = new XpTxn({
+        reason: {
+          tag: "listing-submission",
+          id: listingID,
+        },
+        value: 500,
+        user: mongoose.Types.ObjectId(existingListing.submission.submitter),
+        meta: {
+          title: `Listing submission: ${existingListing.name}`,
+          description: "",
+        },
+      });
+
+      submittersReward = await submittersReward.save({ session });
+    }
+
+    existingListing = await Listing.findByIdAndUpdate(
+      listingID,
+      {
+        $set: {
+          visible: true,
+          verified: true,
+          "submission.verifiedAt": new Date(),
+          "submission.verifiedBy": mongoose.Types.ObjectId(userID),
+          "submission.submitterIsRewarded": submittersReward ? true : false,
+        },
+      },
+      { session, new: true }
+    )
+      .select("+submission")
+      .populate("socials");
+
+    await session.commitTransaction();
+    await session.endSession();
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Listing[${listingID}] verified successfully`,
+      null,
+      {
+        listing: existingListing,
+      }
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    console.log("verifyListing: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

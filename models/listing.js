@@ -59,15 +59,14 @@ const listingSchema = new mongoose.Schema(
       },
     },
     meta: {
+      // TODO: auto updates for these
       twitter_followers: {
         type: Number,
         default: 0,
-        select: false,
       },
       discord_members: {
         type: Number,
         default: 0,
-        select: false,
       },
       select: false,
     },
@@ -94,9 +93,26 @@ const listingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    submitter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    submission: {
+      type: {
+        type: String,
+        enum: ["USER", "AUTO"],
+        default: "USER",
+      },
+      submitter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      submitterIsRewarded: {
+        type: Boolean,
+      },
+      verifiedAt: {
+        type: Date,
+      },
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+      },
       select: false,
     },
   },
