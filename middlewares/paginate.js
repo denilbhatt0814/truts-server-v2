@@ -1,7 +1,7 @@
 const HTTPError = require("../utils/httpError");
 
 // take in model and request
-const paginateRequest = (Model, lookupOptions) => {
+const paginateRequest = (Model, lookupOptions, additionalToPipeline) => {
   return async (req, res, next) => {
     try {
       let bigQuery = req.query;
@@ -29,7 +29,8 @@ const paginateRequest = (Model, lookupOptions) => {
         sortObject,
         resultPerPage,
         skipVal,
-        lookupOptions
+        lookupOptions,
+        additionalToPipeline
       );
       const countPipeline = buildAggregationPipeline(
         "COUNT",
@@ -37,7 +38,8 @@ const paginateRequest = (Model, lookupOptions) => {
         sortObject,
         resultPerPage,
         skipVal,
-        lookupOptions
+        lookupOptions,
+        additionalToPipeline
       );
 
       let result = Model.aggregate(joinPipeline);
@@ -256,10 +258,12 @@ function buildAggregationPipeline(
   sortObject,
   resultPerPage,
   skipVal,
-  lookupOptions
+  lookupOptions,
+  additionalToPipeline
 ) {
   let pipeline = [];
-  if (lookupOptions) {
+  // CHECK: if not empty object
+  if (lookupOptions && lookupOptions.constructor !== Object) {
     const lookupObjects = parseLookupOptions(lookupOptions);
     pipeline.push(...lookupObjects);
   }
@@ -280,6 +284,12 @@ function buildAggregationPipeline(
 
     default:
       throw new Error("Invalid aggregation type. (JOIN | COUNT)");
+  }
+
+  // finally
+  // CHECK: if not empty object
+  if (additionalToPipeline && additionalToPipeline.constructor !== Object) {
+    pipeline.push(...additionalToPipeline);
   }
 
   return pipeline;

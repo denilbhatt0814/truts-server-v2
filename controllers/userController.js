@@ -34,6 +34,7 @@ const {
 const { default: axios } = require("axios");
 const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
+const { Listing_Social } = require("../models/listing_social");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -1241,54 +1242,121 @@ exports.getMyMatchWithListedGuilds = async (req, res) => {
       );
     }
 
-    const guildIds = user.discord.guilds.map((guild) => guild.id);
-    let listings = await Dao.find(
-      { guild_id: { $in: guildIds }, verified_status: true },
+    // TEST:
+    const pipeline = [
       {
-        dao_name: 1,
-        slug: 1,
-        guild_id: 1,
-        average_rating: 1,
-        dao_cover: 1,
-        dao_logo: 1,
-        discord_link: 1,
-        twitter_link: 1,
-        website_link: 1,
-        verified_status: 1,
-        review_count: 1,
-        twitter_followers: 1,
-        discord_members: 1,
-      }
-    );
-    listings = listings.map((listing) => {
-      return {
-        name: listing.dao_name,
-        ratings: {
-          average: listing.average_rating,
-          count: listing.review_count,
+        $match: {
+          _id: user._id,
         },
-        discord: {
-          id: listing.guild_id,
-          link: listing.discord_link,
-          count: listing.discord_members,
+      },
+      {
+        $unwind: {
+          path: "$discord.guilds",
         },
-        twitter: {
-          // id: "",
-          link: listing.twitter_link,
-          count: listing.twitter_followers,
+      },
+      {
+        $lookup: {
+          from: "listing_socials",
+          localField: "discord.guilds.id",
+          foreignField: "meta.guild_id",
+          as: "discordSocial",
         },
-        website: listing.website_link,
-        image: {
-          logo: {
-            url: listing.dao_logo,
-          },
-          cover: {
-            url: listing.dao_cover,
+      },
+      {
+        $match: {
+          discordSocial: {
+            $ne: [],
           },
         },
-        slug: listing.slug,
-      };
-    });
+      },
+      {
+        $unwind: {
+          path: "$discordSocial",
+        },
+      },
+      {
+        $lookup: {
+          from: "listings",
+          localField: "discordSocial.listing",
+          foreignField: "_id",
+          as: "listing",
+        },
+      },
+      {
+        $unwind: {
+          path: "$listing",
+        },
+      },
+      {
+        $project: {
+          "listing._id": 1,
+          "listing.name": 1,
+          "listing.photo": 1,
+          "listing.reviews": 1,
+          "listing.slug": 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "listing_socials",
+          localField: "listing._id",
+          foreignField: "listing",
+          as: "listing.socials",
+        },
+      },
+    ];
+
+    const user_listings = await User.aggregate(pipeline);
+    const listings = user_listings.map((user_listing) => user_listing.listing);
+
+    // const guildIds = user.discord.guilds.map((guild) => guild.id);
+    // let listings = await Dao.find(
+    //   { guild_id: { $in: guildIds }, verified_status: true },
+    //   {
+    //     dao_name: 1,
+    //     slug: 1,
+    //     guild_id: 1,
+    //     average_rating: 1,
+    //     dao_cover: 1,
+    //     dao_logo: 1,
+    //     discord_link: 1,
+    //     twitter_link: 1,
+    //     website_link: 1,
+    //     verified_status: 1,
+    //     review_count: 1,
+    //     twitter_followers: 1,
+    //     discord_members: 1,
+    //   }
+    // );
+    // listings = listings.map((listing) => {
+    //   return {
+    //     name: listing.dao_name,
+    //     ratings: {
+    //       average: listing.average_rating,
+    //       count: listing.review_count,
+    //     },
+    //     discord: {
+    //       id: listing.guild_id,
+    //       link: listing.discord_link,
+    //       count: listing.discord_members,
+    //     },
+    //     twitter: {
+    //       // id: "",
+    //       link: listing.twitter_link,
+    //       count: listing.twitter_followers,
+    //     },
+    //     website: listing.website_link,
+    //     image: {
+    //       logo: {
+    //         url: listing.dao_logo,
+    //       },
+    //       cover: {
+    //         url: listing.dao_cover,
+    //       },
+    //     },
+    //     slug: listing.slug,
+    //   };
+    // });
 
     return new HTTPResponse(res, true, 200, null, null, {
       count: listings.length,
@@ -1388,7 +1456,9 @@ exports.getMyReviews = async (req, res) => {
       },
       {
         $lookup: {
-          from: "daos",
+          // from: "daos",
+          // TEST
+          from: "listings",
           localField: "listing",
           foreignField: "_id",
           as: "listing",
@@ -1412,14 +1482,17 @@ exports.getMyReviews = async (req, res) => {
             username: 1,
             photo: 1,
           },
+          // TEST:
           listing: {
             _id: 1,
-            name: "$listing.dao_name",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            name: 1,
+            photo: 1,
+            // name: "$listing.dao_name",
+            // photo: {
+            //   logo: {
+            //     secure_url: "$listing.dao_logo",
+            //   },
+            // },
             slug: 1,
           },
           createdAt: 1,
@@ -1559,7 +1632,9 @@ exports.getUserReviews = async (req, res) => {
       },
       {
         $lookup: {
-          from: "daos",
+          // from: "daos",
+          // TEST:
+          from: "listings",
           localField: "listing",
           foreignField: "_id",
           as: "listing",
@@ -1583,14 +1658,11 @@ exports.getUserReviews = async (req, res) => {
             username: 1,
             photo: 1,
           },
+          // TEST:
           listing: {
             _id: 1,
-            name: "$listing.dao_name",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            name: 1,
+            photo: 1,
             slug: 1,
           },
           createdAt: 1,
@@ -1646,7 +1718,9 @@ exports.getMyCompletedMissions = async (req, res) => {
       },
       {
         $lookup: {
-          from: "daos",
+          // from: "daos",
+          // TEST:
+          from: "listings",
           localField: "mission.listing",
           foreignField: "_id",
           as: "listing",
@@ -1702,13 +1776,9 @@ exports.getMyCompletedMissions = async (req, res) => {
           description: 1,
           tags: 1,
           listing: {
-            name: "$listing.dao_name",
-            slug: "$listing.slug",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            name: 1,
+            slug: 1,
+            photo: 1,
           },
           listingXP: 1,
           trutsXP: 1,
@@ -1792,54 +1862,121 @@ exports.getMatchWithListedGuilds_Public = async (req, res) => {
         "user not found"
       );
     }
-    const guildIds = user.discord.guilds.map((guild) => guild.id);
-    let listings = await Dao.find(
-      { guild_id: { $in: guildIds }, verified_status: true },
+
+    // TEST:
+    const pipeline = [
       {
-        dao_name: 1,
-        slug: 1,
-        guild_id: 1,
-        average_rating: 1,
-        dao_cover: 1,
-        dao_logo: 1,
-        discord_link: 1,
-        twitter_link: 1,
-        website_link: 1,
-        verified_status: 1,
-        review_count: 1,
-        twitter_followers: 1,
-        discord_members: 1,
-      }
-    );
-    listings = listings.map((listing) => {
-      return {
-        name: listing.dao_name,
-        ratings: {
-          average: listing.average_rating,
-          count: listing.review_count,
+        $match: {
+          username: username,
         },
-        discord: {
-          id: listing.guild_id,
-          link: listing.discord_link,
-          count: listing.discord_members,
+      },
+      {
+        $unwind: {
+          path: "$discord.guilds",
         },
-        twitter: {
-          // id: "",
-          link: listing.twitter_link,
-          count: listing.twitter_followers,
+      },
+      {
+        $lookup: {
+          from: "listing_socials",
+          localField: "discord.guilds.id",
+          foreignField: "meta.guild_id",
+          as: "discordSocial",
         },
-        website: listing.website_link,
-        image: {
-          logo: {
-            url: listing.dao_logo,
-          },
-          cover: {
-            url: listing.dao_cover,
+      },
+      {
+        $match: {
+          discordSocial: {
+            $ne: [],
           },
         },
-        slug: listing.slug,
-      };
-    });
+      },
+      {
+        $unwind: {
+          path: "$discordSocial",
+        },
+      },
+      {
+        $lookup: {
+          from: "listings",
+          localField: "discordSocial.listing",
+          foreignField: "_id",
+          as: "listing",
+        },
+      },
+      {
+        $unwind: {
+          path: "$listing",
+        },
+      },
+      {
+        $project: {
+          "listing._id": 1,
+          "listing.name": 1,
+          "listing.photo": 1,
+          "listing.reviews": 1,
+          "listing.slug": 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "listing_socials",
+          localField: "listing._id",
+          foreignField: "listing",
+          as: "listing.socials",
+        },
+      },
+    ];
+
+    const user_listings = await User.aggregate(pipeline);
+    const listings = user_listings.map((user_listing) => user_listing.listing);
+
+    // let listings = await Dao.find(
+    //   { guild_id: { $in: guildIds }, verified_status: true },
+    //   {
+    //     dao_name: 1,
+    //     slug: 1,
+    //     guild_id: 1,
+    //     average_rating: 1,
+    //     dao_cover: 1,
+    //     dao_logo: 1,
+    //     discord_link: 1,
+    //     twitter_link: 1,
+    //     website_link: 1,
+    //     verified_status: 1,
+    //     review_count: 1,
+    //     twitter_followers: 1,
+    //     discord_members: 1,
+    //   }
+    // );
+    // listings = listings.map((listing) => {
+    //   return {
+    //     name: listing.dao_name,
+    //     ratings: {
+    //       average: listing.average_rating,
+    //       count: listing.review_count,
+    //     },
+    //     discord: {
+    //       id: listing.guild_id,
+    //       link: listing.discord_link,
+    //       count: listing.discord_members,
+    //     },
+    //     twitter: {
+    //       // id: "",
+    //       link: listing.twitter_link,
+    //       count: listing.twitter_followers,
+    //     },
+    //     website: listing.website_link,
+    //     image: {
+    //       logo: {
+    //         url: listing.dao_logo,
+    //       },
+    //       cover: {
+    //         url: listing.dao_cover,
+    //       },
+    //     },
+    //     slug: listing.slug,
+    //   };
+    // });
 
     return new HTTPResponse(res, true, 200, null, null, {
       count: listings.length,
@@ -1871,7 +2008,7 @@ exports.getUserReviews_Public = async (req, res) => {
       user: mongoose.Types.ObjectId(user._id),
     }).populate({
       path: "listing",
-      select: { dao_name: 1, dao_logo: 1, slug: 1 },
+      select: { name: 1, photo: 1, slug: 1 },
     });
 
     reviews = reviews.map((review) => {
@@ -1946,7 +2083,9 @@ exports.getUserCompletedMissions_Public = async (req, res) => {
       },
       {
         $lookup: {
-          from: "daos",
+          // from: "daos",
+          // TEST:
+          from: "listings",
           localField: "mission.listing",
           foreignField: "_id",
           as: "listing",
@@ -2002,13 +2141,9 @@ exports.getUserCompletedMissions_Public = async (req, res) => {
           description: 1,
           tags: 1,
           listing: {
-            name: "$listing.dao_name",
-            slug: "$listing.slug",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            name: 1,
+            slug: 1,
+            photo: 1,
           },
           listingXP: 1,
           trutsXP: 1,

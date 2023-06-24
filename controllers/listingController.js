@@ -7,11 +7,19 @@ const { User_Mission } = require("../models/user_mission");
 const WhereClause = require("../utils/whereClause");
 const redisClient = require("../databases/redis-client");
 const { Mission } = require("../models/mission");
+const { XpTxn } = require("../models/xpTxn");
+const {
+  supportedPlatforms,
+  Listing_Social,
+} = require("../models/listing_social");
+const { Listing } = require("../models/listing");
+const { publishEvent } = require("../utils/pubSub");
 
 exports.getListing = async (req, res) => {
   try {
     const slug = req.params.slug;
-    const listing = await Dao.findOne({ slug });
+
+    const listing = await Listing.findOne({ slug }).populate("socials");
     return new HTTPResponse(res, true, 200, null, null, { listing });
   } catch (error) {
     console.log("getListing: ", error);
@@ -19,10 +27,15 @@ exports.getListing = async (req, res) => {
   }
 };
 
+// TODO: update listing thing
 exports.getListings = async (req, res) => {
   try {
+    let { count, result, meta } = req.pagination;
+
     const response = new HTTPResponse(res, true, 200, null, null, {
-      ...req.pagination,
+      count,
+      result,
+      meta,
     });
 
     await redisClient.setEx(
@@ -38,12 +51,202 @@ exports.getListings = async (req, res) => {
   }
 };
 
+// TODO: MAKE IT PROTECTED
+/**
+ * socials: {
+ *      TWITTER: {
+ *    url:
+ * },
+ *      DISCORD: {
+ *
+ * },
+ * }
+ */
+exports.getSupportedPlatforms = async (req, res) => {
+  try {
+    return new HTTPResponse(res, true, 200, null, null, { supportedPlatforms });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.addNewListing = async (req, res) => {
+  const session = await mongoose.startSession();
+  await session.startTransaction();
+  try {
+    // get the required data from body
+    let { name, oneliner, description, slug, categories, chains, socials } =
+      req.body;
+
+    console.log(req.body);
+
+    const user = req.user;
+
+    // make slug generator
+    if (slug) {
+      const slugIsAvailable = await Listing.isSlugAvailable(slug);
+      if (!slugIsAvailable) {
+        return new HTTPError(
+          res,
+          409,
+          `${slug} is not available as slug`,
+          "slug not available"
+        );
+      }
+    } else {
+      slug = await Listing.generateSlug(name);
+    }
+    console.log(slug);
+
+    // Shape in model form:
+    let newListing = await Listing({
+      name,
+      oneliner,
+      description,
+      categories,
+      chains,
+      slug,
+      submission: { submitter: user._id, submitterIsRewarded: false }, // TEST:
+    });
+    await newListing.save({ session });
+    console.log({ newListing });
+    // verify and add all socials
+    socials = Listing_Social.transformObjectToArray(socials, newListing._id);
+    console.log({ socials });
+
+    let social_res = await Listing_Social.insertMany(socials, { session });
+    console.log({ social_res });
+    await session.commitTransaction();
+    await session.endSession();
+    console.log("finding new listing...");
+    newListing = await Listing.findOne({ _id: newListing._id })
+      .populate("socials")
+      .populate("submission.submitter", { username: 1, name: 1, photo: 1 });
+    // TODO: update DISNOTIFY action here
+
+    console.log({ newListing });
+    // TEST: trigger event: for disnotify and service
+    await publishEvent(
+      "listing:create",
+      JSON.stringify({
+        data: newListing,
+      })
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      "New Listing created successfully!",
+      null,
+      {
+        listing: newListing,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
+    await session.endSession();
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.verifyListing = async (req, res) => {
+  const session = await mongoose.startSession();
+  await session.startTransaction();
+  try {
+    const { listingID } = req.body;
+    const userID = req.user._id;
+
+    // check if listing exists
+    let existingListing = await Listing.findById(listingID).session(session);
+    if (!existingListing) {
+      await session.abortTransaction();
+      await session.endSession();
+      return new HTTPError(
+        res,
+        404,
+        `Listing[${listingID}] doesn't exist`,
+        "listing not found"
+      );
+    }
+    if (existingListing.verified) {
+      await session.abortTransaction();
+      await session.endSession();
+      return new HTTPResponse(
+        res,
+        true,
+        200,
+        `Listing[${listingID}] was already verified`,
+        null,
+        { listing: existingListing }
+      );
+    }
+
+    let submittersReward;
+    if (
+      existingListing.submission.type === "USER" &&
+      !existingListing.submission.submitterIsRewarded
+    ) {
+      // reward the submitter
+      submittersReward = new XpTxn({
+        reason: {
+          tag: "listing-submission",
+          id: listingID,
+        },
+        value: 500,
+        user: mongoose.Types.ObjectId(existingListing.submission.submitter),
+        meta: {
+          title: `Listing submission: ${existingListing.name}`,
+          description: "",
+        },
+      });
+
+      submittersReward = await submittersReward.save({ session });
+    }
+
+    existingListing = await Listing.findByIdAndUpdate(
+      listingID,
+      {
+        $set: {
+          visible: true,
+          verified: true,
+          "submission.verifiedAt": new Date(),
+          "submission.verifiedBy": mongoose.Types.ObjectId(userID),
+          "submission.submitterIsRewarded": submittersReward ? true : false,
+        },
+      },
+      { session, new: true }
+    )
+      .select("+submission")
+      .populate("socials");
+
+    await session.commitTransaction();
+    await session.endSession();
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Listing[${listingID}] verified successfully`,
+      null,
+      {
+        listing: existingListing,
+      }
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    console.log("verifyListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.getListingReviews = async (req, res) => {
   try {
     const userID = req.user._id;
     const listingID = req.params.listingID;
 
-    const listing = await Dao.findById(listingID);
+    const listing = await Listing.findById(listingID);
     if (!listing) {
       return new HTTPError(
         res,
@@ -141,7 +344,9 @@ exports.getListingReviews = async (req, res) => {
       },
       {
         $lookup: {
-          from: "daos",
+          // from: "daos",
+          // TEST:
+          from: "listings",
           localField: "listing",
           foreignField: "_id",
           as: "listing",
@@ -168,12 +373,15 @@ exports.getListingReviews = async (req, res) => {
           },
           listing: {
             _id: 1,
-            name: "$listing.dao_name",
-            photo: {
-              logo: {
-                secure_url: "$listing.dao_logo",
-              },
-            },
+            // TEST:
+            // name: "$listing.dao_name",
+            // photo: {
+            //   logo: {
+            //     secure_url: "$listing.dao_logo",
+            //   },
+            // },
+            name: 1,
+            photo: 1,
             slug: 1,
           },
           createdAt: 1,
@@ -198,7 +406,7 @@ exports.getListingReviews_Public = async (req, res) => {
   try {
     const listingID = req.params.listingID;
 
-    const listing = await Dao.findById(listingID).select({ _id: 1 });
+    const listing = await Listing.findById(listingID).select({ _id: 1 });
     if (!listing) {
       return new HTTPError(
         res,
@@ -243,10 +451,10 @@ exports.getListingMissions_Public = async (req, res) => {
   try {
     const listingID = req.params.listingID;
 
-    const listing = await Dao.findById(listingID).select({
+    const listing = await Listing.findById(listingID).select({
       _id: 1,
-      dao_name: 1,
-      dao_logo: 1,
+      name: 1,
+      photo: 1,
       slug: 1,
     });
     if (!listing) {
@@ -283,7 +491,9 @@ exports.getListingLeaderboard_Public = async (req, res) => {
     const listingID = req.params.listingID;
     const limit = req.query.limit ?? 10;
 
-    const listing = await Dao.findById(listingID).select({ _id: 1 });
+    // const listing = await Dao.findById(listingID).select({ _id: 1 });
+    // TEST:
+    const listing = await Listing.findById(listingID).select({ _id: 1 });
     if (!listing) {
       return new HTTPError(
         res,
@@ -363,12 +573,12 @@ exports.getListingCountInAChain = async (req, res) => {
     const agg = [
       {
         $unwind: {
-          path: "$chain",
+          path: "$chains",
         },
       },
       {
         $group: {
-          _id: "$chain",
+          _id: "$chains",
           count: {
             $sum: 1,
           },
@@ -387,7 +597,8 @@ exports.getListingCountInAChain = async (req, res) => {
         },
       },
     ];
-    const result = await Dao.aggregate(agg);
+
+    const result = await Listing.aggregate(agg);
     const response = new HTTPResponse(res, true, 200, null, null, {
       count: result.length,
       result,
@@ -408,12 +619,12 @@ exports.getListingCountInACategory = async (req, res) => {
     const agg = [
       {
         $unwind: {
-          path: "$dao_category",
+          path: "$categories",
         },
       },
       {
         $group: {
-          _id: "$dao_category",
+          _id: "$categories",
           count: {
             $sum: 1,
           },
@@ -432,7 +643,8 @@ exports.getListingCountInACategory = async (req, res) => {
         },
       },
     ];
-    const result = await Dao.aggregate(agg);
+
+    const result = await Listing.aggregate(agg);
 
     const response = new HTTPResponse(res, true, 200, null, null, {
       count: result.length,

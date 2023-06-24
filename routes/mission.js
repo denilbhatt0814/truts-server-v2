@@ -34,8 +34,8 @@ router
     paginateRequest(Mission, [
       {
         path: "listing",
-        from: "daos",
-        select: { dao_name: 1, dao_logo: 1, chain: 1 },
+        from: "listings",
+        select: { name: 1, photo: 1, chains: 1, slug: 1 },
       },
       { path: "tags", from: "missiontags" },
     ]),
