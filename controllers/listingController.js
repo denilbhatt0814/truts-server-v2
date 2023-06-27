@@ -488,6 +488,39 @@ exports.getListingMissions_Public = async (req, res) => {
 
 exports.getListingLeaderboard_Public = async (req, res) => {
   try {
+    const limit = req.query.limit ?? 10;
+
+    let leaderboard = await Listing.find({ visible: true })
+      .select({
+        _id: 1,
+        slug: 1,
+        name: 1,
+        "reviews.count": 1,
+        "reviews.rating": 1,
+        "photo.logo": 1,
+      })
+      .sort({ "reviews.count": -1 })
+      .limit(limit)
+      .populate("socials");
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count: leaderboard.length,
+      leaderboard,
+    });
+    await redisClient.setEx(
+      req.originalUrl,
+      2 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
+  } catch (error) {
+    console.log("getListingLeaderboard_Public: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getLeaderboardOfListing_Public = async (req, res) => {
+  try {
     const listingID = req.params.listingID;
     const limit = req.query.limit ?? 10;
 
@@ -561,7 +594,7 @@ exports.getListingLeaderboard_Public = async (req, res) => {
       leaderboard,
     });
   } catch (error) {
-    console.log("getListingLeaderboard_Public: ", error);
+    console.log("getLeaderboardOfListing_Public: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

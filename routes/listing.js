@@ -12,6 +12,7 @@ const {
   getSupportedSocials,
   getSupportedPlatforms,
   verifyListing,
+  getLeaderboardOfListing_Public,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -42,9 +43,7 @@ router
 router.route("/listing/verify").post(isLoggedIn, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
-router
-  .route("/listing/supported-platforms")
-  .get(cacheRoute, getSupportedPlatforms);
+router.route("/listing/supported-platforms").get(getSupportedPlatforms);
 router.route("/listing/:slug").get(getListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
@@ -59,7 +58,11 @@ router
   .get(getListingMissions_Public);
 
 router
+  .route("/public/listing/leaderboard")
+  .get(cacheRoute, getListingLeaderboard_Public);
+
+router
   .route("/public/listing/:listingID/leaderboard")
-  .get(getListingLeaderboard_Public);
+  .get(getLeaderboardOfListing_Public);
 
 module.exports = router;
