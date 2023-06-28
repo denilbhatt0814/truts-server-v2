@@ -8,15 +8,23 @@ const {
   getMissionCompletedBy,
   createMissionV2,
   specialClaimMissionCompletion,
+  deleteMission,
+  updateMission,
 } = require("../controllers/missionController");
 const {
   answerToQuestion,
   addQuestionToMission,
+  deleteQuestionFromMission,
+  updateQuestionInMission,
+  reOrderQuiz,
 } = require("../controllers/quizController");
 const {
   performTask,
   checkTaskDependency,
   addOneTaskToMission,
+  deleteTaskFromMission,
+  reOrderTask,
+  updateTaskInMission,
 } = require("../controllers/taskController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -42,7 +50,13 @@ router
     getMissions
   )
   .post(createMissionV2);
-router.route("/mission/:missionID").get(getOneMission);
+
+// TEST : AKSHAY
+router
+  .route("/mission/:missionID")
+  .get(getOneMission)
+  .delete(deleteMission)
+  .patch(updateMission);
 router.route("/mission/:missionID/completed-by").get(getMissionCompletedBy);
 
 router.get(
@@ -53,6 +67,20 @@ router.get(
 
 router.route("/mission/:missionID/task").post(addOneTaskToMission);
 router.route("/mission/:missionID/quiz").post(addQuestionToMission);
+
+// TEST : AKSHAY
+router.route("/mission/:missionID/task/reorder").patch(reOrderTask);
+router.route("/mission/:missionID/quiz/reorder").patch(reOrderQuiz);
+
+// TEST : AKSHAY
+router
+  .route("/mission/:missionID/task/:taskID")
+  .delete(deleteTaskFromMission)
+  .patch(updateTaskInMission);
+router
+  .route("/mission/:missionID/quiz/:questionID")
+  .delete(deleteQuestionFromMission)
+  .patch(updateQuestionInMission);
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);

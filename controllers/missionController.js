@@ -11,6 +11,7 @@ const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
 const Coupon = require("../models/coupon");
 const { UD_MISSION_ID } = require("../config/config");
+const CronJob = require("cron").CronJob;
 
 /**
  * NOTE:
@@ -98,10 +99,79 @@ exports.createMissionV2 = async (req, res) => {
 };
 
 // TODO:
+// TEST : AKSHAY
 exports.deleteMission = async (req, res) => {
   try {
+    const missionID = req.params.missionID;
+
+    const deletedMission = await Mission.findByIdAndDelete(missionID);
+    if (!deletedMission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission deleted successfully!",
+      null,
+      {
+        mission: deletedMission,
+      }
+    );
   } catch (error) {
     console.log("deleteMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.updateMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const { description, visible, listingXP, tags } = req.body;
+
+    const mission = await Mission.findById(missionID);
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    for (let tagId of tags) {
+      const result = await MissionTag.findById(tagId);
+      if (!result)
+        return new HTTPError(
+          res,
+          404,
+          `tag[${tagId}] doesn't exist`,
+          "tag not found"
+        );
+    }
+
+    const updatedMission = await Mission.findByIdAndUpdate(
+      missionID,
+      { description, visible, listingXP, tags },
+      { new: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission updated successfully!",
+      null,
+      {
+        mission: updatedMission,
+      }
+    );
+  } catch (error) {
+    console.log("updateMission: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
