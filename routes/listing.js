@@ -12,6 +12,9 @@ const {
   getSupportedSocials,
   getSupportedPlatforms,
   verifyListing,
+  updateListing,
+  updateSocial,
+  updateListingSocails,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -37,6 +40,12 @@ router
     getListings
   )
   .post(isLoggedIn, addNewListing);
+console.log("testing1");
+// TEST : AKSHAY
+router.route("/listing/:listingID").patch(updateListing);
+
+router.route("/listing/:listingID/socials").patch(updateListingSocails);
+
 // NOTE: CacheRoute could be modified after bringing on
 //        verify a community feature to this server
 router.route("/listing/verify").post(isLoggedIn, verifyListing);

@@ -151,6 +151,93 @@ exports.addNewListing = async (req, res) => {
   }
 };
 
+// TEST : AKSHAY
+exports.updateListing = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    let { name, oneliner, description, categories, chains } = req.body;
+    const listingID = req.params.listingID;
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      listingID,
+      { name, oneliner, description, categories, chains },
+      { new: true }
+    );
+
+    await session.commitTransaction();
+    await session.endSession();
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      `Listing ${listingID} updated successfully!`,
+      null,
+      {
+        listing: updatedListing,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
+    await session.endSession();
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.updateListingSocails = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const { platform, link, meta } = req.body;
+
+    const updatedListingSocial = await Listing_Social.findOneAndUpdate(
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+      },
+      { link: link, meta: meta },
+      { new: true }
+    );
+
+    // if (platform === "DISCORD" || platform === "TWITTER") {
+    //   updatedListingSocial = await Listing_Social.findOneAndUpdate(
+    //     {
+    //       listing: mongoose.Types.ObjectId(listingID),
+    //       platform: platform,
+    //     },
+    //     { link: link, "meta.count": count },
+    //     { new: true }
+    //   );
+    // } else if (platform === "WEBSITE") {
+    //   updatedListingSocial = await Listing_Social.findOneAndUpdate(
+    //     {
+    //       listing: mongoose.Types.ObjectId(listingID),
+    //       platform: platform,
+    //     },
+    //     { link: link },
+    //     { new: true }
+    //   );
+    // }
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Listing socials ${listingID} updated successfully!`,
+      null,
+      {
+        listing: updatedListingSocial,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
+    await session.endSession();
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.verifyListing = async (req, res) => {
   const session = await mongoose.startSession();
   await session.startTransaction();
