@@ -151,13 +151,50 @@ exports.addNewListing = async (req, res) => {
 exports.updateListing = async (req, res) => {
   try {
     const listingID = req.params.listingID;
+    const listing = await Listing.findById(listingID).select({ slug: 1 });
     let { name, oneliner, description, categories, chains } = req.body;
 
-    const updatedListing = await Listing.findByIdAndUpdate(
-      listingID,
-      { name, oneliner, description, categories, chains },
-      { new: true }
-    ).populate("socials");
+    // get new data
+    const newData = {
+      name,
+      oneliner,
+      description,
+      categories: JSON.parse(categories),
+      chains: JSON.parse(chains),
+    };
+
+    if (req.files && "logo" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-logo`,
+        req.files.logo
+      );
+
+      newData.photo = {
+        logo: {
+          id: saveResp.ETag.replaceAll('"', ""),
+          secure_url: saveResp.object_url,
+        },
+      };
+    }
+
+    if (req.files && "cover" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-cover`,
+        req.files.cover
+      );
+
+      newData.photo = {
+        ...newData.photo,
+        cover: {
+          id: saveResp.ETag.replaceAll('"', ""),
+          secure_url: saveResp.object_url,
+        },
+      };
+    }
+
+    const updatedListing = await Listing.findByIdAndUpdate(listingID, newData, {
+      new: true,
+    }).populate("socials");
 
     return new HTTPResponse(
       res,
@@ -744,3 +781,19 @@ exports.getListingCountInACategory = async (req, res) => {
 
 // say i have a collection "Projects" of documents in mongo which has a field "chains" that holds array of chain e.g EVM, SOL, etc.
 // Now I wish to run a query to retrive all the chains and count of projects under a chain using mongoose.js write JS code for it
+
+const updateListingPhoto = async (fileName, listingImage) => {
+  try {
+    const convertedBuffer = await sharp(listingImage.data)
+      .toFormat("webp")
+      .toBuffer();
+    let data = await uploadToS3(
+      "truts-test",
+      fileName + ".webp",
+      convertedBuffer
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
