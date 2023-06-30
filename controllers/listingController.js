@@ -14,8 +14,9 @@ const {
 } = require("../models/listing_social");
 const { Listing } = require("../models/listing");
 const { publishEvent } = require("../utils/pubSub");
+const { deleteKeysByPattern } = require("../utils/redisHelper");
 
-exports.getListing = async (req, res) => {
+exports.getListingBySlug = async (req, res) => {
   try {
     const slug = req.params.slug;
 
@@ -106,7 +107,7 @@ exports.addNewListing = async (req, res) => {
       categories,
       chains,
       slug,
-      submission: { submitter: user._id, submitterIsRewarded: false }, // TEST:
+      submission: { submitter: user._id, submitterIsRewarded: false },
     });
     await newListing.save({ session });
     console.log({ newListing });
@@ -122,10 +123,9 @@ exports.addNewListing = async (req, res) => {
     newListing = await Listing.findOne({ _id: newListing._id })
       .populate("socials")
       .populate("submission.submitter", { username: 1, name: 1, photo: 1 });
-    // TODO: update DISNOTIFY action here
 
     console.log({ newListing });
-    // TEST: trigger event: for disnotify and service
+
     await publishEvent(
       "listing:create",
       JSON.stringify({
@@ -151,42 +151,56 @@ exports.addNewListing = async (req, res) => {
   }
 };
 
-// TEST : AKSHAY
 exports.updateListing = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
-    let { name, oneliner, description, categories, chains } = req.body;
     const listingID = req.params.listingID;
+    let { name, oneliner, description, categories, chains } = req.body;
 
     const updatedListing = await Listing.findByIdAndUpdate(
       listingID,
       { name, oneliner, description, categories, chains },
       { new: true }
-    );
+    ).populate("socials");
 
-    await session.commitTransaction();
-    await session.endSession();
     return new HTTPResponse(
       res,
       true,
       201,
-      `Listing ${listingID} updated successfully!`,
+      `Listing[${listingID}] updated successfully!`,
       null,
       {
         listing: updatedListing,
       }
     );
   } catch (error) {
-    console.log(error);
-    await session.abortTransaction();
-    await session.endSession();
+    console.log("updateListing: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
 
-// TEST : AKSHAY
-exports.updateListingSocails = async (req, res) => {
+exports.getSocialsOfListing = async (req, res) => {
+  try {
+    const { listingID } = req.params;
+
+    let findQuery = {
+      listing: mongoose.Types.ObjectId(listingID),
+    };
+    if (req.query.platform) {
+      findQuery.platform = req.query.platform?.toUpperCase();
+    }
+
+    console.log(findQuery);
+
+    const listingSocials = await Listing_Social.find(findQuery);
+
+    return new HTTPResponse(res, true, 200, null, null, { listingSocials });
+  } catch (error) {
+    console.log("getSocialsOfListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.updateSocialOfListing = async (req, res) => {
   try {
     const listingID = req.params.listingID;
     const { platform, link, meta } = req.body;
@@ -196,44 +210,27 @@ exports.updateListingSocails = async (req, res) => {
         listing: mongoose.Types.ObjectId(listingID),
         platform: platform,
       },
-      { link: link, meta: meta },
-      { new: true }
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+        link: link,
+        meta: meta,
+      },
+      { new: true, upsert: true }
     );
-
-    // if (platform === "DISCORD" || platform === "TWITTER") {
-    //   updatedListingSocial = await Listing_Social.findOneAndUpdate(
-    //     {
-    //       listing: mongoose.Types.ObjectId(listingID),
-    //       platform: platform,
-    //     },
-    //     { link: link, "meta.count": count },
-    //     { new: true }
-    //   );
-    // } else if (platform === "WEBSITE") {
-    //   updatedListingSocial = await Listing_Social.findOneAndUpdate(
-    //     {
-    //       listing: mongoose.Types.ObjectId(listingID),
-    //       platform: platform,
-    //     },
-    //     { link: link },
-    //     { new: true }
-    //   );
-    // }
 
     return new HTTPResponse(
       res,
       true,
       200,
-      `Listing socials ${listingID} updated successfully!`,
+      `Social of Listing[${listingID}] updated successfully!`,
       null,
       {
-        listing: updatedListingSocial,
+        listingSocial: updatedListingSocial,
       }
     );
   } catch (error) {
-    console.log(error);
-    await session.abortTransaction();
-    await session.endSession();
+    console.log("updateSocialOfListing: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

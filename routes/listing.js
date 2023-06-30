@@ -2,7 +2,7 @@ const router = require("express").Router();
 const {
   getListingReviews,
   getListingReviews_Public,
-  getListing,
+  getListingBySlug,
   getListingLeaderboard_Public,
   getListings,
   getListingCountInAChain,
@@ -13,14 +13,12 @@ const {
   getSupportedPlatforms,
   verifyListing,
   updateListing,
-  updateSocial,
-  updateListingSocails,
+  updateSocialOfListing,
+  getSocialsOfListing,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
-// const cacheRoute = require("../middlewares/cacheRoute");
 const { isLoggedIn } = require("../middlewares/user");
-// const Listing = require("../models/dao");
 const { Listing } = require("../models/listing");
 
 router
@@ -40,11 +38,6 @@ router
     getListings
   )
   .post(isLoggedIn, addNewListing);
-console.log("testing1");
-// TEST : AKSHAY
-router.route("/listing/:listingID").patch(updateListing);
-
-router.route("/listing/:listingID/socials").patch(updateListingSocails);
 
 // NOTE: CacheRoute could be modified after bringing on
 //        verify a community feature to this server
@@ -54,7 +47,14 @@ router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
 router
   .route("/listing/supported-platforms")
   .get(cacheRoute, getSupportedPlatforms);
-router.route("/listing/:slug").get(getListing);
+router.route("/listing/by-slug/:slug").get(getListingBySlug);
+
+// TEST: AKSHAY
+router.route("/listing/:listingID").patch(updateListing);
+router
+  .route("/listing/:listingID/social")
+  .get(getSocialsOfListing)
+  .patch(updateSocialOfListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
 router
