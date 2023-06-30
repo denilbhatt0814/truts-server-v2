@@ -1,10 +1,8 @@
 const HTTPError = require("../utils/httpError");
 const { Review } = require("../models/newReview");
-const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
-const WhereClause = require("../utils/whereClause");
 const redisClient = require("../databases/redis-client");
 const { Mission } = require("../models/mission");
 const { XpTxn } = require("../models/xpTxn");
@@ -14,7 +12,6 @@ const {
 } = require("../models/listing_social");
 const { Listing } = require("../models/listing");
 const { publishEvent } = require("../utils/pubSub");
-const { deleteKeysByPattern } = require("../utils/redisHelper");
 
 exports.getListingBySlug = async (req, res) => {
   try {

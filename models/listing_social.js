@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
+
 const { deleteKeysByPattern } = require("../utils/redisHelper");
 
 const supportedPlatforms = [
@@ -7,7 +7,8 @@ const supportedPlatforms = [
   "TWITTER",
   "WEBSITE",
   "TELEGRAM",
-  "EMAIL", // substack, medium
+  "EMAIL",
+  "MEDIUM", // substack, medium
 ];
 
 // Relation: many social --- (belongs to) --> one listing

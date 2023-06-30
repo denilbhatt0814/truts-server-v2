@@ -49,7 +49,6 @@ router
   .get(cacheRoute, getSupportedPlatforms);
 router.route("/listing/by-slug/:slug").get(getListingBySlug);
 
-// TEST: AKSHAY
 router.route("/listing/:listingID").patch(updateListing);
 router
   .route("/listing/:listingID/social")
