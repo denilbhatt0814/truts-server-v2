@@ -63,7 +63,7 @@ module.exports = {
       return {
         title: "Congratulations!",
         text: `${trutsXP} XP`,
-        description: `Congrats for winning Truts XP`,
+        description: `Enjoy your well-deserved reward!`,
         icon_url: `https://truts.xyz/missions/coin.svg`,
         redirect_url: ``,
       };
