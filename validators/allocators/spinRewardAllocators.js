@@ -61,6 +61,7 @@ module.exports = {
         return null;
       }
       return {
+        title: "Congratulations!",
         text: `${trutsXP} XP`,
         description: `Congrats for winning Truts XP`,
         icon_url: `https://truts.xyz/missions/coin.svg`,
@@ -86,6 +87,7 @@ module.exports = {
       const { rewardID, userID } = arguments;
 
       return {
+        title: `Thank you for participating!`,
         text: `0 XPs`,
         description: `Try your luck again tomorrow! 🍀`,
         icon_url: `https://truts.xyz/missions/coin.svg`,
