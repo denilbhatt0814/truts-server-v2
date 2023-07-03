@@ -12,6 +12,8 @@ const {
 } = require("../models/listing_social");
 const { Listing } = require("../models/listing");
 const { publishEvent } = require("../utils/pubSub");
+const Sharp = require("sharp");
+const uploadToS3 = require("../utils/uploadToS3");
 
 exports.getListingBySlug = async (req, res) => {
   try {
@@ -154,13 +156,14 @@ exports.updateListing = async (req, res) => {
     const listing = await Listing.findById(listingID).select({ slug: 1 });
     let { name, oneliner, description, categories, chains } = req.body;
 
-    // get new data
-    const newData = {
-      name,
-      oneliner,
-      description,
-      categories: JSON.parse(categories),
-      chains: JSON.parse(chains),
+    let updateQuery = {
+      $set: {
+        name,
+        oneliner,
+        description,
+        categories: JSON.parse(categories),
+        chains: JSON.parse(chains),
+      },
     };
 
     if (req.files && "logo" in req.files) {
@@ -169,11 +172,9 @@ exports.updateListing = async (req, res) => {
         req.files.logo
       );
 
-      newData.photo = {
-        logo: {
-          id: saveResp.ETag.replaceAll('"', ""),
-          secure_url: saveResp.object_url,
-        },
+      updateQuery.$set["photo.logo"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
       };
     }
 
@@ -183,18 +184,19 @@ exports.updateListing = async (req, res) => {
         req.files.cover
       );
 
-      newData.photo = {
-        ...newData.photo,
-        cover: {
-          id: saveResp.ETag.replaceAll('"', ""),
-          secure_url: saveResp.object_url,
-        },
+      updateQuery.$set["photo.cover"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
       };
     }
 
-    const updatedListing = await Listing.findByIdAndUpdate(listingID, newData, {
-      new: true,
-    }).populate("socials");
+    const updatedListing = await Listing.findByIdAndUpdate(
+      listingID,
+      updateQuery,
+      {
+        new: true,
+      }
+    ).populate("socials");
 
     return new HTTPResponse(
       res,
@@ -784,7 +786,7 @@ exports.getListingCountInACategory = async (req, res) => {
 
 const updateListingPhoto = async (fileName, listingImage) => {
   try {
-    const convertedBuffer = await sharp(listingImage.data)
+    const convertedBuffer = await Sharp(listingImage.data)
       .toFormat("webp")
       .toBuffer();
     let data = await uploadToS3(
