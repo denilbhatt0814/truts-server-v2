@@ -132,27 +132,29 @@ exports.getTwitterUserDetails = async (access_token) => {
 
 exports.getTwitterUserFollowing = async (twitterUserId, access_token) => {
   try {
-    let url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
-    // console.log({ access_token });
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${access_token}`,
-      },
-    };
+    // NOTE: FOLLOWING API not available on Basic Plan
+    // let url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000`;
+    // // console.log({ access_token });
+    // const config = {
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Authorization: `Bearer ${access_token}`,
+    //   },
+    // };
 
-    let axios_resp = await axios.get(url, config);
-    let followingList = axios_resp.data.data;
-    let nextToken = axios_resp.data.meta.next_token;
+    // let axios_resp = await axios.get(url, config);
+    // let followingList = axios_resp.data.data;
+    // let nextToken = axios_resp.data.meta.next_token;
 
-    while (nextToken) {
-      url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000&pagination_token=${nextToken}`;
-      axios_resp = await axios.get(url, config);
-      followingList.push(...axios_resp.data.data);
-      nextToken = axios_resp.data.meta.next_token;
-    }
+    // while (nextToken) {
+    //   url = `https://api.twitter.com/2/users/${twitterUserId}/following?max_results=1000&pagination_token=${nextToken}`;
+    //   axios_resp = await axios.get(url, config);
+    //   followingList.push(...axios_resp.data.data);
+    //   nextToken = axios_resp.data.meta.next_token;
+    // }
 
-    console.log(followingList);
+    // console.log(followingList);
+    const followingList = [];
     return followingList;
   } catch (error) {
     console.log("TwitterError: unable to fetch following list of user");

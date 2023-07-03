@@ -299,26 +299,28 @@ module.exports = {
       return dependencyStatus;
     },
     exec: async function (arguments) {
-      // NOTE: optimize find by using select
-      // here any twitter account can be validated not just a listing's twtr account
-      const { twitterUsername, userID } = arguments;
-      const user = await User.findById(userID).select(
-        "+twitter.access_token +twitter.refresh_token +twitter.following"
-      );
-      if (!user.twitter) {
-        console.log(
-          `FOLLOWS_ON_TWITTER: user's [${user._id}] twitter not found connected `
-        );
-        return false;
-      }
+      // NOTE: FOLLOWING API not working on Basic Plan
+      // // NOTE: optimize find by using select
+      // // here any twitter account can be validated not just a listing's twtr account
+      // const { twitterUsername, userID } = arguments;
+      // const user = await User.findById(userID).select(
+      //   "+twitter.access_token +twitter.refresh_token +twitter.following"
+      // );
+      // if (!user.twitter) {
+      //   console.log(
+      //     `FOLLOWS_ON_TWITTER: user's [${user._id}] twitter not found connected `
+      //   );
+      //   return false;
+      // }
 
-      const followsOnTwitter = await user.followsTwitterAccount(
-        twitterUsername
-      );
+      // const followsOnTwitter = await user.followsTwitterAccount(
+      //   twitterUsername
+      // );
 
-      if (!followsOnTwitter) {
-        return false;
-      }
+      // if (!followsOnTwitter) {
+      //   return false;
+      // }
+      // return true;
       return true;
     },
   },
