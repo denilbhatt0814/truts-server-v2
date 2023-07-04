@@ -2351,6 +2351,34 @@ const attachReferral = async (user, code, session) => {
   }
 };
 
+// TEST : AKSHAY
+exports.getUserXpTxns = async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    const user = await User.findOne({ username: username }).select({
+      _id: 1,
+    });
+
+    if (!user) {
+      return new HTTPError(
+        res,
+        404,
+        "user w/ given username not found",
+        "user not found"
+      );
+    }
+    const xpTxns = await XpTxn.find({ user: user._id }).sort({ createdAt: -1 });
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: xpTxns.length,
+      xpTxns,
+    });
+  } catch (error) {
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 // -------- FOR FUTURE ------------
 // TEST: multi wallet login
 // exports.loginViaWallet = async (req, res) => {

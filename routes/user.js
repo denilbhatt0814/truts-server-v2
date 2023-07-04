@@ -39,6 +39,7 @@ const {
   verifyChangedWallet,
   verifyNewMultiWallet,
   getMyProfileStatus,
+  getUserXpTxns,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -114,6 +115,9 @@ router.route("/user/:username/truts-xp").get(isLoggedIn, getUserTrutsXP_Public);
 router
   .route("/user/:username/completed-mission")
   .get(isLoggedIn, getUserCompletedMissions_Public);
+
+// TEST : AKSHAY
+router.route("/user/:username/xp-txn").get(getUserXpTxns);
 
 // ------- NOTE: USER PUBLIC ROUTES : (for lurker/ not logged-in ) ------------
 router.route("/public/user/:username").get(getUserDetails_Public);
