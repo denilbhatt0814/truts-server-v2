@@ -18,7 +18,7 @@ const {
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
-const { isLoggedIn } = require("../middlewares/user");
+const { isLoggedIn, onlySuperAdmin } = require("../middlewares/user");
 const { Listing } = require("../models/listing");
 
 router
@@ -41,7 +41,7 @@ router
 
 // NOTE: CacheRoute could be modified after bringing on
 //        verify a community feature to this server
-router.route("/listing/verify").post(isLoggedIn, verifyListing);
+router.route("/listing/verify").post(isLoggedIn, onlySuperAdmin, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
 router
@@ -49,11 +49,13 @@ router
   .get(cacheRoute, getSupportedPlatforms);
 router.route("/listing/by-slug/:slug").get(getListingBySlug);
 
-router.route("/listing/:listingID").patch(updateListing);
+router
+  .route("/listing/:listingID")
+  .patch(isLoggedIn, onlySuperAdmin, updateListing);
 router
   .route("/listing/:listingID/social")
   .get(getSocialsOfListing)
-  .patch(updateSocialOfListing);
+  .patch(isLoggedIn, onlySuperAdmin, updateSocialOfListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
 router

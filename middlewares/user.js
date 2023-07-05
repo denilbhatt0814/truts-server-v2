@@ -52,3 +52,26 @@ exports.isLoggedIn = async (req, res, next) => {
     return next(new HTTPError(res, 500, "Internal server error", error));
   }
 };
+
+exports.onlySuperAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw Error("User object missing in request");
+    }
+    const user = req.user?.toObject();
+    if (!user.isSuperAdmin) {
+      return next(
+        new HTTPError(
+          res,
+          403,
+          "Access to the requested resource is forbidden.",
+          "access forbidden"
+        )
+      );
+    }
+    next();
+  } catch (error) {
+    console.log("onlySuperAdmin: ", error);
+    return next(new HTTPError(res, 500, error, "internal server error"));
+  }
+};
