@@ -206,6 +206,9 @@ const userSchema = new mongoose.Schema(
       code: String,
       isProviderRewarded: Boolean,
     },
+    isSuperAdmin: {
+      type: Boolean,
+    },
   },
   {
     timestamps: true,
