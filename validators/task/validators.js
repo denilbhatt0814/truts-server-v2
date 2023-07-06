@@ -1,6 +1,7 @@
 const User = require("../../models/user");
 const { Review } = require("../../models/newReview");
 const Dao = require("../../models/dao");
+const { Listing_Social } = require("../../models/listing_social");
 const { refreshToken } = require("../../utils/discordHelper");
 const HTTPError = require("../../utils/httpError");
 const { default: mongoose } = require("mongoose");
@@ -212,16 +213,26 @@ module.exports = {
       return dependencyStatus;
     },
     exec: async function (arguments) {
-      // TODO: This validator might need to be rewriten
-      // after new Listing model
       // NOTE: optimize find by using select
       const { listingID, userID } = arguments;
       const user = await User.findById(userID).select("+discord.refresh_token");
-      const listing = await Dao.findById(listingID);
+      // const listing = await Dao.findById(listingID);
+      const social = await Listing_Social.findOne({
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: "DISCORD",
+      });
 
-      // TODO: USE DIRECTLY METHOD IN USER MODEL FOR THIS
-      // If token has expired
+      if (!social || !social.meta?.guild_id) {
+        console.log("partOfDiscordServer: ", {
+          user,
+          social,
+          partOfGuild: true,
+        });
+        return true;
+      }
       if (Date.now() >= user.discord.token_expiry) {
+        // TODO: USE DIRECTLY METHOD IN USER MODEL FOR THIS
+        // If token has expired
         await user.updateDiscordDetails();
       } else {
         await user.updateDiscordGuilds();
@@ -229,13 +240,12 @@ module.exports = {
 
       // CHECK IF PART OF LISTING
       let partOfGuild = user.discord.guilds.find(
-        (guild) => guild.id == listing.guild_id
+        (guild) => guild.id == social.meta.guild_id
       );
 
-      // TEST: REMOVE AFTER DEBUG
       console.log("partOfDiscordServer: ", {
         user,
-        listing,
+        social,
         partOfGuild,
       });
 
