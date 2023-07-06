@@ -45,7 +45,7 @@ router
 //        verify a community feature to this server
 router
   .route("/listing/verify")
-  .get(isLoggedIn, onlySuperAdmin, getToBeVerifiedListings)
+  .get(getToBeVerifiedListings)
   .post(isLoggedIn, onlySuperAdmin, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
