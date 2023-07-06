@@ -16,6 +16,7 @@ const {
   updateSocialOfListing,
   getSocialsOfListing,
   getLeaderboardOfListing_Public,
+  getToBeVerifiedListings,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -42,7 +43,10 @@ router
 
 // NOTE: CacheRoute could be modified after bringing on
 //        verify a community feature to this server
-router.route("/listing/verify").post(isLoggedIn, onlySuperAdmin, verifyListing);
+router
+  .route("/listing/verify")
+  .get(isLoggedIn, onlySuperAdmin, getToBeVerifiedListings)
+  .post(isLoggedIn, onlySuperAdmin, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
 router.route("/listing/supported-platforms").get(getSupportedPlatforms);

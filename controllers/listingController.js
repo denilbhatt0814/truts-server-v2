@@ -271,6 +271,26 @@ exports.updateSocialOfListing = async (req, res) => {
   }
 };
 
+exports.getToBeVerifiedListings = async (req, res) => {
+  try {
+    let limit = req.params.limit ?? 20;
+
+    const result = await Listing.find({ verified: false })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(limit)
+      .populate("socials");
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+  } catch (error) {
+    console.log("getToBeVerifiedListings: ", error);
+  }
+};
+
 exports.verifyListing = async (req, res) => {
   const session = await mongoose.startSession();
   await session.startTransaction();
