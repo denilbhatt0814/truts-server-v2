@@ -843,7 +843,7 @@ const updateListingPhoto = async (fileName, listingImage) => {
       .toFormat("webp")
       .toBuffer();
     let data = await uploadToS3(
-      "truts-test",
+      "truts-listings",
       fileName + ".webp",
       convertedBuffer
     );
