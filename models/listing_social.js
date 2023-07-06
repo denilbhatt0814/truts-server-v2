@@ -1,12 +1,14 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
+
+const { deleteKeysByPattern } = require("../utils/redisHelper");
 
 const supportedPlatforms = [
   "DISCORD",
   "TWITTER",
   "WEBSITE",
   "TELEGRAM",
-  "EMAIL", // substack, medium
+  "EMAIL",
+  "MEDIUM", // substack, medium
 ];
 
 // Relation: many social --- (belongs to) --> one listing
@@ -45,6 +47,16 @@ const listing_socialSchema = new mongoose.Schema(
   }
 );
 
+// Hooks:
+listing_socialSchema.post("findOneAndUpdate", async function (doc) {
+  try {
+    await deleteKeysByPattern("/api/v1/listing*");
+  } catch (error) {
+    console.log("Listing_Social:POST:findOneAndUpdate: ", error);
+  }
+});
+
+// Methods:
 listing_socialSchema.statics.transformObjectToArray = function (
   socialsObject,
   listingID

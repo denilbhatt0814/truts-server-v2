@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { default: slugify } = require("slugify");
 const validator = require("validator");
+const { deleteKeysByPattern } = require("../utils/redisHelper");
 
 const listingSchema = new mongoose.Schema(
   {
@@ -129,6 +130,15 @@ listingSchema.virtual("socials", {
   localField: "_id", // The localField in Listing for ref
   foreignField: "listing", // is equal to `listing` field in Listing_Social
   justOne: false, // And get all the socials of the listing
+});
+
+// Hooks for listing
+listingSchema.post("findOneAndUpdate", async function (doc) {
+  try {
+    await deleteKeysByPattern("/api/v1/listing*");
+  } catch (error) {
+    console.log("Listing:POST:findOneAndUpdate: ", error);
+  }
 });
 
 // Methods for listing

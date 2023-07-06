@@ -2,7 +2,7 @@ const router = require("express").Router();
 const {
   getListingReviews,
   getListingReviews_Public,
-  getListing,
+  getListingBySlug,
   getListingLeaderboard_Public,
   getListings,
   getListingCountInAChain,
@@ -12,13 +12,14 @@ const {
   getSupportedSocials,
   getSupportedPlatforms,
   verifyListing,
+  updateListing,
+  updateSocialOfListing,
+  getSocialsOfListing,
   getLeaderboardOfListing_Public,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
-// const cacheRoute = require("../middlewares/cacheRoute");
-const { isLoggedIn } = require("../middlewares/user");
-// const Listing = require("../models/dao");
+const { isLoggedIn, onlySuperAdmin } = require("../middlewares/user");
 const { Listing } = require("../models/listing");
 
 router
@@ -38,13 +39,22 @@ router
     getListings
   )
   .post(isLoggedIn, addNewListing);
+
 // NOTE: CacheRoute could be modified after bringing on
 //        verify a community feature to this server
-router.route("/listing/verify").post(isLoggedIn, verifyListing);
+router.route("/listing/verify").post(isLoggedIn, onlySuperAdmin, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
 router.route("/listing/supported-platforms").get(getSupportedPlatforms);
-router.route("/listing/:slug").get(getListing);
+router.route("/listing/by-slug/:slug").get(getListingBySlug);
+
+router
+  .route("/listing/:listingID")
+  .patch(isLoggedIn, onlySuperAdmin, updateListing);
+router
+  .route("/listing/:listingID/social")
+  .get(getSocialsOfListing)
+  .patch(isLoggedIn, onlySuperAdmin, updateSocialOfListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
 router

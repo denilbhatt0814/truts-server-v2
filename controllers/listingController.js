@@ -1,10 +1,8 @@
 const HTTPError = require("../utils/httpError");
 const { Review } = require("../models/newReview");
-const Dao = require("../models/dao");
 const mongoose = require("mongoose");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
-const WhereClause = require("../utils/whereClause");
 const redisClient = require("../databases/redis-client");
 const { Mission } = require("../models/mission");
 const { XpTxn } = require("../models/xpTxn");
@@ -14,8 +12,10 @@ const {
 } = require("../models/listing_social");
 const { Listing } = require("../models/listing");
 const { publishEvent } = require("../utils/pubSub");
+const Sharp = require("sharp");
+const uploadToS3 = require("../utils/uploadToS3");
 
-exports.getListing = async (req, res) => {
+exports.getListingBySlug = async (req, res) => {
   try {
     const slug = req.params.slug;
 
@@ -106,7 +106,7 @@ exports.addNewListing = async (req, res) => {
       categories,
       chains,
       slug,
-      submission: { submitter: user._id, submitterIsRewarded: false }, // TEST:
+      submission: { submitter: user._id, submitterIsRewarded: false },
     });
     await newListing.save({ session });
     console.log({ newListing });
@@ -122,10 +122,9 @@ exports.addNewListing = async (req, res) => {
     newListing = await Listing.findOne({ _id: newListing._id })
       .populate("socials")
       .populate("submission.submitter", { username: 1, name: 1, photo: 1 });
-    // TODO: update DISNOTIFY action here
 
     console.log({ newListing });
-    // TEST: trigger event: for disnotify and service
+
     await publishEvent(
       "listing:create",
       JSON.stringify({
@@ -147,6 +146,127 @@ exports.addNewListing = async (req, res) => {
     console.log(error);
     await session.abortTransaction();
     await session.endSession();
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.updateListing = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const listing = await Listing.findById(listingID).select({ slug: 1 });
+    let { name, oneliner, description, categories, chains } = req.body;
+
+    let updateQuery = {
+      $set: {
+        name,
+        oneliner,
+        description,
+        categories: JSON.parse(categories),
+        chains: JSON.parse(chains),
+      },
+    };
+
+    if (req.files && "logo" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-logo`,
+        req.files.logo
+      );
+
+      updateQuery.$set["photo.logo"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
+      };
+    }
+
+    if (req.files && "cover" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-cover`,
+        req.files.cover
+      );
+
+      updateQuery.$set["photo.cover"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
+      };
+    }
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      listingID,
+      updateQuery,
+      {
+        new: true,
+      }
+    ).populate("socials");
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      `Listing[${listingID}] updated successfully!`,
+      null,
+      {
+        listing: updatedListing,
+      }
+    );
+  } catch (error) {
+    console.log("updateListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getSocialsOfListing = async (req, res) => {
+  try {
+    const { listingID } = req.params;
+
+    let findQuery = {
+      listing: mongoose.Types.ObjectId(listingID),
+    };
+    if (req.query.platform) {
+      findQuery.platform = req.query.platform?.toUpperCase();
+    }
+
+    console.log(findQuery);
+
+    const listingSocials = await Listing_Social.find(findQuery);
+
+    return new HTTPResponse(res, true, 200, null, null, { listingSocials });
+  } catch (error) {
+    console.log("getSocialsOfListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.updateSocialOfListing = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const { platform, link, meta } = req.body;
+
+    const updatedListingSocial = await Listing_Social.findOneAndUpdate(
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+      },
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+        link: link,
+        meta: meta,
+      },
+      { new: true, upsert: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Social of Listing[${listingID}] updated successfully!`,
+      null,
+      {
+        listingSocial: updatedListingSocial,
+      }
+    );
+  } catch (error) {
+    console.log("updateSocialOfListing: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -696,3 +816,19 @@ exports.getListingCountInACategory = async (req, res) => {
 
 // say i have a collection "Projects" of documents in mongo which has a field "chains" that holds array of chain e.g EVM, SOL, etc.
 // Now I wish to run a query to retrive all the chains and count of projects under a chain using mongoose.js write JS code for it
+
+const updateListingPhoto = async (fileName, listingImage) => {
+  try {
+    const convertedBuffer = await Sharp(listingImage.data)
+      .toFormat("webp")
+      .toBuffer();
+    let data = await uploadToS3(
+      "truts-test",
+      fileName + ".webp",
+      convertedBuffer
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
