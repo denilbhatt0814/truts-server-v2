@@ -13,6 +13,7 @@ const {
 } = require("../../utils/twitterHelper");
 const checkIsOwner = require("../../utils/solanaNFT");
 const redisClient = require("../../databases/redis-client");
+const { Listing } = require("../../models/listing");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -141,7 +142,7 @@ module.exports = {
       // NOTE: optimize find by using select
       const { listingID, userID } = arguments;
       const user = await User.findById(userID).select({ _id: 1 });
-      const listing = await Dao.findById(listingID).select({ _id: 1 });
+      const listing = await Listing.findById(listingID).select({ _id: 1 });
       const atLeastOneReview = await Review.findOne({
         user: mongoose.Types.ObjectId(user._id),
         listing: mongoose.Types.ObjectId(listing._id),
