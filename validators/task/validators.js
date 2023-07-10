@@ -390,31 +390,32 @@ module.exports = {
     },
     exec: async function (arguments) {
       const { tweetID, userID } = arguments;
-      const user = await User.findById(userID).select(
-        "+twitter.access_token +twitter.refresh_token"
-      );
-      if (!user.twitter) {
-        console.log(
-          `RETWEET_ON_TWITTER: user's [${user._id}] twitter not found connected `
-        );
-        return false;
-      }
+      // const user = await User.findById(userID).select(
+      //   "+twitter.access_token +twitter.refresh_token"
+      // );
+      // if (!user.twitter) {
+      //   console.log(
+      //     `RETWEET_ON_TWITTER: user's [${user._id}] twitter not found connected `
+      //   );
+      //   return false;
+      // }
 
-      // logic to check if user has retweeted
-      // If token has expired
-      if (Date.now() + 60000 >= user.twitter.token_expiry) {
-        await user.updateTwitterDetails();
-      }
+      // // logic to check if user has retweeted
+      // // If token has expired
+      // if (Date.now() + 60000 >= user.twitter.token_expiry) {
+      //   await user.updateTwitterDetails();
+      // }
 
-      // function to make a query -> check if user in 1st 100
-      // else requery w/ pagination token
-      const hasRetweeted = await checkUserHasRetweeted(
-        user.twitter.id,
-        tweetID,
-        user.twitter.access_token
-      );
+      // // function to make a query -> check if user in 1st 100
+      // // else requery w/ pagination token
+      // const hasRetweeted = await checkUserHasRetweeted(
+      //   user.twitter.id,
+      //   tweetID,
+      //   user.twitter.access_token
+      // );
 
-      return hasRetweeted;
+      // return hasRetweeted;
+      return true;
     },
   },
   LIKE_ON_TWITTER: {
@@ -475,28 +476,29 @@ module.exports = {
       const user = await User.findById(userID).select(
         "+twitter.access_token +twitter.refresh_token"
       );
-      if (!user.twitter) {
-        console.log(
-          `LIKE_ON_TWITTER: user's [${user._id}] twitter not found connected `
-        );
-        return false;
-      }
+      // if (!user.twitter) {
+      //   console.log(
+      //     `LIKE_ON_TWITTER: user's [${user._id}] twitter not found connected `
+      //   );
+      //   return false;
+      // }
 
-      // logic to check if user has liked
-      // If token has expired
-      if (Date.now() + 60000 >= user.twitter.token_expiry) {
-        await user.updateTwitterDetails();
-      }
+      // // logic to check if user has liked
+      // // If token has expired
+      // if (Date.now() + 60000 >= user.twitter.token_expiry) {
+      //   await user.updateTwitterDetails();
+      // }
 
-      // function to make a query -> check if tweet in 1st 100
-      // else requery w/ pagination token
-      const hasLiked = await checkUserHasLiked(
-        user.twitter.id,
-        tweetID,
-        user.twitter.access_token
-      );
+      // // function to make a query -> check if tweet in 1st 100
+      // // else requery w/ pagination token
+      // const hasLiked = await checkUserHasLiked(
+      //   user.twitter.id,
+      //   tweetID,
+      //   user.twitter.access_token
+      // );
 
-      return hasLiked;
+      // return hasLiked;
+      return true;
     },
   },
 
