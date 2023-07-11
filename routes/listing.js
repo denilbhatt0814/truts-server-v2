@@ -8,22 +8,42 @@ const {
   getListingCountInAChain,
   getListingCountInACategory,
   getListingMissions_Public,
+  addNewListing,
+  getSupportedSocials,
+  getSupportedPlatforms,
+  verifyListing,
+  getLeaderboardOfListing_Public,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
 // const cacheRoute = require("../middlewares/cacheRoute");
 const { isLoggedIn } = require("../middlewares/user");
-const Listing = require("../models/dao");
+// const Listing = require("../models/dao");
+const { Listing } = require("../models/listing");
 
 router
-  .route("/listings")
-  .get(cacheRoute, paginateRequest(Listing), getListings);
+  .route("/listing")
+  .get(
+    cacheRoute,
+    paginateRequest(Listing, {}, [
+      {
+        $lookup: {
+          from: "listing_socials",
+          localField: "_id",
+          foreignField: "listing",
+          as: "socials",
+        },
+      },
+    ]),
+    getListings
+  )
+  .post(isLoggedIn, addNewListing);
 // NOTE: CacheRoute could be modified after bringing on
-//        add a community feature to this server
-router.route("/listings/chains").get(cacheRoute, getListingCountInAChain);
-router
-  .route("/listings/categories")
-  .get(cacheRoute, getListingCountInACategory);
+//        verify a community feature to this server
+router.route("/listing/verify").post(isLoggedIn, verifyListing);
+router.route("/listing/chains").get(getListingCountInAChain);
+router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
+router.route("/listing/supported-platforms").get(getSupportedPlatforms);
 router.route("/listing/:slug").get(getListing);
 
 router.route("/listing/:listingID/reviews").get(isLoggedIn, getListingReviews);
@@ -38,7 +58,11 @@ router
   .get(getListingMissions_Public);
 
 router
+  .route("/public/listing/leaderboard")
+  .get(cacheRoute, getListingLeaderboard_Public);
+
+router
   .route("/public/listing/:listingID/leaderboard")
-  .get(getListingLeaderboard_Public);
+  .get(getLeaderboardOfListing_Public);
 
 module.exports = router;

@@ -5,6 +5,9 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const User = require("../models/user");
 const { publishEvent } = require("../utils/pubSub");
+const uploadToS3 = require("../utils/uploadToS3");
+const sharp = require("sharp");
+const { Listing } = require("../models/listing");
 
 exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
@@ -15,7 +18,9 @@ exports.addReview = async (req, res) => {
     const user = await User.findById(userID).select("+discord.refresh_token");
 
     // CHECK: if listing exists
-    const listing = await Dao.findById(listingID);
+    // const listing = await Dao.findById(listingID);
+    // TEST:
+    const listing = await Listing.findById(listingID).populate("socials");
     if (!listing) {
       return new HTTPError(
         res,
@@ -39,14 +44,26 @@ exports.addReview = async (req, res) => {
       );
     }
 
-    // CHECK: if user part of discord server
-    const partOfGuild = await user.isPartOfGuild(listing.guild_id);
-    if (!partOfGuild) {
-      return new HTTPError(
-        res,
-        403,
-        `user[${userID} is not part of guild[${listing.guild_id}]`
+    // TEST:
+    // look for guild_id in listing
+    const listingsDiscord = listing.socials?.find(
+      (social) => social.platform === "DISCORD"
+    );
+    // If no Discord in listing then no Check
+    if (listingsDiscord) {
+      // CHECK: if user part of discord server
+      const partOfGuild = await user.isPartOfGuild(
+        listingsDiscord.meta.guild_id
       );
+      if (!partOfGuild) {
+        return new HTTPError(
+          res,
+          403,
+          `user[${userID} is not part of guild[${listingsDiscord.meta.guild_id}]`
+        );
+      }
+    } else {
+      console.log(`addReview: No discord linked to listing[${listing._id}]`);
     }
 
     // create review
@@ -58,6 +75,7 @@ exports.addReview = async (req, res) => {
       meta: meta, // object structure in model
     });
 
+    // TEST:
     // update listing's rating and reviewCount and metas
     for (const mkey in review.meta) {
       // NOTE: this piece of code must be above update of review count
@@ -130,7 +148,7 @@ exports.getReviewByID = async (req, res) => {
     const review = await Review.findById(reviewID)
       .select({ oldData: 0 })
       .populate({ path: "user", select: { photo: 1, username: 1, name: 1 } })
-      .populate({ path: "listing", select: { dao_name: 1, dao_logo: 1 } });
+      .populate({ path: "listing", select: { name: 1, photo: 1, slug: 1 } });
 
     if (!review) {
       return new HTTPError(
@@ -147,5 +165,52 @@ exports.getReviewByID = async (req, res) => {
   } catch (error) {
     console.log("getReviewByID: ", error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.generateReviewOG = async (req, res) => {
+  try {
+    const reviewID = req.params.reviewID;
+    const base64Image = req.body.image;
+
+    let existingReview = await Review.findById(reviewID);
+    if (!existingReview) {
+      return new HTTPError(
+        res,
+        404,
+        `review[${reviewID}] doesn't exist`,
+        "resource not found"
+      );
+    }
+
+    // Convert base64 to Buffer
+    const base64ImageContent = base64Image.replace(
+      /^data:image\/\w+;base64,/,
+      ""
+    );
+    const inputBuffer = Buffer.from(base64ImageContent, "base64");
+    const convertedBuff = await sharp(inputBuffer).toFormat("webp").toBuffer();
+
+    const saveResp = await uploadToS3(
+      "truts-reviews",
+      reviewID + ".webp",
+      convertedBuff
+    );
+
+    existingReview.photo = {
+      id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
+      secure_url: saveResp.object_url,
+    };
+
+    await existingReview.save();
+
+    return new HTTPResponse(res, true, 201, `OG created successfully!`, null, {
+      photo: {
+        secure_url: saveResp.object_url,
+      },
+    });
+  } catch (error) {
+    console.log("generateReviewOG: ", error);
+    return new HTTPError(res, 500, error, "internal server errro");
   }
 };

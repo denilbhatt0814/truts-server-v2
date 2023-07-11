@@ -25,7 +25,7 @@ const user_missionSchema = new mongoose.Schema(
     },
     listing: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Dao",
+      ref: "Listing",
       required: [
         true,
         "A mission must be linked with a listing. Provide listingID",

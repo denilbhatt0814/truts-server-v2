@@ -34,6 +34,7 @@ const mission = require("./routes/mission");
 const taskTemplate = require("./routes/taskTemplate");
 const review = require("./routes/review");
 const listing = require("./routes/listing");
+const spinWheel = require("./routes/spinWheel");
 
 // routes middleware
 app.use("/api/v1", home);
@@ -42,6 +43,7 @@ app.use("/api/v1", mission);
 app.use("/api/v1", taskTemplate);
 app.use("/api/v1", review);
 app.use("/api/v1", listing);
+app.use("/api/v1", spinWheel);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");
