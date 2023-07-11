@@ -288,6 +288,17 @@ exports.connectTwitter = async (req, res) => {
     const user_data = await getTwitterUserDetails(data.access_token);
 
     console.log(user_data);
+    const twitterAccountExists = await User.findOne({
+      "twitter.id": user_data.id,
+    });
+    if (twitterAccountExists) {
+      return new HTTPError(
+        res,
+        409,
+        "This twitter account is already connected to a user",
+        "twitter account conflict"
+      );
+    }
 
     user.twitter = {
       id: user_data.id,
