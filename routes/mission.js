@@ -82,6 +82,9 @@ router
   .delete(deleteQuestionFromMission)
   .patch(updateQuestionInMission);
 
+//TEST : AKSHAY
+router.route("/mission/:missionID/live").patch(updateMissionStatus);
+
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
 router.post(

@@ -12,6 +12,7 @@ const redisClient = require("../databases/redis-client");
 const Coupon = require("../models/coupon");
 const { UD_MISSION_ID } = require("../config/config");
 const CronJob = require("cron").CronJob;
+const { publishEvent } = require("../utils/pubSub");
 
 /**
  * NOTE:
@@ -528,5 +529,36 @@ exports.specialClaimMissionCompletion = async (req, res) => {
     });
   } catch (error) {
     console.log("specialClaimMissionCompletion: ", error);
+  }
+};
+
+exports.updateMissionStatus = async () => {
+  try {
+    const missionID = req.params.missionID;
+    const missionToBeLived = await Mission.findByIdAndUpdate(
+      missionID,
+      { visible: true },
+      { new: true }
+    );
+
+    // sending publisher events
+    await publishEvent(
+      "mission:live",
+      JSON.stringify({ data: missionToBeLived })
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission updated successfully",
+      null,
+      {
+        mission: missionToBeLived,
+      }
+    );
+  } catch (error) {
+    console.log("updateMissionStatus: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
   }
 };
