@@ -214,6 +214,70 @@ exports.updateListing = async (req, res) => {
   }
 };
 
+exports.updateListing_ADMIN = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const listing = await Listing.findById(listingID).select({ slug: 1 });
+    let { name, oneliner, description, categories, chains } = req.body;
+
+    let updateQuery = {
+      $set: {
+        name,
+        oneliner,
+        description,
+        categories: JSON.parse(categories),
+        chains: JSON.parse(chains),
+      },
+    };
+
+    if (req.files && "logo" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-logo`,
+        req.files.logo
+      );
+
+      updateQuery.$set["photo.logo"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
+      };
+    }
+
+    if (req.files && "cover" in req.files) {
+      const saveResp = await updateListingPhoto(
+        `${listing.slug}-cover`,
+        req.files.cover
+      );
+
+      updateQuery.$set["photo.cover"] = {
+        id: saveResp.ETag.replaceAll('"', ""),
+        secure_url: saveResp.object_url,
+      };
+    }
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      listingID,
+      updateQuery,
+      {
+        new: true,
+      }
+    ).populate("socials");
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      `Listing[${listingID}] updated successfully!`,
+      null,
+      {
+        listing: updatedListing,
+      }
+    );
+  } catch (error) {
+    console.log("updateListing_ADMIN: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.getSocialsOfListing = async (req, res) => {
   try {
     const { listingID } = req.params;
@@ -267,6 +331,41 @@ exports.updateSocialOfListing = async (req, res) => {
     );
   } catch (error) {
     console.log("updateSocialOfListing: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.updateSocialOfListing_ADMIN = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const { platform, link, meta } = req.body;
+
+    const updatedListingSocial = await Listing_Social.findOneAndUpdate(
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+      },
+      {
+        listing: mongoose.Types.ObjectId(listingID),
+        platform: platform,
+        link: link,
+        meta: meta,
+      },
+      { new: true, upsert: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `Social of Listing[${listingID}] updated successfully!`,
+      null,
+      {
+        listingSocial: updatedListingSocial,
+      }
+    );
+  } catch (error) {
+    console.log("updateSocialOfListing_ADMIN: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };

@@ -17,10 +17,16 @@ const {
   getSocialsOfListing,
   getLeaderboardOfListing_Public,
   getToBeVerifiedListings,
+  updateListing_ADMIN,
+  updateSocialOfListing_ADMIN,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
-const { isLoggedIn, onlySuperAdmin } = require("../middlewares/user");
+const {
+  isLoggedIn,
+  onlySuperAdmin,
+  checkAdminTeam,
+} = require("../middlewares/user");
 const { Listing } = require("../models/listing");
 
 router
@@ -78,5 +84,15 @@ router
 router
   .route("/public/listing/:listingID/leaderboard")
   .get(getLeaderboardOfListing_Public);
+
+// ADMIN ROUTES:
+router
+  .route("/admin/:adminTeamID/listing/:listingID")
+  .get(isLoggedIn, checkAdminTeam)
+  .patch(isLoggedIn, checkAdminTeam, updateListing_ADMIN);
+router
+  .route("/admin/:adminTeamID/listing/:listingID/social")
+  .get(getSocialsOfListing)
+  .patch(isLoggedIn, checkAdminTeam, updateSocialOfListing_ADMIN);
 
 module.exports = router;
