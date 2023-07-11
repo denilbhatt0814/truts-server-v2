@@ -195,6 +195,18 @@ exports.loginViaDiscord = async (req, res) => {
 
       const decoded = jwt.verify(token, JWT_SECRET);
 
+      const discordAccountExists = await User.findOne({
+        "discord.id": discordUser.id,
+      });
+      if (discordAccountExists) {
+        return new HTTPError(
+          res,
+          409,
+          "This discord account is already connected to a user",
+          "discord account conflict"
+        );
+      }
+
       filter = { _id: decoded.id };
       console.log("Connected w/ discord");
     } else {
