@@ -27,6 +27,42 @@ exports.getListingBySlug = async (req, res) => {
   }
 };
 
+exports.getListing_ADMIN = async (req, res, next) => {
+  try {
+    const listingID = req.params.listingID;
+    if (!listingID) {
+      throw new Error("Missing listingID in request");
+    }
+
+    // Ensure the adminTeamID matches the admin team in the request
+    // This step is optional and depends on your application's needs
+    const adminTeam = req.adminTeam;
+    if (!adminTeam || adminTeam.listing.toString() !== listingID) {
+      return new HTTPError(
+        res,
+        403,
+        `Admin team[${adminTeam._id}] is not authorized to manage listing[${listingID}]`,
+        `unauthorized access to a resource`
+      );
+    }
+
+    const listing = await Listing.findById(listingID).populate("socials");
+    if (!listing) {
+      return new HTTPError(
+        res,
+        404,
+        `Listing[${listingID}] not found`,
+        `listing not found`
+      );
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, { listing });
+  } catch (error) {
+    console.log("getListing_ADMIN: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 // TODO: update listing thing
 exports.getListings = async (req, res) => {
   try {
@@ -297,6 +333,40 @@ exports.getSocialsOfListing = async (req, res) => {
   } catch (error) {
     console.log("getSocialsOfListing: ", error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+exports.getSocialsOfListing_ADMIN = async (req, res, next) => {
+  try {
+    const { listingID } = req.params;
+
+    // Ensure the adminTeamID matches the admin team in the request
+    // This step is optional and depends on your application's needs
+    const adminTeam = req.adminTeam;
+    if (!adminTeam || adminTeam.listing.toString() !== listingID) {
+      return new HTTPError(
+        res,
+        403,
+        `Admin team[${adminTeam._id}] is not authorized to manage listing[${listingID}]`,
+        `unauthorized access to a resource`
+      );
+    }
+
+    let findQuery = {
+      listing: mongoose.Types.ObjectId(listingID),
+    };
+    if (req.query.platform) {
+      findQuery.platform = req.query.platform.toUpperCase();
+    }
+
+    // console.log(findQuery);
+
+    const listingSocials = await Listing_Social.find(findQuery);
+
+    return new HTTPResponse(res, true, 200, null, null, { listingSocials });
+  } catch (error) {
+    logger.error("getSocialsOfListing_ADMIN: ", error);
+    return next(new HTTPError(res, 500, error, "internal server error"));
   }
 };
 

@@ -19,6 +19,8 @@ const {
   getToBeVerifiedListings,
   updateListing_ADMIN,
   updateSocialOfListing_ADMIN,
+  getListing_ADMIN,
+  getSocialsOfListing_ADMIN,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -88,11 +90,11 @@ router
 // ADMIN ROUTES:
 router
   .route("/admin/:adminTeamID/listing/:listingID")
-  .get(isLoggedIn, checkAdminTeam)
+  .get(isLoggedIn, checkAdminTeam, getListing_ADMIN)
   .patch(isLoggedIn, checkAdminTeam, updateListing_ADMIN);
 router
   .route("/admin/:adminTeamID/listing/:listingID/social")
-  .get(getSocialsOfListing)
+  .get(isLoggedIn, checkAdminTeam, getSocialsOfListing_ADMIN)
   .patch(isLoggedIn, checkAdminTeam, updateSocialOfListing_ADMIN);
 
 module.exports = router;
