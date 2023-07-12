@@ -29,7 +29,7 @@ const {
 } = require("../controllers/taskController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
-const { isLoggedIn } = require("../middlewares/user");
+const { isLoggedIn, onlySuperAdmin } = require("../middlewares/user");
 const { Mission } = require("../models/mission");
 
 const router = require("express").Router();
@@ -84,7 +84,9 @@ router
   .patch(updateQuestionInMission);
 
 //TEST : AKSHAY
-router.route("/mission/:missionID/live").patch(updateMissionStatus);
+router
+  .route("/mission/:missionID/live")
+  .patch(isLoggedIn, onlySuperAdmin, updateMissionStatus);
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
