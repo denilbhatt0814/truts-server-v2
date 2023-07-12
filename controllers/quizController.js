@@ -3,6 +3,7 @@ const { Mission } = require("../models/mission");
 const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
+const mission = require("../models/mission");
 
 // NOTE: protected by admin|manager
 exports.addQuestionToMission = async (req, res) => {
@@ -108,6 +109,194 @@ exports.addQuestionToMission = async (req, res) => {
     );
   } catch (error) {
     console.log("addQuestionToMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.deleteQuestionFromMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const questionID = req.params.questionID;
+    const mission = await Mission.findById(missionID);
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    if (mission.type != "QUIZ") {
+      return new HTTPError(
+        res,
+        409,
+        `mission[${missionID}] doesn't contain any quiz`,
+        "quiz not found inside mission"
+      );
+    }
+
+    // const deletedQuestion = await Mission.findByIdAndUpdate(
+    //   missionID,
+    //   { $pull: { questions: { _id: questionID } } },
+    //   { new: true }
+    // );
+
+    const questionToBeDeletedIdx = mission.questions.findIndex(
+      (question) => question._id.toString() == questionID.toString()
+    );
+
+    const deletedTaskSequenceNum =
+      mission.questions[questionToBeDeletedIdx].sequenceNum;
+
+    mission.questions.splice(questionToBeDeletedIdx, 1);
+
+    for (let quesiton of mission.questions) {
+      if (quesiton.sequenceNum > deletedTaskSequenceNum) {
+        quesiton.sequenceNum -= 1;
+      }
+    }
+    const updatedMission = await mission.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `question: [${questionID}] deleted successfully`,
+      null,
+      { mission: updatedMission }
+    );
+  } catch (error) {
+    console.log("deleteQuestionFromMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.updateQuestionInMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const questionID = req.params.questionID;
+    // todo :  add other fields which needs to be updated
+    const { prompt, type, options, answer, listingXP } = req.body;
+
+    const mission = await Mission.findById(missionID);
+    if (!mission) {
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] does not found`,
+        "mission not found"
+      );
+    }
+
+    // then check type and verify options/answer
+    if (type == "SCQ" || type == "MCQ") {
+      if (!verifyOptions(options)) {
+        return new HTTPError(
+          res,
+          400,
+          "Invalid option format. Option{prompt, id}[]",
+          "invalid input"
+        );
+      }
+    }
+
+    if (!verifyAnswerFormat(type, answer, options)) {
+      return new HTTPError(
+        res,
+        400,
+        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[]}",
+        "invalid input"
+      );
+    }
+
+    const updatedMission = await Mission.findOneAndUpdate(
+      { _id: missionID, "questions._id": questionID },
+      {
+        $set: {
+          "questions.$.prompt": prompt,
+          "questions.$.type": type,
+          "questions.$.options": options,
+          "questions.$.answer": answer,
+          "questions.$.listingXP": listingXP,
+        },
+      },
+      { new: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `question: [${questionID}] updated successfully`,
+      null,
+      { mission: updatedMission }
+    );
+  } catch (error) {
+    console.log("updateQuestionInMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.reOrderQuiz = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const mission = await Mission.findById(missionID);
+    const { reorderMapping } = req.body;
+
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    if (mission.type != "QUIZ") {
+      return new HTTPError(
+        res,
+        409,
+        `mission[${missionID}] doesn't contain any tasks`,
+        "quiz not found in mission"
+      );
+    }
+
+    if (
+      !verifyUniqueValues(reorderMapping) ||
+      !verifyKeysInArray(reorderMapping, mission.questions)
+    ) {
+      return new HTTPError(
+        res,
+        400,
+        `check id to sequence mapping`,
+        "mapping invalid"
+      );
+    }
+
+    for (let id in reorderMapping) {
+      const questionIdx = mission.questions.findIndex(
+        (question) => question._id.toString() === id
+      );
+      mission.questions[questionIdx].sequenceNum = reorderMapping[id];
+    }
+
+    mission.markModified("questions");
+    const updatedMission = await mission.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `quiz reordered successfully`,
+      null,
+      {
+        mission: updatedMission,
+      }
+    );
+  } catch (error) {
+    console.log("reOrderQuiz: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -365,4 +554,23 @@ function matchArray(userAnswer, correctAnswer) {
   }
 
   return isCorrect;
+}
+
+// UTILS
+function verifyUniqueValues(obj) {
+  const values = Object.values(obj);
+  const uniqueValues = new Set(values);
+
+  return (
+    values.length === uniqueValues.size &&
+    Math.max(...values) === values.length &&
+    Math.min(...values) === 1
+  );
+}
+
+function verifyKeysInArray(obj, arrayOfObjects) {
+  const objectKeys = Object.keys(obj);
+  const arrayIds = arrayOfObjects.map((obj) => obj._id.toString());
+
+  return objectKeys.every((key) => arrayIds.includes(key));
 }

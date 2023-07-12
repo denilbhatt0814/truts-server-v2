@@ -11,6 +11,7 @@ const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
 const Coupon = require("../models/coupon");
 const { UD_MISSION_ID } = require("../config/config");
+const { publishEvent } = require("../utils/pubSub");
 
 /**
  * NOTE:
@@ -98,10 +99,79 @@ exports.createMissionV2 = async (req, res) => {
 };
 
 // TODO:
+// TEST : AKSHAY
 exports.deleteMission = async (req, res) => {
   try {
+    const missionID = req.params.missionID;
+
+    const deletedMission = await Mission.findByIdAndDelete(missionID);
+    if (!deletedMission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission deleted successfully!",
+      null,
+      {
+        mission: deletedMission,
+      }
+    );
   } catch (error) {
     console.log("deleteMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.updateMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const { description, visible, listingXP, tags } = req.body;
+
+    const mission = await Mission.findById(missionID);
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    for (let tagId of tags) {
+      const result = await MissionTag.findById(tagId);
+      if (!result)
+        return new HTTPError(
+          res,
+          404,
+          `tag[${tagId}] doesn't exist`,
+          "tag not found"
+        );
+    }
+
+    const updatedMission = await Mission.findByIdAndUpdate(
+      missionID,
+      { description, visible, listingXP, tags },
+      { new: true }
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission updated successfully!",
+      null,
+      {
+        mission: updatedMission,
+      }
+    );
+  } catch (error) {
+    console.log("updateMission: ", error);
     return new HTTPError(res, 500, error, "internal server error");
   }
 };
@@ -278,7 +348,9 @@ exports.claimMissionCompletion = async (req, res) => {
     let attemptedMission = await User_Mission.findOne({
       user: mongoose.Types.ObjectId(userID),
       mission: mongoose.Types.ObjectId(missionID),
-    });
+    })
+      .populate("mission", { name: 1 })
+      .populate("listing", { name: 1, slug: 1, photo: 1 });
 
     if (!attemptedMission) {
       await session.abortTransaction();
@@ -367,6 +439,13 @@ exports.claimMissionCompletion = async (req, res) => {
 
     await session.commitTransaction();
     await session.endSession();
+
+    // sending publisher events
+    await publishEvent(
+      "mission:completion",
+      JSON.stringify({ data: { mission: attemptedMission, user: req.user } })
+    );
+
     return new HTTPResponse(res, true, 200, "claim successful", null, {
       attemptedMission,
     });
@@ -458,5 +537,36 @@ exports.specialClaimMissionCompletion = async (req, res) => {
     });
   } catch (error) {
     console.log("specialClaimMissionCompletion: ", error);
+  }
+};
+
+exports.updateMissionStatus = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const missionToBeLived = await Mission.findByIdAndUpdate(
+      missionID,
+      { visible: true },
+      { new: true }
+    ).populate("listing", { name: 1, slug: 1, photo: 1 });
+
+    // sending publisher events
+    await publishEvent(
+      "mission:live",
+      JSON.stringify({ data: missionToBeLived })
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Mission updated successfully",
+      null,
+      {
+        mission: missionToBeLived,
+      }
+    );
+  } catch (error) {
+    console.log("updateMissionStatus: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
   }
 };

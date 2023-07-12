@@ -87,6 +87,181 @@ exports.addOneTaskToMission = async (req, res) => {
   }
 };
 
+// TEST : AKSHAY
+exports.deleteTaskFromMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const taskID = req.params.taskID;
+    const mission = await Mission.findById(missionID);
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    if (mission.type != "TASKS") {
+      return new HTTPError(
+        res,
+        409,
+        `mission[${missionID}] is of type ${mission.type}`,
+        "mission type conflict"
+      );
+    }
+
+    const taskToBeDeletedIdx = mission.tasks.findIndex(
+      (task) => task._id.toString() == taskID.toString()
+    );
+
+    const deletedTaskStepNum = mission.tasks[taskToBeDeletedIdx].stepNum;
+    mission.tasks.splice(taskToBeDeletedIdx, 1);
+    for (let task of mission.tasks) {
+      if (task.stepNum > deletedTaskStepNum) {
+        task.stepNum -= 1;
+      }
+    }
+    const updatedMission = await mission.save();
+    // const updatedMission = await Mission.findByIdAndUpdate(
+    //   missionID,
+    //   { $pull: { tasks: { _id: taskID } } },
+    //   { new: true }
+    // );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `task: [${taskID}] deleted successfully`,
+      null,
+      { mission: updatedMission }
+    );
+  } catch (error) {
+    console.log("deleteTaskFromMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.updateTaskInMission = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const taskID = req.params.taskID;
+    // todo :  add other fields which needs to be updated
+    const { taskTemplate, name, description, validationDetails, redirect_url } =
+      req.body;
+
+    const mission = await Mission.findById(missionID);
+    if (!mission) {
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] does not found`,
+        "mission not found"
+      );
+    }
+
+    // check if the mission is a TASKs type
+    if (mission.type != "TASKS") {
+      return new HTTPError(
+        res,
+        409,
+        "Trying to add task to non TASKS type mission.",
+        "conflicting type"
+      );
+    }
+
+    const taskIdx = mission.tasks.findIndex(
+      (task) => task._id.toString() === taskID
+    );
+    mission.tasks[taskIdx].name = name;
+    mission.tasks[taskIdx].description = description;
+    mission.tasks[taskIdx].redirect_url = redirect_url;
+    mission.tasks[taskIdx].taskTemplate = taskTemplate;
+    mission.tasks[taskIdx].validationDetails = validationDetails;
+
+    // check validation details match taskTemplates
+    const verification = await cleanseAndVerifyTasks(res, mission.tasks);
+    if (verification instanceof HTTPError) {
+      return;
+    }
+
+    updatedMission = await mission.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `task: [${taskID}] updated successfully`,
+      null,
+      { mission: updatedMission }
+    );
+  } catch (error) {
+    console.log("updateTaskInMission: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST : AKSHAY
+exports.reOrderTask = async (req, res) => {
+  try {
+    const missionID = req.params.missionID;
+    const mission = await Mission.findById(missionID);
+    const { reorderMapping } = req.body;
+
+    if (!mission)
+      return new HTTPError(
+        res,
+        404,
+        `mission[${missionID}] doesn't exist`,
+        "mission not found"
+      );
+
+    if (mission.type != "TASKS") {
+      return new HTTPError(
+        res,
+        409,
+        `mission[${missionID}] is of type ${mission.type}`,
+        "mission type conflict"
+      );
+    }
+
+    if (
+      !verifyUniqueValues(reorderMapping) ||
+      !verifyKeysInArray(reorderMapping, mission.tasks)
+    ) {
+      return new HTTPError(
+        res,
+        400,
+        `check id to sequence mapping`,
+        "mapping invalid"
+      );
+    }
+
+    for (let id in reorderMapping) {
+      const taskIdx = mission.tasks.findIndex(
+        (task) => task._id.toString() === id
+      );
+      mission.tasks[taskIdx].stepNum = reorderMapping[id];
+    }
+
+    mission.markModified("tasks");
+    const updatedMission = await mission.save();
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      `tasks reordered successfully`,
+      null,
+      { mission: updatedMission }
+    );
+  } catch (error) {
+    console.log("reOrderTask: ", error);
+    return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
 exports.performTask = async (req, res) => {
   try {
     // PARSE TASK ID & USER ID (userID from authenticated route)
@@ -322,3 +497,22 @@ const cleanseAndVerifyTasks = async (res, tasks) => {
     }
   }
 };
+
+// UTILS
+function verifyUniqueValues(obj) {
+  const values = Object.values(obj);
+  const uniqueValues = new Set(values);
+
+  return (
+    values.length === uniqueValues.size &&
+    Math.max(...values) === values.length &&
+    Math.min(...values) === 1
+  );
+}
+
+function verifyKeysInArray(obj, arrayOfObjects) {
+  const objectKeys = Object.keys(obj);
+  const arrayIds = arrayOfObjects.map((obj) => obj._id.toString());
+
+  return objectKeys.every((key) => arrayIds.includes(key));
+}
