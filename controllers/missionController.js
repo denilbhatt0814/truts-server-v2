@@ -540,14 +540,14 @@ exports.specialClaimMissionCompletion = async (req, res) => {
   }
 };
 
-exports.updateMissionStatus = async () => {
+exports.updateMissionStatus = async (req, res) => {
   try {
     const missionID = req.params.missionID;
     const missionToBeLived = await Mission.findByIdAndUpdate(
       missionID,
       { visible: true },
       { new: true }
-    );
+    ).populate("listing", { name: 1, slug: 1, photo: 1 });
 
     // sending publisher events
     await publishEvent(
