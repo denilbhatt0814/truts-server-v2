@@ -438,6 +438,13 @@ exports.claimMissionCompletion = async (req, res) => {
 
     await session.commitTransaction();
     await session.endSession();
+
+    // sending publisher events
+    await publishEvent(
+      "mission:completion",
+      JSON.stringify({ data: attemptedMission })
+    );
+
     return new HTTPResponse(res, true, 200, "claim successful", null, {
       attemptedMission,
     });
