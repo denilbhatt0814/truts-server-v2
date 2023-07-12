@@ -10,6 +10,7 @@ const {
   specialClaimMissionCompletion,
   deleteMission,
   updateMission,
+  updateMissionStatus,
 } = require("../controllers/missionController");
 const {
   answerToQuestion,

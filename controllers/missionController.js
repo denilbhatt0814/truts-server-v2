@@ -11,7 +11,6 @@ const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
 const Coupon = require("../models/coupon");
 const { UD_MISSION_ID } = require("../config/config");
-const CronJob = require("cron").CronJob;
 const { publishEvent } = require("../utils/pubSub");
 
 /**
@@ -349,7 +348,9 @@ exports.claimMissionCompletion = async (req, res) => {
     let attemptedMission = await User_Mission.findOne({
       user: mongoose.Types.ObjectId(userID),
       mission: mongoose.Types.ObjectId(missionID),
-    });
+    })
+      .populate("mission", { name: 1 })
+      .populate("listing", { name: 1, slug: 1, photo: 1 });
 
     if (!attemptedMission) {
       await session.abortTransaction();
@@ -442,7 +443,7 @@ exports.claimMissionCompletion = async (req, res) => {
     // sending publisher events
     await publishEvent(
       "mission:completion",
-      JSON.stringify({ data: attemptedMission })
+      JSON.stringify({ data: { mission: attemptedMission, user: req.user } })
     );
 
     return new HTTPResponse(res, true, 200, "claim successful", null, {
