@@ -611,6 +611,18 @@ exports.verifyMultiWallet = async (req, res) => {
         await attachReferral(user, req.body.referral, session);
       }
 
+      if (!user.name) {
+        // add name if missing or if new user
+        user = await User.findOneAndUpdate(
+          { _id: user._id },
+          { name: public_key },
+          {
+            new: true,
+            session,
+          }
+        ).populate("tags");
+      }
+
       await session.commitTransaction();
       await session.endSession();
       cookieToken(user, res);
