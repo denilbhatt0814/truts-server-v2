@@ -615,7 +615,7 @@ exports.verifyMultiWallet = async (req, res) => {
         // add name if missing or if new user
         user = await User.findOneAndUpdate(
           { _id: user._id },
-          { name: public_key },
+          { name: shortenWalletAddress(public_key) },
           {
             new: true,
             session,
@@ -2385,6 +2385,20 @@ const attachReferral = async (user, code, session) => {
     console.log("attachReferral: ", error);
   }
 };
+
+function shortenWalletAddress(address) {
+  const prefixLength = 6; // Number of characters to show at the beginning of the address
+  const suffixLength = 4; // Number of characters to show at the end of the address
+
+  if (address.length <= prefixLength + suffixLength) {
+    return address; // No need to shorten if the address is already short
+  }
+
+  const prefix = address.substring(0, prefixLength);
+  const suffix = address.substring(address.length - suffixLength);
+
+  return `${prefix}...${suffix}`;
+}
 
 // -------- FOR FUTURE ------------
 // TEST: multi wallet login
