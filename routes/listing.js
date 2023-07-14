@@ -17,6 +17,7 @@ const {
   getSocialsOfListing,
   getLeaderboardOfListing_Public,
   getToBeVerifiedListings,
+  getListingChainMapping,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -48,6 +49,7 @@ router
   .get(getToBeVerifiedListings)
   .post(isLoggedIn, onlySuperAdmin, verifyListing);
 router.route("/listing/chains").get(getListingCountInAChain);
+router.route("/listing/chains/mapping").get(getListingChainMapping);
 router.route("/listing/categories").get(cacheRoute, getListingCountInACategory);
 router.route("/listing/supported-platforms").get(getSupportedPlatforms);
 router.route("/listing/by-slug/:slug").get(getListingBySlug);

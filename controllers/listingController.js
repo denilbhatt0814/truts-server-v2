@@ -14,6 +14,7 @@ const { Listing } = require("../models/listing");
 const { publishEvent } = require("../utils/pubSub");
 const Sharp = require("sharp");
 const uploadToS3 = require("../utils/uploadToS3");
+const chainMapping = require("../config/chainMapping.json");
 
 exports.getListingBySlug = async (req, res) => {
   try {
@@ -741,6 +742,17 @@ exports.getLeaderboardOfListing_Public = async (req, res) => {
 
 // TEMP CODE:
 // THIS MUST BE REPLACED SOON:
+exports.getListingChainMapping = async (req, res) => {
+  try {
+    return new HTTPResponse(res, true, 200, null, null, {
+      chainMapping,
+    });
+  } catch (error) {
+    console.log("getListingChainMapping: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 exports.getListingCountInAChain = async (req, res) => {
   try {
     const agg = [
