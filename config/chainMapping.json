@@ -1,0 +1,813 @@
+{
+  "near": {
+    "ticker": "NEAR",
+    "icon": "https://assets.coingecko.com/coins/images/10365/small/near_icon.png?1601359077",
+    "color": "#f2f2f2"
+  },
+  "ethereum": {
+    "ticker": "ETH",
+    "icon": "https://assets.coingecko.com/coins/images/279/small/ethereum.png?1595348880",
+    "color": "#e3d1ff"
+  },
+  "avalanche": {
+    "ticker": "AVAX",
+    "icon": "https://assets.coingecko.com/coins/images/12559/small/coin-round-red.png?1604021818",
+    "color": "#ffa6a7"
+  },
+  "arbitrum-one": {
+    "ticker": "ARRB",
+    "icon": "https://pbs.twimg.com/profile_images/1490751860461953029/046qIxwT_400x400.jpg",
+    "color": "#ccecff"
+  },
+  "optimistic-ethereum": {
+    "ticker": "OP",
+    "icon": "https://assets.coingecko.com/coins/images/25244/small/Optimism.png?1660904599",
+    "color": "#ffa6a7"
+  },
+  "binance-smart-chain": {
+    "ticker": "BSC",
+    "icon": "https://assets.coingecko.com/markets/images/52/small/binance.jpg?1519353250",
+    "color": "#fffdcf"
+  },
+  "solana": {
+    "ticker": "SOL",
+    "icon": "https://assets.coingecko.com/coins/images/4128/small/solana.png?1640133422",
+    "color": "#b0ffd7"
+  },
+  "flow": {
+    "ticker": "FLOW",
+    "icon": "https://assets.coingecko.com/coins/images/13446/small/5f6294c0c7a8cda55cb1c936_Flow_Wordmark.png?1631696776",
+    "color": "#ccffee"
+  },
+  "energi": {
+    "ticker": "NRG",
+    "icon": "https://assets.coingecko.com/coins/images/5795/small/3218.png?1604798557",
+    "color": "#EC7063"
+  },
+  "moonriver": {
+    "ticker": "MOVR",
+    "icon": "https://assets.coingecko.com/coins/images/17984/small/9285.png?1630028620",
+    "color": "#FFA500"
+  },
+  "fantom": {
+    "ticker": "FTM",
+    "icon": "https://assets.coingecko.com/coins/images/4001/small/Fantom.png?1558015016",
+    "color": "#FFFF00"
+  },
+  "harmony-shard-0": {
+    "ticker": "ONE",
+    "icon": "https://assets.coingecko.com/coins/images/4344/small/Y88JAze.png?1565065793",
+    "color": "#FF00FF"
+  },
+  "cosmos": {
+    "ticker": "ATOM",
+    "icon": "https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png?1555657960",
+    "color": "#800080"
+  },
+  "arweave": {
+    "ticker": "AR",
+    "icon": "https://assets.coingecko.com/coins/images/4343/small/oRt6SiEN_400x400.jpg?1591059616",
+    "color": "#008080"
+  },
+  "celestia": {
+    "ticker": "CEL",
+    "icon": "https://icodrops.com/wp-content/uploads/2022/01/Celestia_logo-150x150.jpeg",
+    "color": "#C0C0C0"
+  },
+  "meter": {
+    "ticker": "MTRG",
+    "icon": "https://assets.coingecko.com/coins/images/11848/small/meter.png?1660274270",
+    "color": "#8B4513"
+  },
+  "blockscout": {
+    "ticker": "blockscout",
+    "icon": "https://pbs.twimg.com/profile_images/1563254263161032704/1RBJKVcR_400x400.jpg",
+    "color": "#DC143C"
+  },
+  "algorand": {
+    "ticker": "ALGO",
+    "icon": "https://assets.coingecko.com/coins/images/4380/small/download.png?1547039725",
+    "color": "#7FFF00"
+  },
+  "metis": {
+    "ticker": "METIS",
+    "icon": "https://assets.coingecko.com/coins/images/15595/small/metis.jpeg?1660285312",
+    "color": "#0000FF"
+  },
+  "celo": {
+    "ticker": "CELO",
+    "icon": "https://assets.coingecko.com/coins/images/11090/small/icon-celo-CELO-color-500.png?1592293590",
+    "color": "#808000"
+  },
+  "polkadot": {
+    "ticker": "DOT",
+    "icon": "https://assets.coingecko.com/coins/images/12171/small/polkadot.png?1639712644",
+    "color": "#FF1493"
+  },
+  "bitcoin": {
+    "ticker": "BTC",
+    "icon": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png?1547033579",
+    "color": "#800000"
+  },
+  "cardano": {
+    "ticker": "ADA",
+    "icon": "https://assets.coingecko.com/coins/images/975/small/cardano.png?1547034860",
+    "color": "#2E8B57"
+  },
+  "boba": {
+    "ticker": "BOBA",
+    "icon": "https://assets.coingecko.com/coins/images/20285/small/BOBA.png?1636811576",
+    "color": "#4169E1"
+  },
+  "cronos": {
+    "ticker": "CRO",
+    "icon": "https://assets.coingecko.com/coins/images/7310/small/oCw2s3GI_400x400.jpeg?1645172042",
+    "color": "#FF4500"
+  },
+  "tezos": {
+    "ticker": "XTZ",
+    "icon": "https://assets.coingecko.com/coins/images/976/small/Tezos-logo.png?1547034862",
+    "color": "#FFD700"
+  },
+  "heco": {
+    "ticker": "HECO",
+    "icon": "https://pbs.twimg.com/profile_images/1479376443197263873/3Oeayev6_400x400.jpg",
+    "color": "#D2691E"
+  },
+  "aurora": {
+    "ticker": "AURORA",
+    "icon": "https://assets.coingecko.com/coins/images/20582/small/aurora.jpeg?1637250883",
+    "color": "#FF69B4"
+  },
+  "thor": {
+    "ticker": "THOR",
+    "icon": "https://pbs.twimg.com/profile_images/1573334671508865025/DjovsG7w_400x400.jpg",
+    "color": "#FFA07A"
+  },
+  "ronin": {
+    "ticker": "RON",
+    "icon": "https://assets.coingecko.com/coins/images/20009/small/ronin.jpg?1649184678",
+    "color": "#F08080"
+  },
+  "aptos": {
+    "ticker": "APT",
+    "icon": "https://assets.coingecko.com/coins/images/26455/small/Aptos_mark_BLK.png?1658118095",
+    "color": "#800080"
+  },
+  "polygon-pos": {
+    "ticker": "MATIC",
+    "icon": "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png?1624446912",
+    "color": "#feb5ff"
+  },
+  "sei": {
+    "ticker": "SEI",
+    "icon": "/sei.png",
+    "color": "rgb(197,223,233)"
+  },
+  "syscoin": {
+    "ticker": "SYS",
+    "icon": "https://assets.coingecko.com/coins/images/119/small/Syscoin.png?1560401261",
+    "color": "rgb(76,180,250)"
+  },
+  "sui": {
+    "ticker": "SUI",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/20947.png",
+    "color": "#7AC1F2"
+  },
+  "shardeum": {
+    "ticker": "SHM",
+    "icon": "https://assets.coingecko.com/coins/images/27937/small/shm.png?1666515519",
+    "color": "#808080"
+  },
+  "okc": {
+    "ticker": "OKT",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/8267.png",
+    "color": "rgb(190,202,221)"
+  },
+  "chain-agnostic": {
+    "ticker": "Chain Agnostic",
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/f/f8/GNOME_Web_logo_40.png",
+    "color": "#48C9B0"
+  },
+  "multi-chain": {
+    "ticker": "Multi Chain",
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/f/f8/GNOME_Web_logo_40.png",
+    "color": "#48C9B0"
+  },
+  "telos": {
+    "ticker": "TLOS",
+    "icon": "https://assets.coingecko.com/coins/images/7588/small/TLOS_200.png?1629277084",
+    "color": "#CF9FFF"
+  },
+  "mantle": {
+    "ticker": "MANTLE",
+    "icon": "https://pbs.twimg.com/profile_images/1597775748580134914/bLhE1aY1_400x400.jpg",
+    "color": "#CF9FFF"
+  },
+
+  "agoric": {
+    "ticker": "BLD",
+    "icon": "https://pbs.twimg.com/profile_images/1382370601315225604/Gl81Fjpx_400x400.png",
+    "color": "#cfe64c"
+  },
+  "aleo": {
+    "ticker": "ALEO",
+    "icon": "https://pbs.twimg.com/profile_images/1485936059707965446/qM-hjbty_400x400.png",
+    "color": "#27547c"
+  },
+  "aleph-zero": {
+    "ticker": "AZERO",
+    "icon": "https://alephzero.org/storage/azero-1662674417C7tlS.jpeg",
+    "color": "#3b2ff2"
+  },
+  "astar": {
+    "ticker": "ASTR",
+    "icon": "https://astar.network/images/common/logo.svg",
+    "color": "#8b62da"
+  },
+  "aztec": {
+    "ticker": "AZTC",
+    "icon": "https://cdn-images-1.medium.com/max/92/1*FD_y4WKWC6jwkdoYwpuqSw@2x.png",
+    "color": "#0feea4"
+  },
+  "base": {
+    "ticker": "BASE",
+    "icon": "https://avatars.githubusercontent.com/u/108554348?s=200&v=4",
+    "color": "#6c388f"
+  },
+  "beldex": {
+    "ticker": "BDX",
+    "icon": "https://pbs.twimg.com/profile_images/1612770327112871937/nqneDF29_400x400.png",
+    "color": "#9ec05b"
+  },
+  "bitgert": {
+    "ticker": "BRISE",
+    "icon": "https://pbs.twimg.com/profile_images/1609865304913629184/bCr_l0h__400x400.jpg",
+    "color": "#775b6e"
+  },
+  "bittorrent": {
+    "ticker": "BTT",
+    "icon": "https://bttcscan.com/images/svg/brands/mainbrand-1.png?v=23.6.4.0",
+    "color": "#a31ad3"
+  },
+  "bytom": {
+    "ticker": "BTM",
+    "icon": "https://avatars.githubusercontent.com/u/28505705?s=200&v=4",
+    "color": "#357e71"
+  },
+  "caduceus": {
+    "ticker": "CMP",
+    "icon": "https://pbs.twimg.com/profile_images/1496552714716823562/uZk0I_RJ_400x400.jpg",
+    "color": "#392121"
+  },
+  "canto": {
+    "ticker": "CANTO",
+    "icon": "https://avatars.githubusercontent.com/u/104648009?s=200&v=4",
+    "color": "#17ab90"
+  },
+  "carbon": {
+    "ticker": "CARB",
+    "icon": "https://pbs.twimg.com/profile_images/1607573746537361408/Cz7BPXlw_400x400.png",
+    "color": "#e8d95a"
+  },
+  "casper": {
+    "ticker": "CSPR",
+    "icon": "https://media.licdn.com/dms/image/C4E0BAQGAUEe0tQ6LoA/company-logo_200_200/0/1673864346121?e=2147483647&v=beta&t=ht3IaDYz4ppkDHknyslYymOc30msTLWTk-f1a9lLcN8",
+    "color": "#136ccb"
+  },
+  "ceramic": {
+    "ticker": "CERA",
+    "icon": "https://avatars.githubusercontent.com/u/58352556?s=200&v=4",
+    "color": "#6ebb9c"
+  },
+  "chromia": {
+    "ticker": "CHR",
+    "icon": "https://docs.chromia.com/img/chromia-symbol.png",
+    "color": "#7c8cf5"
+  },
+  "clv": {
+    "ticker": "CLV",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_clv?w=48&h=48",
+    "color": "#2ecb98"
+  },
+  "comdex": {
+    "ticker": "CMDX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_comdex?w=48&h=48",
+    "color": "#8e2cc4"
+  },
+  "concordium": {
+    "ticker": "CCD",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_concordium?w=48&h=48",
+    "color": "#29075d"
+  },
+  "conflux": {
+    "ticker": "CFX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_conflux?w=48&h=48",
+    "color": "#86a8bc"
+  },
+  "core": {
+    "ticker": "CORE",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_core?w=48&h=48",
+    "color": "#104afb"
+  },
+  "crossbell": {
+    "ticker": "CRSB",
+    "icon": "https://avatars.githubusercontent.com/u/103565959?s=200&v=4",
+    "color": "#1e6266"
+  },
+  "csc": {
+    "ticker": "CSC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_csc?w=48&h=48",
+    "color": "#aba9ca"
+  },
+  "cube": {
+    "ticker": "CUBE",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_cube?w=48&h=48",
+    "color": "#5ae0a6"
+  },
+  "defichain": {
+    "ticker": "DFI",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_defichain?w=48&h=48",
+    "color": "#0f9c56"
+  },
+  "deso": {
+    "ticker": "DESO",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/10442.png",
+    "color": "#29dfc5"
+  },
+  "dfk-chain": {
+    "ticker": "DFK",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_dfk?w=48&h=48",
+    "color": "#640036"
+  },
+  "dogechain": {
+    "ticker": "DOGE",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_dogechain?w=48&h=48",
+    "color": "#2c5a41"
+  },
+  "eos": {
+    "ticker": "EOS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_eos%20evm?w=48&h=48",
+    "color": "#98a0db"
+  },
+  "ergo": {
+    "ticker": "ERGO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_ergo?w=48&h=48",
+    "color": "#443256"
+  },
+  "evmos": {
+    "ticker": "EVMOS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_evmos?w=48&h=48",
+    "color": "#b81008"
+  },
+  "fetch.ai": {
+    "ticker": "FET",
+    "icon": "https://avatars.githubusercontent.com/u/40889903?s=200&v=4",
+    "color": "#b997bd"
+  },
+  "fvm": {
+    "ticker": "FVM",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_filecoin?w=48&h=48",
+    "color": "#279d4f"
+  },
+  "findora": {
+    "ticker": "FRA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_findora?w=48&h=48",
+    "color": "#d8e8d8"
+  },
+  "flare-network": {
+    "ticker": "FLR",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_flare?w=48&h=48",
+    "color": "#83fb47"
+  },
+  "fuel": {
+    "ticker": "FUEL",
+    "icon": "https://assets-global.website-files.com/62e273f312d561347ce33306/6400d0b82c501d62b75963ff_Fuel%20New.png",
+    "color": "#97fb31"
+  },
+  "function-x": {
+    "ticker": "FX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_functionx?w=48&h=48",
+    "color": "#d0b43d"
+  },
+  "fuse": {
+    "ticker": "FUSE",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_fuse?w=48&h=48",
+    "color": "#ee772d"
+  },
+  "fusion": {
+    "ticker": "FSN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_fusion?w=48&h=48",
+    "color": "#22b988"
+  },
+  "gatechain": {
+    "ticker": "GATE",
+    "icon": "https://avatars.githubusercontent.com/u/48748353?s=200&v=4",
+    "color": "#2c4a02"
+  },
+  "gather": {
+    "ticker": "GTH",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/7041.png",
+    "color": "#a96474"
+  },
+  "gnosis-chain": {
+    "ticker": "GNO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_gnosis?w=48&h=48",
+    "color": "#598fe8"
+  },
+  "gochain": {
+    "ticker": "GO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_gochain?w=48&h=48",
+    "color": "#1c3026"
+  },
+  "godwoken": {
+    "ticker": "GDWKN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_godwoken?w=48&h=48",
+    "color": "#06204d"
+  },
+  "hedera": {
+    "ticker": "HBAR",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/4642.png",
+    "color": "#808d48"
+  },
+  "hive": {
+    "ticker": "HIVE",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/5370.png",
+    "color": "#97b901"
+  },
+  "immutable-x": {
+    "ticker": "IMX",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/10603.png",
+    "color": "#cc7e58"
+  },
+  "injective": {
+    "ticker": "INJ",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_injective?w=48&h=48",
+    "color": "#17b0c0"
+  },
+  "internet-computer": {
+    "ticker": "ICP",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/8916.png",
+    "color": "#ea72ad"
+  },
+  "iost": {
+    "ticker": "IOST",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/2405.png",
+    "color": "#7260a7"
+  },
+  "iotex": {
+    "ticker": "IOTX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_iotex?w=48&h=48",
+    "color": "#8b7983"
+  },
+  "juno": {
+    "ticker": "JUNO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_juno?w=48&h=48",
+    "color": "#b46b96"
+  },
+  "kadena": {
+    "ticker": "KDA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kadena?w=48&h=48",
+    "color": "#4e09e0"
+  },
+  "kardiachain": {
+    "ticker": "KAI",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kardia?w=48&h=48",
+    "color": "#9c14c9"
+  },
+  "karura": {
+    "ticker": "KAR",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_karura?w=48&h=48",
+    "color": "#d22e55"
+  },
+  "kava": {
+    "ticker": "KAVA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kava?w=48&h=48",
+    "color": "#6286bf"
+  },
+  "kcc": {
+    "ticker": "KCC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kcc?w=48&h=48",
+    "color": "#6acbe5"
+  },
+  "klaytn": {
+    "ticker": "KLAY",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_klaytn?w=48&h=48",
+    "color": "#9c4989"
+  },
+  "kujira": {
+    "ticker": "KUJI",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kujira?w=48&h=48",
+    "color": "#554e16"
+  },
+  "kusama": {
+    "ticker": "KSM",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_kusama?w=48&h=48",
+    "color": "#b722d4"
+  },
+  "linea": {
+    "ticker": "LINEA",
+    "icon": "https://goerli.lineascan.build/images/svg/brands/main.svg?v=23.6.4.0",
+    "color": "#46de9f"
+  },
+  "lisk": {
+    "ticker": "LSK",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/1214.png",
+    "color": "#d83793"
+  },
+  "litecoin": {
+    "ticker": "LTC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_litecoin?w=48&h=48",
+    "color": "#a9f90b"
+  },
+  "loopring": {
+    "ticker": "LRC",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/1934.png",
+    "color": "#1badc4"
+  },
+  "lum-network": {
+    "ticker": "LUM",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/17183.png",
+    "color": "#0a62ed"
+  },
+  "milkomeda": {
+    "ticker": "MILK",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_milkomeda%20a1?w=48&h=48",
+    "color": "#962060"
+  },
+  "mixin": {
+    "ticker": "XIN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_mixin?w=48&h=48",
+    "color": "#395dd9"
+  },
+  "monero": {
+    "ticker": "XMR",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/328.png",
+    "color": "#6e11c1"
+  },
+  "moonbeam": {
+    "ticker": "GLMR",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_moonbeam?w=48&h=48",
+    "color": "#db390c"
+  },
+  "multiversx": {
+    "ticker": "EGLD",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_multiversx?w=48&h=48",
+    "color": "#1dca85"
+  },
+  "nautilus": {
+    "ticker": "NAUT",
+    "icon": "https://nautchain.xyz/static/images/logo.svg",
+    "color": "#b28da8"
+  },
+  "neo": {
+    "ticker": "NEO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_neo?w=48&h=48",
+    "color": "#14da37"
+  },
+  "nervos": {
+    "ticker": "CKB",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/4948.png",
+    "color": "#aced76"
+  },
+  "nitro": {
+    "ticker": "NITRO",
+    "icon": "https://pbs.twimg.com/profile_images/1608259421351575553/q77Lh87E_400x400.jpg",
+    "color": "#e68b8e"
+  },
+  "nuls": {
+    "ticker": "NULS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_nuls?w=48&h=48",
+    "color": "#489181"
+  },
+  "oasis": {
+    "ticker": "OASIS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_oasis?w=48&h=48",
+    "color": "#f033f3"
+  },
+  "oasys": {
+    "ticker": "OASYS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_oasys?w=48&h=48",
+    "color": "#a90c99"
+  },
+  "octopus-network": {
+    "ticker": "OCT",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/12043.png",
+    "color": "#bd591c"
+  },
+  "oneledger": {
+    "ticker": "OLT",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/2921.png",
+    "color": "#96c99b"
+  },
+  "ontology": {
+    "ticker": "ONT",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_ontology?w=48&h=48",
+    "color": "#5bb16b"
+  },
+  "oraichain": {
+    "ticker": "ORAI",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_oraichain?w=48&h=48",
+    "color": "#1760c0"
+  },
+  "osmosis": {
+    "ticker": "OSMO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_osmosis?w=48&h=48",
+    "color": "#b9385e"
+  },
+  "palm": {
+    "ticker": "PALM",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_palm?w=48&h=48",
+    "color": "#2a730f"
+  },
+  "picasso": {
+    "ticker": "PICA",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/13678.png",
+    "color": "#38d8c8"
+  },
+  "platon": {
+    "ticker": "LAT",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/9720.png",
+    "color": "#761372"
+  },
+  "proton": {
+    "ticker": "XPR",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_proton?w=48&h=48",
+    "color": "#383870"
+  },
+  "qtum": {
+    "ticker": "QTUM",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/1684.png",
+    "color": "#ad205b"
+  },
+  "reef": {
+    "ticker": "REEF",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/6951.png",
+    "color": "#9db5f9"
+  },
+  "rei-network": {
+    "ticker": "REI",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_reichain?w=48&h=48",
+    "color": "#058058"
+  },
+  "rsk": {
+    "ticker": "RSK",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/15164.png",
+    "color": "#6c3924"
+  },
+  "scroll": {
+    "ticker": "SCRL",
+    "icon": "https://avatars.githubusercontent.com/u/87750292?s=200&v=4",
+    "color": "#f359e5"
+  },
+  "secret-network": {
+    "ticker": "SCRT",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_secret?w=48&h=48",
+    "color": "#9406e8"
+  },
+  "shiden": {
+    "ticker": "SDN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_shiden?w=48&h=48",
+    "color": "#338a9e"
+  },
+  "sifchain": {
+    "ticker": "SIF",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_sifchain?w=48&h=48",
+    "color": "#a4a72d"
+  },
+  "skale": {
+    "ticker": "SKL",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/5691.png",
+    "color": "#ac6f17"
+  },
+  "smartbch": {
+    "ticker": "SBCH",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_smartbch?w=48&h=48",
+    "color": "#29b267"
+  },
+  "songbird": {
+    "ticker": "SGB",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_songbird?w=48&h=48",
+    "color": "#6748a1"
+  },
+  "stacks": {
+    "ticker": "STX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_stacks?w=48&h=48",
+    "color": "#99b1f8"
+  },
+  "starcoin": {
+    "ticker": "STC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_starcoin?w=48&h=48",
+    "color": "#6f57b1"
+  },
+  "stargaze": {
+    "ticker": "STARS",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_stargaze?w=48&h=48",
+    "color": "#4f6aa2"
+  },
+  "starkex": {
+    "ticker": "STRX",
+    "icon": "https://starkware.co/wp-content/uploads/2021/08/StarkEx-Blue-Banner.svg",
+    "color": "#5df031"
+  },
+  "starknet": {
+    "ticker": "STRK",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_starknet?w=48&h=48",
+    "color": "#f7f81a"
+  },
+  "stellar": {
+    "ticker": "XLM",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_stellar?w=48&h=48",
+    "color": "#750e93"
+  },
+  "sx-network": {
+    "ticker": "SX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_sxnetwork?w=48&h=48",
+    "color": "#ee218f"
+  },
+  "terra-two": {
+    "ticker": "LUNA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_terra2?w=48&h=48",
+    "color": "#9db560"
+  },
+  "terra-classic": {
+    "ticker": "LUNC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_terra%20classic?w=48&h=48",
+    "color": "#f6fc6d"
+  },
+  "theta": {
+    "ticker": "THETA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_theta?w=48&h=48",
+    "color": "#d67a63"
+  },
+  "thundercore": {
+    "ticker": "TT",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_thundercore?w=48&h=48",
+    "color": "#b3692b"
+  },
+  "tomochain": {
+    "ticker": "TOMO",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_tomochain?w=48&h=48",
+    "color": "#33b8ea"
+  },
+  "ton": {
+    "ticker": "TON",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_ton?w=48&h=48",
+    "color": "#db3d53"
+  },
+  "velas": {
+    "ticker": "VLX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_velas?w=48&h=48",
+    "color": "#b8f03f"
+  },
+  "vision-chain": {
+    "ticker": "VSN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_vision?w=48&h=48",
+    "color": "#d31b5a"
+  },
+  "vite": {
+    "ticker": "VITE",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_vite?w=48&h=48",
+    "color": "#df4c74"
+  },
+  "wanchain": {
+    "ticker": "WAN",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_wanchain?w=48&h=48",
+    "color": "#145dac"
+  },
+  "waves": {
+    "ticker": "WAVES",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_waves?w=48&h=48",
+    "color": "#235ca1"
+  },
+  "xdc-network": {
+    "ticker": "XDC",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_xdc?w=48&h=48",
+    "color": "#648c0a"
+  },
+  "xpla": {
+    "ticker": "XPLA",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_xpla?w=48&h=48",
+    "color": "#855880"
+  },
+  "xrp-ledger": {
+    "ticker": "XRPL",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/52.png",
+    "color": "#e67b2e"
+  },
+  "zilliqa": {
+    "ticker": "ZIL",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_zilliqa?w=48&h=48",
+    "color": "#ccb58d"
+  },
+  "zksync": {
+    "ticker": "ZKS",
+    "icon": "https://s2.coinmarketcap.com/static/img/coins/64x64/24091.png",
+    "color": "#833886"
+  },
+  "zyx": {
+    "ticker": "ZYX",
+    "icon": "https://icons.llamao.fi/icons/chains/rsz_zyx?w=48&h=48",
+    "color": "#1f3606"
+  }
+}
