@@ -39,6 +39,7 @@ const {
   verifyChangedWallet,
   verifyNewMultiWallet,
   getMyProfileStatus,
+  getMissionsSuggeestedToMe,
 } = require("../controllers/userController");
 const { isLoggedIn } = require("../middlewares/user");
 const randomString = require("../utils/randomString");
@@ -82,6 +83,9 @@ router.route("/user/reviews").get(isLoggedIn, getMyReviews);
 router.route("/user/guilds").get(isLoggedIn, getMyMatchWithListedGuilds);
 router.route("/user/truts-xp").get(isLoggedIn, getMyTrutsXP);
 router.route("/user/completed-mission").get(isLoggedIn, getMyCompletedMissions);
+router
+  .route("/user/suggest-missions")
+  .get(isLoggedIn, getMissionsSuggeestedToMe);
 router.route("/user/referral").get(isLoggedIn, getMyReferralDetails);
 
 router.route("/user/profile/status").get(isLoggedIn, getMyProfileStatus);
