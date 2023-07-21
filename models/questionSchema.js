@@ -28,7 +28,7 @@ exports.questionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["SCQ", "MCQ", "TEXT"],
+      enum: ["SCQ", "MCQ", "TEXT", "SLIDE"],
       required: [true, "Please select type of the question"],
     },
     options: {

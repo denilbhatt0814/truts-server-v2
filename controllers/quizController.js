@@ -505,6 +505,8 @@ function verifyAnswerFormat(type, answer, options) {
       return verifySCQAnswer(answer, options);
     case "MCQ":
       return verifyMCQAnswer(answer, options);
+    case "SLIDE":
+      return true;
 
     default:
       return false;
