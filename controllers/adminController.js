@@ -95,7 +95,9 @@ exports.getMyAdminTeams = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const adminTeams = await AdminTeam.find({ "members.user": userId });
+    const adminTeams = await AdminTeam.find({
+      "members.user": userId,
+    }).populate("listing", { name: 1, oneliner: 1, slug: 1, photo: 1 });
 
     return new HTTPResponse(
       res,
