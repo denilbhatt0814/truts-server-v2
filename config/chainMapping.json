@@ -152,7 +152,7 @@
   "aptos": {
     "ticker": "APT",
     "icon": "https://assets.coingecko.com/coins/images/26455/small/Aptos_mark_BLK.png?1658118095",
-    "color": "#800080"
+    "color": "#a3fbfd"
   },
   "polygon-pos": {
     "ticker": "MATIC",
