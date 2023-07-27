@@ -612,6 +612,137 @@ module.exports = {
       return false;
     },
   },
+  HOLDS_THE_TOKEN: {
+    parameters: [
+      {
+        field: "chainID",
+        name: "Chain ID",
+        type: String,
+        required: true,
+      },
+      {
+        field: "contractAddress",
+        name: "Contract Address",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+      {
+        field: "minimumTokenBalance",
+        name: "Minimum Token Balance",
+        type: Number,
+        required: true,
+      },
+    ],
+    areValidArguments: function (arguments) {
+      if (
+        "contractAddress" in arguments &&
+        "chainID" in arguments &&
+        "minimumTokenBalance" in arguments
+      ) {
+        return true;
+      }
+      return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
+
+      const { chainID, contractAddress, userID, minimumTokenBalance } =
+        arguments;
+
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDS_THE_TOKEN: user[${user._id}] has no wallet connected`
+        );
+        return false;
+      }
+
+      // then search for EVM wallet
+      const EVM_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "EVM" && wallet.verified
+      );
+
+      if (!EVM_Wallet) {
+        console.log(
+          `HOLDS_THE_TOKEN: user's [${user._id}] EVM wallet not found connected`
+        );
+        return false;
+      }
+
+      // CHAIN LOGIC
+      let chainMapping = {
+        1: "eth-mainnet",
+        137: "polygon-mainnet",
+        42161: "arb-mainnet",
+        10: "opt-mainnet",
+        5000: "mantle-mainnet",
+      };
+
+      const options = {
+        method: "GET",
+        url: `https://api.covalenthq.com/v1/${chainMapping[chainID]}/address/${EVM_Wallet.address}/balances_v2/?`,
+        headers: {
+          accept: "application/json",
+          Authorization: "Bearer cqt_rQCBb64p8qfG9MQQjGrphJY3Jw9R",
+        },
+      };
+      const axios_resp = await axios.request(options);
+
+      const tokenInWallet = axios_resp.data.items.find(
+        (token) => token.contract_address === contractAddress
+      );
+
+      if (!tokenInWallet) {
+        return false;
+      }
+
+      if (
+        tokenInWallet.balance / Math.pow(10, tokenInWallet.contract_decimals) >=
+        minimumTokenBalance
+      ) {
+        return true;
+      }
+      return false;
+    },
+  },
   HOLDER_OF_SOL_NFT: {
     parameters: [
       {
