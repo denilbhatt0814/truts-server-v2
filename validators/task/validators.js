@@ -14,6 +14,8 @@ const {
 const checkIsOwner = require("../../utils/solanaNFT");
 const redisClient = require("../../databases/redis-client");
 const { Listing } = require("../../models/listing");
+const wallet = require("../../models/wallet");
+const config = require("../../config/config");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -607,6 +609,135 @@ module.exports = {
       const holdsNFT = axios_resp.data.isHolderOfCollection;
 
       if (holdsNFT) {
+        return true;
+      }
+      return false;
+    },
+  },
+  HOLDER_OF_EVM_TOKEN: {
+    parameters: [
+      {
+        field: "chainID",
+        name: "Chain ID",
+        type: String,
+        required: true,
+      },
+      {
+        field: "contractAddress",
+        name: "Contract Address",
+        type: String,
+        required: true,
+      },
+      {
+        field: "minimumTokenBalance",
+        name: "Minimum Token Balance",
+        type: Number,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if (
+        "chainID" in arguments &&
+        "contractAddress" in arguments &&
+        "minimumTokenBalance" in arguments
+      ) {
+        return true;
+      }
+      return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      const { chainID, contractAddress, minimumTokenBalance, userID } =
+        arguments;
+
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDER_OF_EVM_TOKEN: user[${user._id}] has no wallet connected`
+        );
+        return false;
+      }
+
+      // then search for EVM wallet
+      const EVM_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "EVM" && wallet.verified
+      );
+
+      if (!EVM_Wallet) {
+        console.log(
+          `HOLDER_OF_EVM_TOKEN: user's [${user._id}] EVM wallet not found connected`
+        );
+        return false;
+      }
+
+      // CHAIN LOGIC
+      let chainMapping = {
+        1: "eth-mainnet",
+        137: "matic-mainnet",
+        42161: "arb-mainnet",
+        10: "opt-mainnet",
+        5000: "mantle-mainnet",
+      };
+
+      const url = `https://api.covalenthq.com/v1/${chainMapping[chainID]}/address/${EVM_Wallet.address}/balances_v2/`;
+      const axios_resp = await axios.get(url, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${config.COVALENT_API_KEY}`,
+          "Accept-Encoding": "gzip,deflate,compress",
+        },
+      });
+
+      const tokenInWallet = axios_resp.data.data.items.find(
+        (token) =>
+          token.contract_address.toLowerCase() == contractAddress.toLowerCase()
+      );
+
+      if (!tokenInWallet) {
+        return false;
+      }
+
+      if (
+        tokenInWallet.balance / Math.pow(10, tokenInWallet.contract_decimals) >=
+        minimumTokenBalance
+      ) {
         return true;
       }
       return false;
