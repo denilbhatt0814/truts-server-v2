@@ -14,6 +14,7 @@ const {
 const checkIsOwner = require("../../utils/solanaNFT");
 const redisClient = require("../../databases/redis-client");
 const { Listing } = require("../../models/listing");
+const wallet = require("../../models/wallet");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -612,7 +613,7 @@ module.exports = {
       return false;
     },
   },
-  HOLDS_THE_TOKEN: {
+  HOLDER_OF_EVM_TOKEN: {
     parameters: [
       {
         field: "chainID",
@@ -626,18 +627,18 @@ module.exports = {
         type: String,
         required: true,
       },
-      { field: "userID", name: "User ID", type: String, required: false },
       {
         field: "minimumTokenBalance",
         name: "Minimum Token Balance",
         type: Number,
         required: true,
       },
+      { field: "userID", name: "User ID", type: String, required: false },
     ],
     areValidArguments: function (arguments) {
       if (
-        "contractAddress" in arguments &&
         "chainID" in arguments &&
+        "contractAddress" in arguments &&
         "minimumTokenBalance" in arguments
       ) {
         return true;
@@ -682,15 +683,13 @@ module.exports = {
       return dependencyStatus;
     },
     exec: async function (arguments) {
-      // TEST: THINGS MIGHT HAVE TO CHANGE WHEN WE GET MULTI-WALLET SUPPORT
-
-      const { chainID, contractAddress, userID, minimumTokenBalance } =
+      const { chainID, contractAddress, minimumTokenBalance, userID } =
         arguments;
 
       const user = await User.findById(userID, { wallets: 1 });
       if (!user.wallets) {
         console.log(
-          `HOLDS_THE_TOKEN: user[${user._id}] has no wallet connected`
+          `HOLDER_OF_EVM_TOKEN: user[${user._id}] has no wallet connected`
         );
         return false;
       }
@@ -702,7 +701,7 @@ module.exports = {
 
       if (!EVM_Wallet) {
         console.log(
-          `HOLDS_THE_TOKEN: user's [${user._id}] EVM wallet not found connected`
+          `HOLDER_OF_EVM_TOKEN: user's [${user._id}] EVM wallet not found connected`
         );
         return false;
       }
@@ -710,25 +709,25 @@ module.exports = {
       // CHAIN LOGIC
       let chainMapping = {
         1: "eth-mainnet",
-        137: "polygon-mainnet",
+        137: "matic-mainnet",
         42161: "arb-mainnet",
         10: "opt-mainnet",
         5000: "mantle-mainnet",
       };
 
-      const options = {
-        method: "GET",
-        url: `https://api.covalenthq.com/v1/${chainMapping[chainID]}/address/${EVM_Wallet.address}/balances_v2/?`,
+      const url = `https://api.covalenthq.com/v1/${chainMapping[chainID]}/address/${EVM_Wallet.address}/balances_v2/`;
+      const axios_resp = await axios.get(url, {
         headers: {
-          accept: "application/json",
+          Accept: "application/json",
           Authorization: "Bearer cqt_rQCBb64p8qfG9MQQjGrphJY3Jw9R",
         },
-      };
-      const axios_resp = await axios.request(options);
+      });
 
       const tokenInWallet = axios_resp.data.items.find(
         (token) => token.contract_address === contractAddress
       );
+
+      console.log({ tokenInWallet });
 
       if (!tokenInWallet) {
         return false;
