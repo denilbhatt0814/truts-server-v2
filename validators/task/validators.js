@@ -15,6 +15,7 @@ const checkIsOwner = require("../../utils/solanaNFT");
 const redisClient = require("../../databases/redis-client");
 const { Listing } = require("../../models/listing");
 const wallet = require("../../models/wallet");
+const config = require("../../config/config");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -719,15 +720,15 @@ module.exports = {
       const axios_resp = await axios.get(url, {
         headers: {
           Accept: "application/json",
-          Authorization: "Bearer cqt_rQCBb64p8qfG9MQQjGrphJY3Jw9R",
+          Authorization: `Bearer ${config.COVALENT_API_KEY}`,
+          "Accept-Encoding": "gzip,deflate,compress",
         },
       });
 
-      const tokenInWallet = axios_resp.data.items.find(
-        (token) => token.contract_address === contractAddress
+      const tokenInWallet = axios_resp.data.data.items.find(
+        (token) =>
+          token.contract_address.toLowerCase() == contractAddress.toLowerCase()
       );
-
-      console.log({ tokenInWallet });
 
       if (!tokenInWallet) {
         return false;
