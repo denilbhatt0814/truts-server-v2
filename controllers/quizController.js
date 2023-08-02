@@ -509,7 +509,7 @@ function verifyAnswerFormat(type, answer, options) {
     case "MCQ":
       return verifyMCQAnswer(answer, options);
     case "SLIDE":
-      return answer === -1;
+      return true;
 
     default:
       return false;
