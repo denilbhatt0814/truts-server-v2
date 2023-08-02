@@ -10,7 +10,7 @@ const app = express();
 // BASIC SERVER CONFIGS
 app.use(
   cors({
-    origin: true,
+    origin: "https://truts.xyz",
     credentials: true,
   })
 );
