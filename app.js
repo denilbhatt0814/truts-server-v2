@@ -10,16 +10,10 @@ const app = express();
 // BASIC SERVER CONFIGS
 app.use(
   cors({
-    origin: "https://truts.xyz",
+    origin: true,
     credentials: true,
   })
 );
-// Set the "Access-Control-Allow-Origin" header to allow "truts.xyz" to access the API
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://truts.xyz"); // Replace this with the actual frontend URL
-  res.header("Access-Control-Allow-Credentials", true);
-  next();
-});
 
 app.use(express.json({ extended: true }));
 app.use(express.urlencoded({ extended: true }));
