@@ -5,6 +5,7 @@ const cookieToken = (user, res) => {
 
   const options = {
     expiresIn: new Date(Date.now()) + COOKIE_TIME * 24 * 60 * 60 * 1000,
+    domain: "truts.xyz",
     httpOnly: true,
   };
 
