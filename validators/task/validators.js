@@ -828,6 +828,189 @@ module.exports = {
       return false;
     },
   },
+  HOLDER_OF_SOL_NFT_V2: {
+    parameters: [
+      {
+        field: "updateAuthority",
+        name: "Update Authority",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("updateAuthority" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    // TODO
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      const { updateAuthority, userID } = arguments;
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user[${user._id}] has no wallet connected `
+        );
+        return false;
+      }
+
+      const SOL_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "SOL" && wallet.verified
+      );
+      if (!SOL_Wallet) {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user's [${user._id}] SOL wallet not found connected`
+        );
+        return false;
+      }
+
+      // check user is holding particular nft or not
+
+      let url = `https://api-mainnet.magiceden.dev/v2/wallets/${SOL_Wallet}/tokens`;
+      const axios_resp = await axios.get(url);
+      const tokenList = axios_resp.data;
+
+      for (let token of tokenList) {
+        if (token.updateAuthority == updateAuthority && token.supply >= 1) {
+          return true;
+        }
+      }
+      return false;
+    },
+  },
+  HOLDER_SOL_TOKEN: {
+    parameters: [
+      {
+        field: "mintAddress",
+        name: "Mint Address",
+        type: String,
+        required: true,
+      },
+      {
+        field: "minimumTokenBalance",
+        name: "Minimum Token Balance",
+        type: Number,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("mintAddress" in arguments && "minimumTokenBalance" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    // TODO
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      const { mintAddress, minimumTokenBalance, userID } = arguments;
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user[${user._id}] has no wallet connected `
+        );
+        return false;
+      }
+
+      const SOL_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "SOL" && wallet.verified
+      );
+      if (!SOL_Wallet) {
+        console.log(
+          `HOLDER_OF_SOL_NFT: user's [${user._id}] SOL wallet not found connected`
+        );
+        return false;
+      }
+
+      const url = `https://api.helius.xyz/v0/addresses/${SOL_WALLET}/balances?api-key=07445297-e53a-4d55-919c-5c50a77f9d03`;
+
+      const axios_resp = await axios.get(url);
+      const { tokens } = axios_resp.data;
+
+      for (let token of tokens) {
+        if (
+          token.mint == mintAddress &&
+          token.amount / Math.pow(10, token.decimal) >= minimumTokenBalance
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+  },
   JOINED_TELEGRAM: {
     exec: function () {
       return true;
