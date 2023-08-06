@@ -762,7 +762,7 @@ module.exports = {
     getDependecyStatus: async function (data) {
       let dependencyStatus = [
         {
-          dependency: "EVM_WALLET",
+          dependency: "SOL_WALLET",
           satisfied: false,
           id: 1,
         },
@@ -844,11 +844,10 @@ module.exports = {
       }
       return false;
     },
-    // TODO
     getDependecyStatus: async function (data) {
       let dependencyStatus = [
         {
-          dependency: "EVM_WALLET",
+          dependency: "SOL_WALLET",
           satisfied: false,
           id: 1,
         },
@@ -886,24 +885,24 @@ module.exports = {
       const user = await User.findById(userID, { wallets: 1 });
       if (!user.wallets) {
         console.log(
-          `HOLDER_OF_SOL_NFT: user[${user._id}] has no wallet connected `
+          `HOLDER_OF_SOL_NFT_V2: user[${user._id}] has no wallet connected `
         );
         return false;
       }
 
-      const SOL_Wallet = user.wallets.find(
+      const SOL_WALLET = user.wallets.find(
         (wallet) => wallet.chain == "SOL" && wallet.verified
       );
-      if (!SOL_Wallet) {
+      if (!SOL_WALLET) {
         console.log(
-          `HOLDER_OF_SOL_NFT: user's [${user._id}] SOL wallet not found connected`
+          `HOLDER_OF_SOL_NFT_V2: user's [${user._id}] SOL wallet not found connected`
         );
         return false;
       }
 
       // check user is holding particular nft or not
 
-      let url = `https://api-mainnet.magiceden.dev/v2/wallets/${SOL_Wallet}/tokens`;
+      let url = `https://api-mainnet.magiceden.dev/v2/wallets/${SOL_WALLET.address}/tokens`;
       const axios_resp = await axios.get(url);
       const tokenList = axios_resp.data;
 
@@ -941,7 +940,7 @@ module.exports = {
     getDependecyStatus: async function (data) {
       let dependencyStatus = [
         {
-          dependency: "EVM_WALLET",
+          dependency: "SOL_WALLET",
           satisfied: false,
           id: 1,
         },
@@ -984,17 +983,17 @@ module.exports = {
         return false;
       }
 
-      const SOL_Wallet = user.wallets.find(
+      const SOL_WALLET = user.wallets.find(
         (wallet) => wallet.chain == "SOL" && wallet.verified
       );
-      if (!SOL_Wallet) {
+      if (!SOL_WALLET) {
         console.log(
           `HOLDER_OF_SOL_NFT: user's [${user._id}] SOL wallet not found connected`
         );
         return false;
       }
 
-      const url = `https://api.helius.xyz/v0/addresses/${SOL_WALLET}/balances?api-key=07445297-e53a-4d55-919c-5c50a77f9d03`;
+      const url = `https://api.helius.xyz/v0/addresses/${SOL_WALLET.address}/balances?api-key=${config.HELIUS_API_KEY}`;
 
       const axios_resp = await axios.get(url);
       const { tokens } = axios_resp.data;
@@ -1002,7 +1001,7 @@ module.exports = {
       for (let token of tokens) {
         if (
           token.mint == mintAddress &&
-          token.amount / Math.pow(10, token.decimal) >= minimumTokenBalance
+          token.amount / Math.pow(10, token.decimals) >= minimumTokenBalance
         ) {
           return true;
         }

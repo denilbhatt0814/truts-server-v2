@@ -62,7 +62,7 @@ module.exports = {
   ALCHEMY_API_KEY:
     process.env.ALCHEMY_API_KEY || "gFX2bqqEuU9H1Ph9nZ_j_5g6ZfwV9xue",
   HELIUS_API_KEY:
-    process.env.HELIUS_API_KEY || "d5117e1d-6932-4b04-bc4e-62128c792fc2",
+    process.env.HELIUS_API_KEY || "07445297-e53a-4d55-919c-5c50a77f9d03",
   COVALENT_API_KEY:
     process.env.HELIUS_API_KEY || "cqt_rQCBb64p8qfG9MQQjGrphJY3Jw9R",
   UD_MISSION_ID: process.env.UD_MISSION_ID || "645a472eac01844d7b41279d",
