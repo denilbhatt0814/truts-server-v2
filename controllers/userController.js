@@ -35,6 +35,7 @@ const { default: axios } = require("axios");
 const { XpTxn } = require("../models/xpTxn");
 const redisClient = require("../databases/redis-client");
 const { Listing_Social } = require("../models/listing_social");
+const userActivityManager = require("../utils/userTracking");
 
 exports.signup = async (req, res) => {
   // NOTE: this controller is of no use RN
@@ -56,7 +57,7 @@ exports.signup = async (req, res) => {
     // TODO: photo, wallets, intrest tags
 
     // send JWT cookie for fututre use
-    cookieToken(user, res);
+    await cookieToken(user, res);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -93,7 +94,7 @@ exports.login = async (req, res) => {
     }
 
     // generate and send cookie
-    cookieToken(user, res);
+    await cookieToken(user, res);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -168,7 +169,7 @@ exports.loginViaGoogle = async (req, res) => {
     await session.commitTransaction();
     await session.endSession();
     // return jwt token
-    cookieToken(user, res);
+    await cookieToken(user, res);
   } catch (error) {
     await session.abortTransaction();
     await session.endSession();
@@ -269,7 +270,17 @@ exports.loginViaDiscord = async (req, res) => {
     }
 
     // return jwt token
-    cookieToken(user, res);
+    await cookieToken(user, res);
+
+    // Creating event
+    await userActivityManager.emitEvent({
+      action: "LOGGED_IN",
+      user: user._id.toString(),
+      timestamp: new Date(),
+      meta: {
+        mode: "DISCORD",
+      },
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -471,7 +482,7 @@ exports.verifyWallet = async (req, res) => {
 
       await session.commitTransaction();
       await session.endSession();
-      cookieToken(user, res);
+      await cookieToken(user, res);
     } else {
       await session.abortTransaction();
       await session.endSession();
@@ -625,7 +636,7 @@ exports.verifyMultiWallet = async (req, res) => {
 
       await session.commitTransaction();
       await session.endSession();
-      cookieToken(user, res);
+      await cookieToken(user, res);
     } else {
       await session.abortTransaction();
       await session.endSession();
@@ -2620,7 +2631,7 @@ function shortenWalletAddress(address) {
 //         verified: true,
 //       });
 //       user = await User.findById(user._id).populate("tags", "wallets");
-//       cookieToken(user, res);
+//       await cookieToken(user, res);
 //     } else {
 //       return new HTTPError(
 //         res,
@@ -2714,7 +2725,7 @@ function shortenWalletAddress(address) {
 //         verified: true,
 //       });
 //       user = await User.findById(user._id).populate("tags", "wallets");
-//       cookieToken(user, res);
+//       await cookieToken(user, res);
 //     } else {
 //       return new HTTPError(
 //         res,

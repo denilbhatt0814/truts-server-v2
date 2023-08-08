@@ -1,6 +1,6 @@
 const { COOKIE_TIME } = require("../config/config");
 
-const cookieToken = (user, res) => {
+const cookieToken = async (user, res) => {
   const token = user.getJWTToken();
 
   const options = {
@@ -9,7 +9,7 @@ const cookieToken = (user, res) => {
     httpOnly: true,
   };
 
-  res.status(200).cookie("token", token, options).json({
+  await res.status(200).cookie("token", token, options).json({
     success: true,
     message: "Login | Sign-up | Connect Social : Successful",
     error: null,
