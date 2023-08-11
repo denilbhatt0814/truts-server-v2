@@ -7,6 +7,7 @@ const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
 const { User_Mission } = require("../models/user_mission");
 const redisClient = require("../databases/redis-client");
+const { TaskForm } = require("../models/task_form");
 
 // TODO: complete here from cleanseAndVerifyOfTask
 // TEST: also add routes
@@ -139,6 +140,57 @@ exports.deleteTaskFromMission = async (req, res) => {
   } catch (error) {
     console.log("deleteTaskFromMission: ", error);
     return new HTTPError(res, 500, error, "internal server error");
+  }
+};
+
+// TEST:
+exports.submitTaskForm = async (req, res) => {
+  try {
+    const { missionID, taskID } = req.params;
+    const { formData } = req.body;
+    const userID = req.user._id;
+
+    // const submissionExists = await TaskForm.find({
+    //   user: userID,
+    //   task: new mongoose.Types.ObjectId(taskID),
+    // });
+    // if (submissionExists) {
+    //   return HTTPError(
+    //     res,
+    //     406,
+    //     "Submission for this task is already made",
+    //     "Submission Conflict"
+    //   );
+    // }
+
+    if (formData.link) {
+      const linkExists = await TaskForm.findOne({
+        user: userID,
+        "formData.link": formData.link,
+      });
+      if (linkExists) {
+        return HTTPError(res, 409, "Link is being re-used", "Link Conflict");
+      }
+    }
+
+    const taskForm = await TaskForm.findOneAndUpdate(
+      {
+        user: userID,
+        mission: new mongoose.Types.ObjectId(missionID),
+        task: new mongoose.Types.ObjectId(taskID),
+      },
+      {
+        user: userID,
+        mission: new mongoose.Types.ObjectId(missionID),
+        task: new mongoose.Types.ObjectId(taskID),
+        formData,
+      },
+      { upsert: true }
+    );
+
+    return new HTTPResponse(res, true, 201, null, null, { taskForm });
+  } catch (error) {
+    return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
 
