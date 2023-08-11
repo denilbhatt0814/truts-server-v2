@@ -150,10 +150,10 @@ exports.submitTaskForm = async (req, res) => {
     const { formData } = req.body;
     const userID = req.user._id;
 
-    const submissionExists = await TaskForm.find({
-      user: userID,
-      task: new mongoose.Types.ObjectId(taskID),
-    });
+    // const submissionExists = await TaskForm.find({
+    //   user: userID,
+    //   task: new mongoose.Types.ObjectId(taskID),
+    // });
     // if (submissionExists) {
     //   return HTTPError(
     //     res,
@@ -164,7 +164,10 @@ exports.submitTaskForm = async (req, res) => {
     // }
 
     if (formData.link) {
-      const linkExists = await TaskForm.find({ user: userID, link });
+      const linkExists = await TaskForm.findOne({
+        user: userID,
+        "formData.link": formData.link,
+      });
       if (linkExists) {
         return HTTPError(res, 409, "Link is being re-used", "Link Conflict");
       }
