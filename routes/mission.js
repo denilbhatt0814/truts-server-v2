@@ -26,6 +26,7 @@ const {
   deleteTaskFromMission,
   reOrderTask,
   updateTaskInMission,
+  submitTaskForm,
 } = require("../controllers/taskController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -90,6 +91,14 @@ router
 
 // task verification and
 router.get("/mission/:missionID/task-verify/:taskID", isLoggedIn, performTask);
+
+// TEST:
+router.get(
+  "/mission/:missionID/task-form-submission/:taskID",
+  isLoggedIn,
+  submitTaskForm
+);
+
 router.post(
   "/mission/:missionID/question-answer/:questionID",
   isLoggedIn,

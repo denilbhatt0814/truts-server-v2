@@ -16,6 +16,7 @@ const redisClient = require("../../databases/redis-client");
 const { Listing } = require("../../models/listing");
 const wallet = require("../../models/wallet");
 const config = require("../../config/config");
+const { TaskForm } = require("../../models/task_form");
 
 function getValue(obj, path) {
   const fields = path.split(".");
@@ -1118,6 +1119,87 @@ module.exports = {
       });
 
       return dependencyStatus;
+    },
+  },
+  TWEET_LINK_VERIFICATION: {
+    parameters: [
+      { field: "userID", name: "User ID", type: String, required: false },
+      { field: "taskID", name: "Task ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      return true;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "TWITTER_ACCOUNT",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      // TEST:
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+        console.log("Added to cache");
+      } else {
+        user = JSON.parse(userFromCache);
+        console.log("from cache");
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      const { userID, taskID } = arguments;
+      console.log(arguments);
+      // fetch submitted link
+      const taskForm = await TaskForm.findOne({ user: userID, task: taskID });
+      const user = await User.findById(userID).select("twitter");
+
+      if (!user) {
+        console.log("not user");
+        return false;
+      }
+
+      if (!taskForm) {
+        console.log("not submission");
+        return false;
+      }
+
+      const { link } = taskForm.formData;
+
+      // regex match
+      const username = user.twitter.username;
+      const regexPattern = new RegExp(
+        `https:\\/\\/twitter\\.com\\/${username}\\/status\\/\\d+`
+      );
+
+      if (!regexPattern.test(link)) {
+        console.log("not match");
+        return false;
+      }
+
+      return true;
     },
   },
 };
