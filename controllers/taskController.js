@@ -7,6 +7,7 @@ const { HTTPResponse } = require("../utils/httpResponse");
 const taskValidators = require("../validators/task/validators");
 const { User_Mission } = require("../models/user_mission");
 const redisClient = require("../databases/redis-client");
+const userActivityManager = require("../utils/userTracking");
 
 // TODO: complete here from cleanseAndVerifyOfTask
 // TEST: also add routes
@@ -348,6 +349,18 @@ exports.performTask = async (req, res) => {
     attemptedMission.tasks[task._id] = "COMPLETE";
     attemptedMission.markModified("tasks");
     await attemptedMission.save();
+
+    // TEST
+    await userActivityManager.emitEvent({
+      action: "TASK_ATTEMPT",
+      user: userID,
+      timestamp: new Date(),
+      meta: {
+        taskId: taskID,
+        missionId: missionID,
+        success: true,
+      },
+    });
 
     return new HTTPResponse(
       res,

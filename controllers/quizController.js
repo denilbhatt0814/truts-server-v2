@@ -4,6 +4,7 @@ const HTTPError = require("../utils/httpError");
 const { HTTPResponse } = require("../utils/httpResponse");
 const { User_Mission } = require("../models/user_mission");
 const mission = require("../models/mission");
+const userActivityManager = require("../utils/userTracking");
 
 // NOTE: protected by admin|manager
 exports.addQuestionToMission = async (req, res) => {
@@ -415,6 +416,18 @@ exports.answerToQuestion = async (req, res) => {
     attemptedMission.markModified("questions");
     await attemptedMission.save();
 
+    // TEST
+    await userActivityManager.emitEvent({
+      action: "QUESTION_ATTEMPT",
+      user: userID,
+      timestamp: new Date(),
+      meta: {
+        questionId: questionID,
+        missionId: missionID,
+        answerByUser: answer,
+        success: isCorrect, // Denil ? true if attempted successfully or got the correct answer ??
+      },
+    });
     // give success response
     return new HTTPResponse(
       res,

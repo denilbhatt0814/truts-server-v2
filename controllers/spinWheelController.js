@@ -5,6 +5,7 @@ const { SpinHistory } = require("../models/spinHistory");
 const { SpinWheel } = require("../models/spinWheel");
 const { SpinReward } = require("../models/spinReward");
 const spinRewardAllocators = require("../validators/allocators/spinRewardAllocators");
+const userActivityManager = require("../utils/userTracking");
 
 exports.createWheel = async (req, res) => {
   try {
@@ -115,6 +116,16 @@ exports.spinTheWheel = async (req, res) => {
 
     await session.commitTransaction();
     await session.endSession();
+
+    await userActivityManager.emitEvent({
+      action: "WHEEL_SPIN",
+      user: userID,
+      timestamp: new Date(),
+      meta: {
+        reward: reward._id,
+        date: spinHistory.spinnedAt,
+      },
+    });
     return new HTTPResponse(res, true, 200, "Spin successfull!!", null, {
       reward: {
         slot: selectedReward.slot,

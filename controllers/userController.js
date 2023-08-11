@@ -170,6 +170,19 @@ exports.loginViaGoogle = async (req, res) => {
     await session.endSession();
     // return jwt token
     await cookieToken(user, res);
+
+    //TEST
+    await userActivityManager.emitEvent({
+      action: "LOGGED_IN",
+      user: user._id.toString(),
+      timestamp: new Date(),
+      meta: {
+        mode: "GOOGLE",
+        ip: req.ip,
+        deviceName: req.headers["User-Agent"],
+        //location: getGeoLocation(req.ip),
+      },
+    });
   } catch (error) {
     await session.abortTransaction();
     await session.endSession();
@@ -273,14 +286,27 @@ exports.loginViaDiscord = async (req, res) => {
     await cookieToken(user, res);
 
     // Creating event
+    //TEST
     await userActivityManager.emitEvent({
       action: "LOGGED_IN",
       user: user._id.toString(),
       timestamp: new Date(),
       meta: {
         mode: "DISCORD",
+        ip: req.ip,
+        deviceName: req.headers["User-Agent"],
+        //location: getGeoLocation(req.ip),
       },
     });
+
+    // async function getGeoLocation(ip) {
+    //   const axios_res = await axios.get(`http://ip-api.com/json/${ip}`);
+    //   return {
+    //     country: axios_res.data.country,
+    //     region: axios_res.data.regionName,
+    //     city: axios_res.data.city,
+    //   };
+    // }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -546,6 +572,19 @@ exports.loginViaMultiWallet = async (req, res) => {
     }
 
     console.log(msg);
+
+    //TEST
+    await userActivityManager.emitEvent({
+      action: "LOGGED_IN",
+      user: user._id.toString(),
+      timestamp: new Date(),
+      meta: {
+        mode: "WALLET",
+        ip: req.ip,
+        deviceName: req.headers["User-Agent"],
+        //location: getGeoLocation(req.ip),
+      },
+    });
 
     // return nonce
     return new HTTPResponse(res, true, 200, msg, null, {
@@ -2422,7 +2461,7 @@ exports.getUserLeaderboard_Public = async (req, res) => {
 
 // -----  LOGOUT MANAGEMENT  --------
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
   // Delete the prexisting cookie of user by sending a Stale cookie
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -2431,6 +2470,14 @@ exports.logout = (req, res) => {
   res.status(200).json({
     success: true,
     message: "Logout success",
+  });
+
+  // TEST
+  await userActivityManager.emitEvent({
+    action: "LOGGED_OUT",
+    user: req.user._id, // Ask denil
+    timestamp: new Date(),
+    meta: {},
   });
 };
 

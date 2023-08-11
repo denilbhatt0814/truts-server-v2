@@ -12,6 +12,7 @@ const redisClient = require("../databases/redis-client");
 const Coupon = require("../models/coupon");
 const { UD_MISSION_ID } = require("../config/config");
 const { publishEvent } = require("../utils/pubSub");
+const userActivityManager = require("../utils/userTracking");
 
 /**
  * NOTE:
@@ -446,6 +447,14 @@ exports.claimMissionCompletion = async (req, res) => {
       JSON.stringify({ data: { mission: attemptedMission, user: req.user } })
     );
 
+    await userActivityManager.emitEvent({
+      action: "CLAIM_MISSION_COMPLETION",
+      user: userID,
+      timestamp: new Date(),
+      meta: {
+        missionId: missionID,
+      },
+    });
     return new HTTPResponse(res, true, 200, "claim successful", null, {
       attemptedMission,
     });

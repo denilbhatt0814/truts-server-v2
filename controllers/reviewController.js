@@ -8,6 +8,7 @@ const { publishEvent } = require("../utils/pubSub");
 const uploadToS3 = require("../utils/uploadToS3");
 const sharp = require("sharp");
 const { Listing } = require("../models/listing");
+const userActivityManager = require("../utils/userTracking");
 
 exports.addReview = async (req, res) => {
   const session = await mongoose.startSession();
@@ -36,6 +37,7 @@ exports.addReview = async (req, res) => {
       listing: mongoose.Types.ObjectId(listingID),
     }).session(session);
     if (alreadyReviewed) {
+      await emitReviewEvent("ALREADY_REVIEWED");
       return new HTTPError(
         res,
         409,
@@ -56,6 +58,7 @@ exports.addReview = async (req, res) => {
         listingsDiscord.meta.guild_id
       );
       if (!partOfGuild) {
+        await emitReviewEvent("NOT_PART_OF_DISCORD");
         return new HTTPError(
           res,
           403,
@@ -121,6 +124,20 @@ exports.addReview = async (req, res) => {
     } catch (error) {
       console.log("Error: Publishing review event");
     }
+
+    async function emitReviewEvent(status = "DONE") {
+      await userActivityManager.emitEvent({
+        action: "REVIEW",
+        user: userID,
+        timestamp: new Date(),
+        meta: {
+          listingId: listingID,
+          userDiscordGuild: user.discord?.guilds,
+          status: status,
+        },
+      });
+    }
+
     return new HTTPResponse(res, true, 201, "review added successfully", null, {
       review,
       listing: { _id: listing._id, name: listing.name, slug: listing.slug },
@@ -203,6 +220,15 @@ exports.generateReviewOG = async (req, res) => {
     };
 
     await existingReview.save();
+
+    await userActivityManager.emitEvent({
+      action: "SHARE_REVIEW",
+      user: req.user._id,
+      timestamp: new Date(),
+      meta: {
+        reviewID,
+      },
+    });
 
     return new HTTPResponse(res, true, 201, `OG created successfully!`, null, {
       photo: {
