@@ -150,12 +150,40 @@ exports.submitTaskForm = async (req, res) => {
     const { formData } = req.body;
     const userID = req.user._id;
 
-    const taskForm = await TaskForm.create({
+    const submissionExists = await TaskForm.find({
       user: userID,
-      mission: new mongoose.Types.ObjectId(missionID),
       task: new mongoose.Types.ObjectId(taskID),
-      formData,
     });
+    // if (submissionExists) {
+    //   return HTTPError(
+    //     res,
+    //     406,
+    //     "Submission for this task is already made",
+    //     "Submission Conflict"
+    //   );
+    // }
+
+    if (formData.link) {
+      const linkExists = await TaskForm.find({ user: userID, link });
+      if (linkExists) {
+        return HTTPError(res, 409, "Link is being re-used", "Link Conflict");
+      }
+    }
+
+    const taskForm = await TaskForm.findOneAndUpdate(
+      {
+        user: userID,
+        mission: new mongoose.Types.ObjectId(missionID),
+        task: new mongoose.Types.ObjectId(taskID),
+      },
+      {
+        user: userID,
+        mission: new mongoose.Types.ObjectId(missionID),
+        task: new mongoose.Types.ObjectId(taskID),
+        formData,
+      },
+      { upsert: true }
+    );
 
     return new HTTPResponse(res, true, 201, null, null, { taskForm });
   } catch (error) {
