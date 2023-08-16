@@ -206,6 +206,10 @@ const userSchema = new mongoose.Schema(
       code: String,
       isProviderRewarded: Boolean,
     },
+    streakRewardClaims: {
+      type: mongoose.Schema.Types.Mixed,
+      select: false,
+    },
     isSuperAdmin: {
       type: Boolean,
     },
