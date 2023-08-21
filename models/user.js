@@ -240,6 +240,14 @@ userSchema.post("findOneAndUpdate", async function (doc) {
         })
       );
     }
+    await userActivityManager.emitEvent({
+      action: "BASIC_PROFILE_COMPLETED",
+      user: doc._id.toString(),
+      timestamp: new Date(),
+      meta: {
+        user: doc,
+      },
+    });
     doc.isCompleted = true;
   } else {
     doc.isCompleted = false;
