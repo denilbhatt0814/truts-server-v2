@@ -312,7 +312,7 @@ async function verifyRewardsInWheel(res, rewards) {
 exports.streakUpdationCheck = async (req, res) => {
   try {
     const userID = req.user._id;
-    let lastStreakRecord = await SpinStreakPeriod.findOne(userID);
+    let lastStreakRecord = await SpinStreakPeriod.findOne({ user: userID });
 
     if (!lastStreakRecord) {
       lastStreakRecord = {
@@ -341,7 +341,7 @@ exports.streakUpdationCheck = async (req, res) => {
 exports.streakStatusCheck = async (req, res) => {
   try {
     const userID = req.user._id;
-    let lastStreakRecord = await SpinStreakPeriod.findOne(userID);
+    let lastStreakRecord = await SpinStreakPeriod.findOne({ user: userID });
 
     if (!lastStreakRecord) {
       lastStreakRecord = {
