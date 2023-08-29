@@ -341,7 +341,14 @@ exports.streakUpdationCheck = async (req, res) => {
 exports.streakStatusCheck = async (req, res) => {
   try {
     const userID = req.user._id;
-    let lastStreakRecord = await SpinStreakPeriod.findOne({ user: userID });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = today.setDate(today.getDate() - 1);
+
+    let lastStreakRecord = await SpinStreakPeriod.findOne({
+      user: userID,
+      lastDate: { $gte: yesterday },
+    });
 
     if (!lastStreakRecord) {
       lastStreakRecord = {
