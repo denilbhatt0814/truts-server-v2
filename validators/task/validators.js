@@ -1011,6 +1011,134 @@ module.exports = {
       return false;
     },
   },
+  INTERACTED_WITH_SMART_CONTRACT: {
+    parameters: [
+      {
+        field: "chainID",
+        name: "Chain ID",
+        type: String,
+        required: true,
+      },
+      {
+        field: "smartContractAddress",
+        name: "Smart Contract Address",
+        type: String,
+        required: true,
+      },
+      { field: "userID", name: "User ID", type: String, required: false },
+    ],
+    areValidArguments: function (arguments) {
+      if ("SmartContractAddress" in arguments && "chainID" in arguments) {
+        return true;
+      }
+      return false;
+    },
+    getDependecyStatus: async function (data) {
+      let dependencyStatus = [
+        {
+          dependency: "EVM_WALLET",
+          satisfied: false,
+          id: 1,
+        },
+      ];
+
+      if (!data.userID) {
+        return dependencyStatus;
+      }
+
+      let user;
+      let userFromCache = await redisClient.get(
+        `USER:VALIDATORS:$${data.userID}`
+      );
+      if (!userFromCache) {
+        user = await User.findById(data.userID);
+        await redisClient.setEx(
+          `USER:VALIDATORS:$${data.userID}`,
+          30,
+          JSON.stringify(user)
+        );
+      } else {
+        user = JSON.parse(userFromCache);
+      }
+      if (!user) {
+        return dependencyStatus;
+      }
+
+      dependencyStatus.forEach((status) => {
+        status.satisfied = dependecyCheckers[status.dependency].exec(user);
+      });
+
+      return dependencyStatus;
+    },
+    exec: async function (arguments) {
+      const { chainID, smartContractAddress, userID } = arguments;
+      const user = await User.findById(userID, { wallets: 1 });
+      if (!user.wallets) {
+        console.log(
+          `INTERACTED_WITH_SMART_CONTRACT: user[${user._id}] has no wallet connected`
+        );
+        return false;
+      }
+
+      const EVM_Wallet = user.wallets.find(
+        (wallet) => wallet.chain == "EVM" && wallet.verified
+      );
+
+      if (!EVM_Wallet) {
+        console.log(
+          `INTERACTED_WITH_SMART_CONTRACT: user's [${user._id}] EVM wallet not found connected`
+        );
+        return false;
+      }
+
+      // CHAIN LOGIC has been changed - ask denil
+      let chainMapping = {
+        1: "eth-mainnet",
+        137: "matic-mainnet",
+        42161: "arbitrum-mainnet",
+        10: "optimism-mainnet",
+      };
+
+      let transactionFound = false,
+        page_param = -1,
+        axios_resp;
+
+      do {
+        axios_resp = await fetchTransactionList(
+          EVM_Wallet.address,
+          page_param,
+          chainMapping[chainID]
+        );
+        page_param = axios_resp.data.data.current_page - 1;
+
+        let count = axios_resp.data.data.items.length;
+        for (let i = 0; i < count && !transactionFound; i++) {
+          if (
+            axios_resp.data.data.items[i].to_address ==
+            smartContractAddress.toLowerCase()
+          ) {
+            transactionFound = true;
+          }
+        }
+      } while (axios_resp.data.data.links.prev != null && !transactionFound);
+
+      if (transactionFound) return true;
+      else return false;
+
+      function fetchTransactionList(walletAddress, page_param, chainName) {
+        return axios.get(
+          `https://api.covalenthq.com/v1/${chainName}/address/${walletAddress}/transactions_v3${
+            page_param === -1 ? `` : `/page/${page_param}`
+          }/?no-logs=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${config.COVALENT_API_KEY}`,
+            },
+          }
+        );
+      }
+    },
+  },
   JOINED_TELEGRAM: {
     exec: function () {
       return true;
