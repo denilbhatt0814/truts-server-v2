@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const HTTPError = require("../utils/httpError");
 const User = require("../models/user");
 const { HTTPResponse } = require("../utils/httpResponse");
+const userActivityManager = require("../utils/userTracking");
 
 exports.createAdminTeam = async (req, res, next) => {
   try {
@@ -32,11 +33,13 @@ exports.createAdminTeam = async (req, res, next) => {
       );
     }
 
-    let members = [];
+    let members = [],
+      adminEmail;
 
     // If we have a userID, create a member
     if (userID) {
-      const user = await User.findById(userID).select({ _id: 1 });
+      const user = await User.findById(userID).select({ _id: 1, email: 1 });
+      adminTeamEmail = user.email;
       if (!user) {
         return new HTTPError(res, 404, "User not found.", "missing details");
       }
@@ -49,6 +52,15 @@ exports.createAdminTeam = async (req, res, next) => {
     const newAdminTeam = await AdminTeam.create({
       listing: mongoose.Types.ObjectId(listingID),
       members: members,
+    });
+
+    await userActivityManager.emitEvent({
+      action: "ADMIN_ACCESS_GRANTED",
+      user: req.user._id.toString(), // ask denil : is it neccesary to pass it
+      timestamp: new Date(),
+      meta: {
+        adminTeamEmail: adminTeamEmail,
+      },
     });
 
     return new HTTPResponse(res, true, 201, "Admin team created.", null, {

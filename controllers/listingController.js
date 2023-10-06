@@ -15,6 +15,8 @@ const { publishEvent } = require("../utils/pubSub");
 const Sharp = require("sharp");
 const uploadToS3 = require("../utils/uploadToS3");
 const chainMapping = require("../config/chainMapping.json");
+const userActivityManager = require("../utils/userTracking");
+const User = require("../models/user");
 
 exports.getListingBySlug = async (req, res) => {
   try {
@@ -531,8 +533,23 @@ exports.verifyListing = async (req, res) => {
       .select("+submission")
       .populate("socials");
 
+    const user = await User.findById(
+      existingListing.submission.submitter
+    ).select({ email: 1 });
+
     await session.commitTransaction();
     await session.endSession();
+
+    await userActivityManager.emitEvent({
+      action: "COMMUNITY_LISTED",
+      user: req.user._id,
+      timestamp: new Date(),
+      meta: {
+        submitterEmail: user.email,
+        submitterUserId: existingListing.submission.submitter,
+      },
+    });
+
     return new HTTPResponse(
       res,
       true,
