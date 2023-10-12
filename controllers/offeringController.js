@@ -4,6 +4,7 @@ const { Offering } = require("../models/offering"); // Assuming the model is sav
 const uploadToS3 = require("../utils/uploadToS3");
 const sharp = require("sharp");
 const randomString = require("../utils/randomString");
+const redisClient = require("../databases/redis-client");
 
 exports.createOffering = async (req, res) => {
   try {
@@ -51,6 +52,30 @@ exports.createOffering = async (req, res) => {
       { offering }
     );
   } catch (error) {
+    console.log("createOffering:", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
+exports.getOfferings = async (req, res) => {
+  try {
+    let { count, result, meta } = req.pagination;
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count,
+      result,
+      meta,
+    });
+
+    await redisClient.setEx(
+      req.originalUrl,
+      30, // 30secs
+      JSON.stringify(response.getResponse())
+    );
+
+    return response;
+  } catch (error) {
+    console.log("getOfferings: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
@@ -69,6 +94,7 @@ exports.getOfferingById = async (req, res) => {
 
     return new HTTPResponse(res, true, 200, null, null, { offering });
   } catch (error) {
+    console.log("getOfferingById:", error);
     return new HTTPError(
       res,
       true,
@@ -79,7 +105,7 @@ exports.getOfferingById = async (req, res) => {
   }
 };
 
-exports.getOfferings = async (req, res) => {
+exports.getOfferings_ = async (req, res) => {
   try {
     let query = Offering.find();
 
@@ -144,6 +170,7 @@ exports.updateOffering = async (req, res) => {
 
     return new HTTPResponse(res, true, 200, null, null, { offering });
   } catch (error) {
+    console.log("updateOffering:", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
