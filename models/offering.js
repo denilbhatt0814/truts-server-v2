@@ -10,29 +10,42 @@ const offeringSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    logo: {
-      id: { type: String },
-      secure_url: {
-        type: String,
-      },
-      required: [true, "Please associate a logo to this offering"],
+    organization: {
+      type: String,
+      required: [true, "Offering must be assosicated wiht an organinzation"],
     },
-    images: [
-      {
+    logo: {
+      type: {
         id: { type: String },
-        secure_url: { type: String },
+        secure_url: {
+          type: String,
+        },
       },
-    ],
+      default: {
+        secure_url: "",
+      },
+    },
+    images: {
+      type: [
+        {
+          id: { type: String },
+          secure_url: { type: String },
+        },
+      ],
+      default: [],
+    },
     credits: {
       type: Number,
       default: 0,
     },
-    tags: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "OfferingTag",
+    tags: {
+      type: [{ type: String }],
+      required: true,
+      validate: {
+        validator: (v) => v.length <= 10,
+        message: "Tags is over 10",
       },
-    ],
+    },
     visible: {
       type: Boolean,
       default: false,
