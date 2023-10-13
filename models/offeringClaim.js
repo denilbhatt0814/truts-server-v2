@@ -7,17 +7,23 @@ const offeringClaimSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Please link this claim to an user"],
     },
-    offer: {
+    offers: {
       type: [
         {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Offering",
         },
       ],
-      // validate at max only three offers shall be linked
+      validate: {
+        validator: function (v) {
+          return v.length <= 3;
+        },
+        message: "You can link a maximum of 3 offers only.",
+      },
     },
     truts_link: {
       type: String,
+      maxLength: [150, "Your link seems to be too long"],
     },
   },
   { timestamps: true }

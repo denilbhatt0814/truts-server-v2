@@ -5,10 +5,17 @@ const uploadToS3 = require("../utils/uploadToS3");
 const sharp = require("sharp");
 const randomString = require("../utils/randomString");
 const redisClient = require("../databases/redis-client");
+const { OfferingClaim } = require("../models/offeringClaim");
+const { Offering_Social } = require("../models/offering_social");
+const { default: mongoose } = require("mongoose");
 
 exports.createOffering = async (req, res) => {
+  const session = await mongoose.startSession();
+  await session.startTransaction();
   try {
-    const { name, description, credits, organization, tags } = req.body;
+    let { name, description, credits, organization, tags, socials } = req.body;
+
+    socials = JSON.parse(socials);
 
     const offering = new Offering({
       name: name,
@@ -40,8 +47,20 @@ exports.createOffering = async (req, res) => {
         });
       }
     }
+    await offering.save({ session });
 
-    await offering.save();
+    socials = Offering_Social.transformObjectToArray(socials, offering._id);
+    console.log({ socials });
+
+    let social_res = await Offering_Social.insertMany(socials, { session });
+    console.log({ social_res });
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    const newOffering = await Offering.findById(offering._id).populate(
+      "socials"
+    );
 
     return new HTTPResponse(
       res,
@@ -49,10 +68,12 @@ exports.createOffering = async (req, res) => {
       201,
       "Offering created successfully",
       null,
-      { offering }
+      { offering: newOffering }
     );
   } catch (error) {
     console.log("createOffering:", error);
+    await session.abortTransaction();
+    await session.endSession();
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
@@ -140,14 +161,24 @@ exports.getOfferings_ = async (req, res) => {
 
 exports.applyToClaimOffering = async (req, res) => {
   try {
-    // auth route -> truts project link -> offerings to be claimed
+    const userID = req.user._id;
 
     const { truts_link, offers } = req.body;
 
-    // create offering_claim model -> ref to user (_id) | truts_link (str) | refs. to offerings(_id[]) |
-    // store _id of atmost 3 offerings ->
-    // need a function to calculate claims on each offering
-    //
+    const claim = await OfferingClaim.create({
+      user: userID,
+      offers,
+      truts_link,
+    });
+
+    return new HTTPResponse(
+      res,
+      true,
+      201,
+      "claim request successfull!",
+      null,
+      { claim }
+    );
   } catch (error) {
     console.log("applyToClaimOffering: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
@@ -187,6 +218,54 @@ exports.updateOffering = async (req, res) => {
     return new HTTPResponse(res, true, 200, null, null, { offering });
   } catch (error) {
     console.log("updateOffering:", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
+exports.getOfferCountInATag = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $unwind: {
+          path: "$tags",
+        },
+      },
+      {
+        $group: {
+          _id: "$tags",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          tag: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          tag: 1,
+        },
+      },
+    ];
+
+    const result = await Offering.aggregate(agg);
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+    await redisClient.setEx(
+      req.originalUrl,
+      30 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
+  } catch (error) {
+    console.log("getOfferCountInATag: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };

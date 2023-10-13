@@ -44,6 +44,20 @@ const offering_socialSchema = new mongoose.Schema(
   }
 );
 
+// Methods:
+offering_socialSchema.statics.transformObjectToArray = function (
+  socialsObject,
+  offeringID
+) {
+  console.log("transforming socials", { offeringID });
+  return Object.entries(socialsObject).map(([platform, link]) => {
+    if (!supportedPlatforms.includes(platform)) {
+      throw new Error(`Offering: Platform ${platform} is not supported.`);
+    }
+    return { platform, link, offering: offeringID };
+  });
+};
+
 module.exports = {
-  OfferingSocial: mongoose.model("OfferingSocial", offering_socialSchema),
+  Offering_Social: mongoose.model("Offering_Social", offering_socialSchema),
 };

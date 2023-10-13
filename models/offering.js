@@ -51,8 +51,16 @@ const offeringSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// Can make socials as virtual field
+offeringSchema.virtual("socials", {
+  ref: "Offering_Social", // The model to use
+  localField: "_id", // The localField in Listing for ref
+  foreignField: "offering", // is equal to `listing` field in Listing_Social
+  justOne: false, // And get all the socials of the listing
+});
 
 module.exports = {
   Offering: mongoose.model("Offering", offeringSchema),
