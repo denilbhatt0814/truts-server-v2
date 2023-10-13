@@ -138,6 +138,22 @@ exports.getOfferings_ = async (req, res) => {
   }
 };
 
+exports.applyToClaimOffering = async (req, res) => {
+  try {
+    // auth route -> truts project link -> offerings to be claimed
+
+    const { truts_link, offers } = req.body;
+
+    // create offering_claim model -> ref to user (_id) | truts_link (str) | refs. to offerings(_id[]) |
+    // store _id of atmost 3 offerings ->
+    // need a function to calculate claims on each offering
+    //
+  } catch (error) {
+    console.log("applyToClaimOffering: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 exports.updateOffering = async (req, res) => {
   try {
     // TODO: ignoring images
