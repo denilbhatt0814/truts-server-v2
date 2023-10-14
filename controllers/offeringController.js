@@ -104,7 +104,7 @@ exports.getOfferings = async (req, res) => {
 exports.getOfferingById = async (req, res) => {
   try {
     const offeringID = req.params.id;
-    const offering = await Offering.findById(offeringID);
+    const offering = await Offering.findById(offeringID).populate("socials");
     if (!offering)
       return new HTTPError(
         res,
@@ -113,7 +113,13 @@ exports.getOfferingById = async (req, res) => {
         "resource not found"
       );
 
-    return new HTTPResponse(res, true, 200, null, null, { offering });
+    const response = new HTTPResponse(res, true, 200, null, null, { offering });
+    await redisClient.setEx(
+      req.originalUrl,
+      30 * 60, // 30mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
   } catch (error) {
     console.log("getOfferingById:", error);
     return new HTTPError(
@@ -278,7 +284,13 @@ exports.getOfferClaimCount = async (req, res) => {
       offers: mongoose.Types.ObjectId(offerID),
     });
 
-    return new HTTPResponse(res, true, 200, null, null, { count });
+    const response = new HTTPResponse(res, true, 200, null, null, { count });
+    await redisClient.setEx(
+      req.originalUrl,
+      5 * 60, // 5mins
+      JSON.stringify(response.getResponse())
+    );
+    return response;
   } catch (error) {
     console.log("getOfferClaimCount: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");

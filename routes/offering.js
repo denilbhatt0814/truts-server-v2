@@ -26,11 +26,11 @@ router
 
 router
   .route("/offering/:id")
-  .get(offeringControllers.getOfferingById)
+  .get(cacheRoute, offeringControllers.getOfferingById)
   .put(offeringControllers.updateOffering);
 
 router
   .route("/offering/:id/claim-count")
-  .get(offeringControllers.getOfferClaimCount);
+  .get(cacheRoute, offeringControllers.getOfferClaimCount);
 
 module.exports = router;
