@@ -270,6 +270,21 @@ exports.getOfferCountInATag = async (req, res) => {
   }
 };
 
+exports.getOfferClaimCount = async (req, res) => {
+  try {
+    const offerID = req.params.id;
+
+    const count = await OfferingClaim.count({
+      offers: mongoose.Types.ObjectId(offerID),
+    });
+
+    return new HTTPResponse(res, true, 200, null, null, { count });
+  } catch (error) {
+    console.log("getOfferClaimCount: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 // ------ UTILS ------
 const updateOfferingLogo = async (offering, photo) => {
   try {

@@ -29,4 +29,8 @@ router
   .get(offeringControllers.getOfferingById)
   .put(offeringControllers.updateOffering);
 
+router
+  .route("/offering/:id/claim-count")
+  .get(offeringControllers.getOfferClaimCount);
+
 module.exports = router;
