@@ -8,6 +8,7 @@ const redisClient = require("../databases/redis-client");
 const { OfferingClaim } = require("../models/offeringClaim");
 const { Offering_Social } = require("../models/offering_social");
 const { default: mongoose } = require("mongoose");
+const { publishEvent } = require("../utils/pubSub");
 
 exports.createOffering = async (req, res) => {
   const session = await mongoose.startSession();
@@ -177,7 +178,7 @@ exports.applyToClaimOffering = async (req, res) => {
       truts_link,
     });
 
-    return new HTTPResponse(
+    const response = new HTTPResponse(
       res,
       true,
       201,
@@ -185,6 +186,18 @@ exports.applyToClaimOffering = async (req, res) => {
       null,
       { claim }
     );
+
+    // TODO:
+    claim = (await claim.populate("offers", { name: 1, logo: 1 })).populate(
+      "user",
+      { name: 1, usenname: 1, photo: 1 }
+    );
+    await publishEvent(
+      "offer-claim:create",
+      JSON.stringify({ data: { claim } })
+    );
+
+    return response;
   } catch (error) {
     console.log("applyToClaimOffering: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
