@@ -74,8 +74,16 @@ const trutsEventSchema = new mongoose.Schema(
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// Can make socials as virtual field
+trutsEventSchema.virtual("socials", {
+  ref: "TrutsEvent_Social", // The model to use
+  localField: "_id", // The localField in Listing for ref
+  foreignField: "event", // is equal to `listing` field in Listing_Social
+  justOne: false, // And get all the socials of the listing
+});
 
 module.exports = {
   TrutsEvent: mongoose.model("TrutsEvent", trutsEventSchema),
