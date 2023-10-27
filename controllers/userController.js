@@ -2413,7 +2413,14 @@ exports.getUserLeaderboard_Public = async (req, res) => {
 
 exports.logout = (req, res) => {
   // Delete the prexisting cookie of user by sending a Stale cookie
-  res.clearCookie("token").status(200).json({
+
+  const options = {
+    expires: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    domain: "truts.xyz",
+    httpOnly: true,
+  };
+
+  return res.cookie("token", null, options).status(200).json({
     success: true,
     message: "Logout success",
   });
