@@ -81,6 +81,9 @@ async function checkEligibiltyAndRewardForStreak(userID) {
         "streakRewardClaims"
       );
 
+      if (!userStreaks.streakRewardClaims) {
+        userStreaks.streakRewardClaims = {};
+      }
       // check if already claimed:
       if (!userStreaks.streakRewardClaims[streakCount]) {
         // if not -> reward them now
