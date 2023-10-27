@@ -44,6 +44,20 @@ const trutsEvent_socialSchema = new mongoose.Schema(
   }
 );
 
+// Methods:
+trutsEvent_socialSchema.statics.transformObjectToArray = function (
+  socialsObject,
+  eventID
+) {
+  console.log("transforming socials", { eventID });
+  return Object.entries(socialsObject).map(([platform, link]) => {
+    if (!supportedPlatforms.includes(platform)) {
+      throw new Error(`Events: Platform ${platform} is not supported.`);
+    }
+    return { platform, link, offering: eventID };
+  });
+};
+
 moduel.exports = {
   TrutsEvent_Social: mongoose.model(
     "TrutsEvent_Social",
