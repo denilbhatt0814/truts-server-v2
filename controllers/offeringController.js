@@ -63,6 +63,11 @@ exports.createOffering = async (req, res) => {
       "socials"
     );
 
+    await publishEvent(
+      "offering:create",
+      JSON.stringify({ data: newOffering, user: req.user })
+    );
+
     return new HTTPResponse(
       res,
       true,
@@ -194,7 +199,7 @@ exports.applyToClaimOffering = async (req, res) => {
     );
     await publishEvent(
       "offer-claim:create",
-      JSON.stringify({ data: { claim } })
+      JSON.stringify({ data: { claim }, user: req.user })
     );
 
     return response;
