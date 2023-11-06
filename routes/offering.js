@@ -6,7 +6,7 @@ const paginateRequest = require("../middlewares/paginate");
 const cacheRoute = require("../middlewares/cacheRoute");
 const { isLoggedIn } = require("../middlewares/user");
 
-router.route("/offering").post(offeringControllers.createOffering);
+router.route("/offering").post(isLoggedIn, offeringControllers.createOffering);
 
 router
   .route("/offerings")

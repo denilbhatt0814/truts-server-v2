@@ -12,7 +12,7 @@ const offeringSchema = new mongoose.Schema(
     },
     organization: {
       type: String,
-      required: [true, "Offering must be assosicated wiht an organinzation"],
+      required: [true, "Offering must be assosicated with an organinzation"],
     },
     logo: {
       type: {
@@ -49,6 +49,25 @@ const offeringSchema = new mongoose.Schema(
     visible: {
       type: Boolean,
       default: false,
+    },
+    submission: {
+      type: {
+        type: String,
+        enum: ["USER", "AUTO"],
+        default: "USER",
+      },
+      submitter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      verifiedAt: {
+        type: Date,
+      },
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      select: false,
     },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }

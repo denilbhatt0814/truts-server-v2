@@ -24,6 +24,7 @@ exports.createOffering = async (req, res) => {
       credits: credits,
       organization: organization,
       tags: JSON.parse(tags),
+      submission: { submitter: user._id },
     });
 
     // store logo of offering:
@@ -38,6 +39,16 @@ exports.createOffering = async (req, res) => {
 
     // store images of offering:
     if (req.files && req.files.images) {
+      if (!(req.files.images instanceof Array)) {
+        let file = req.files.images; // frontend must call this images
+        const saveResp = await updateOfferingLogo(offering, file);
+        // save link and id for the new image
+        offering.images.push({
+          id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
+          secure_url: saveResp.object_url,
+        });
+      }
+
       for (let index = 0; index < req.files.images.length; index++) {
         let file = req.files.images[index]; // frontend must call this images
         const saveResp = await updateOfferingLogo(offering, file);
@@ -61,6 +72,11 @@ exports.createOffering = async (req, res) => {
 
     const newOffering = await Offering.findById(offering._id).populate(
       "socials"
+    );
+
+    await publishEvent(
+      "offering:create",
+      JSON.stringify({ data: { offering: newOffering, user: req.user } })
     );
 
     return new HTTPResponse(
@@ -172,7 +188,7 @@ exports.applyToClaimOffering = async (req, res) => {
 
     const { truts_link, offers } = req.body;
 
-    const claim = await OfferingClaim.create({
+    let claim = await OfferingClaim.create({
       user: userID,
       offers,
       truts_link,
@@ -188,13 +204,12 @@ exports.applyToClaimOffering = async (req, res) => {
     );
 
     // TODO:
-    claim = (await claim.populate("offers", { name: 1, logo: 1 })).populate(
-      "user",
-      { name: 1, usenname: 1, photo: 1 }
-    );
+    claim = await (
+      await claim.populate("offers", { name: 1, logo: 1, organization: 1 })
+    ).populate("user", { name: 1, usenname: 1, photo: 1 });
     await publishEvent(
       "offer-claim:create",
-      JSON.stringify({ data: { claim } })
+      JSON.stringify({ data: { claim: claim, user: req.user } })
     );
 
     return response;
