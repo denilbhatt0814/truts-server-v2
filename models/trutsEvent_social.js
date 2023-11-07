@@ -54,11 +54,11 @@ trutsEvent_socialSchema.statics.transformObjectToArray = function (
     if (!supportedPlatforms.includes(platform)) {
       throw new Error(`Events: Platform ${platform} is not supported.`);
     }
-    return { platform, link, offering: eventID };
+    return { platform, link, event: eventID };
   });
 };
 
-moduel.exports = {
+module.exports = {
   TrutsEvent_Social: mongoose.model(
     "TrutsEvent_Social",
     trutsEvent_socialSchema

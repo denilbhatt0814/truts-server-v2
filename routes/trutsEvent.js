@@ -1,6 +1,7 @@
 const trutsEventController = require("../controllers/trutsEventController");
 const { isLoggedIn } = require("../middlewares/user");
 const paginateRequest = require("../middlewares/paginate");
+const { TrutsEvent } = require("../models/trutsEvent");
 const router = require("express").Router();
 
 router

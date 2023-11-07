@@ -73,6 +73,33 @@ const trutsEventSchema = new mongoose.Schema(
         message: "Main event reference is only allowed for SIDE events.",
       },
     },
+    visible: {
+      type: Boolean,
+      default: false,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    submission: {
+      type: {
+        type: String,
+        enum: ["USER", "AUTO"],
+        default: "USER",
+      },
+      submitter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      verifiedAt: {
+        type: Date,
+      },
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+      },
+      select: false,
+    },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

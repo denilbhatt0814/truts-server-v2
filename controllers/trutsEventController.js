@@ -28,7 +28,7 @@ exports.createTrutsEvent = async (req, res) => {
     const listingID = req.body.host;
     socials = JSON.parse(socials);
 
-    const listing = await Listing.findById(listingID).populate("socials");
+    const listing = await Listing.findById(listingID);
     if (!listing) {
       return new HTTPError(
         res,
@@ -43,14 +43,14 @@ exports.createTrutsEvent = async (req, res) => {
       if (!main_event) {
         return new HTTPError(
           res,
-          400,
-          `Main event with id: ${main_event_id} does not exist`,
+          404,
+          `Main Event with id: ${main_event_id} does not exist`,
           "main_event does not found"
         );
       }
     }
 
-    const trutsEvent = TrutsEvent({
+    const trutsEvent = new TrutsEvent({
       name,
       description,
       start_date,
@@ -59,13 +59,13 @@ exports.createTrutsEvent = async (req, res) => {
       category,
       type,
       tags: JSON.parse(tags),
-      host: listingID,
+      host: listing._id,
       main_event: main_event_id,
     });
 
     // store logo of event:
     if (req.files && req.files.logo) {
-      const saveResp = await addEventsImage(trutsEvent, req.files.logo); // TODO: later the id of images can be mapped with position of img
+      const saveResp = await addEventsLogo(trutsEvent, req.files.logo); // TODO: later the id of images can be mapped with position of img
       // save link and id for the new image
       trutsEvent.logo = {
         id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
@@ -75,7 +75,7 @@ exports.createTrutsEvent = async (req, res) => {
 
     //store banner of event:
     if (req.files && req.files.banner) {
-      const saveResp = await addEventsImage(trutsEvent, req.files.banner); // TODO: later the id of images can be mapped with position of img
+      const saveResp = await addEventsBanner(trutsEvent, req.files.banner); // TODO: later the id of images can be mapped with position of img
       // save link and id for the new image
       trutsEvent.banner = {
         id: saveResp.ETag.replaceAll('"', ""), // need to remove some extra char.
@@ -94,17 +94,17 @@ exports.createTrutsEvent = async (req, res) => {
     await session.commitTransaction();
     await session.endSession();
 
-    const newTrutsEvent = await Offering.findById(trutsEvent._id).populate(
-      "socials"
-    );
+    const newTrutsEvent = await TrutsEvent.findById(trutsEvent._id)
+      .populate("socials")
+      .populate("host", { name: 1, photo: 1, slug: 1 });
 
     return new HTTPResponse(
       res,
       true,
       201,
-      "Offering created successfully",
+      "TrutsEvent created successfully",
       null,
-      { offering: newTrutsEvent }
+      { event: newTrutsEvent }
     );
   } catch (error) {
     console.log("createTrutsEvent:", error);
@@ -140,7 +140,10 @@ exports.getTrutsEvents = async (req, res) => {
 exports.getTrutsEventById = async (req, res) => {
   try {
     const eventID = req.params.id;
-    const event = await TrutsEvent.findById(eventID).populate("socials");
+    const event = await TrutsEvent.findById(eventID)
+      .populate("socials")
+      .populate("host", { name: 1, photo: 1, slug: 1 })
+      .populate("main_event", { name: 1, logo: 1 });
     if (!event)
       return new HTTPError(
         res,
@@ -257,12 +260,25 @@ exports.getEventCountInACategory = async (req, res) => {
   }
 };
 
-const addEventsImage = async (trutsEvent, photo) => {
+const addEventsLogo = async (trutsEvent, photo) => {
   try {
     const convertedBuffer = await sharp(photo.data).toFormat("webp").toBuffer();
     let data = await uploadToS3(
       "truts-event",
-      trutsEvent._id + "-IMG-" + randomString(5) + ".webp",
+      trutsEvent._id.toString() + "-logo.webp",
+      convertedBuffer
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+const addEventsBanner = async (trutsEvent, photo) => {
+  try {
+    const convertedBuffer = await sharp(photo.data).toFormat("webp").toBuffer();
+    let data = await uploadToS3(
+      "truts-event",
+      trutsEvent._id.toString() + "-banner.webp",
       convertedBuffer
     );
     return data;
