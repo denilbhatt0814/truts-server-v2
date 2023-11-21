@@ -4,7 +4,8 @@ const cookieToken = (user, res) => {
   const token = user.getJWTToken();
 
   const options = {
-    expiresIn: new Date(Date.now()) + COOKIE_TIME * 24 * 60 * 60 * 1000,
+    expires: new Date(Date.now() + COOKIE_TIME * 24 * 60 * 60 * 1000),
+    domain: "truts.xyz",
     httpOnly: true,
   };
 

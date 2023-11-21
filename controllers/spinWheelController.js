@@ -5,6 +5,11 @@ const { SpinHistory } = require("../models/spinHistory");
 const { SpinWheel } = require("../models/spinWheel");
 const { SpinReward } = require("../models/spinReward");
 const spinRewardAllocators = require("../validators/allocators/spinRewardAllocators");
+const { incrementSpinStreak } = require("./spinWheelStreak");
+const { SpinStreakPeriod } = require("../models/spinStreakPeriod");
+const {
+  streakDayToRewardMapping,
+} = require("../validators/allocators/spinStreakRewardAllocator");
 
 exports.createWheel = async (req, res) => {
   try {
@@ -115,6 +120,14 @@ exports.spinTheWheel = async (req, res) => {
 
     await session.commitTransaction();
     await session.endSession();
+
+    // TEST:
+    try {
+      await incrementSpinStreak(userID);
+    } catch (error) {
+      console.log("spinTheWheel: (incrementSpinStreak) - ", error);
+    }
+
     return new HTTPResponse(res, true, 200, "Spin successfull!!", null, {
       reward: {
         slot: selectedReward.slot,
@@ -294,3 +307,69 @@ async function verifyRewardsInWheel(res, rewards) {
     );
   }
 }
+
+// ------- STREAKS -----------
+exports.streakUpdationCheck = async (req, res) => {
+  try {
+    const userID = req.user._id;
+    let lastStreakRecord = await SpinStreakPeriod.findOne({ user: userID });
+
+    if (!lastStreakRecord) {
+      lastStreakRecord = {
+        count: 0,
+      };
+    }
+
+    const rewardsObject = streakDayToRewardMapping;
+
+    for (const key in rewardsObject) {
+      if (rewardsObject[key].reward) {
+        delete rewardsObject[key].reward.allocate;
+      }
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      record: lastStreakRecord,
+      reward: rewardsObject[lastStreakRecord.count]?.reward, // TODO: this can be MOD to get info from user object
+    });
+  } catch (error) {
+    console.log("streakUpdationCheck: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
+exports.streakStatusCheck = async (req, res) => {
+  try {
+    const userID = req.user._id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = today.setDate(today.getDate() - 1);
+
+    let lastStreakRecord = await SpinStreakPeriod.findOne({
+      user: userID,
+      lastDate: { $gte: yesterday },
+    });
+
+    if (!lastStreakRecord) {
+      lastStreakRecord = {
+        count: 0,
+      };
+    }
+
+    const rewardsObject = streakDayToRewardMapping;
+
+    for (const key in rewardsObject) {
+      if (rewardsObject[key].reward) {
+        delete rewardsObject[key].reward.allocate;
+      }
+    }
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      record: lastStreakRecord,
+      mapping: rewardsObject,
+    });
+  } catch (error) {
+    console.log("streakUpdationCheck: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};

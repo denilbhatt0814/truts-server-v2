@@ -169,7 +169,12 @@ exports.submitTaskForm = async (req, res) => {
         "formData.link": formData.link,
       });
       if (linkExists) {
-        return HTTPError(res, 409, "Link is being re-used", "Link Conflict");
+        return new HTTPError(
+          res,
+          409,
+          "Link is being re-used",
+          "Link Conflict"
+        );
       }
     }
 
@@ -190,6 +195,7 @@ exports.submitTaskForm = async (req, res) => {
 
     return new HTTPResponse(res, true, 201, null, null, { taskForm });
   } catch (error) {
+    console.log("submitTaskForm: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };

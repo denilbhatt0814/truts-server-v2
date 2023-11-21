@@ -1833,6 +1833,125 @@ exports.getMyCompletedMissions = async (req, res) => {
   }
 };
 
+exports.getMissionsSuggeestedToMe = async (req, res) => {
+  try {
+    const userID = req.user._id;
+    const limit = req.params.limit ?? 3;
+
+    const pipeline = [
+      {
+        $match: {
+          user: userID,
+          isCompleted: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          completedMissions: {
+            $push: "$mission",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "missions",
+          let: {
+            completedMissions: "$completedMissions",
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $not: {
+                    $in: ["$_id", "$$completedMissions"],
+                  },
+                },
+                visible: true,
+              },
+            },
+            {
+              $sort: {
+                trending: -1,
+                createdAt: -1,
+              },
+            },
+            {
+              $limit: limit,
+            },
+          ],
+          as: "remainingMissions",
+        },
+      },
+      {
+        $unwind: "$remainingMissions",
+      },
+      {
+        $replaceRoot: {
+          newRoot: "$remainingMissions",
+        },
+      },
+      {
+        $project: {
+          tasks: 0,
+          questions: 0,
+        },
+      },
+      {
+        $lookup: {
+          from: "missiontags",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $lookup: {
+          from: "listings",
+          localField: "listing",
+          foreignField: "_id",
+          as: "listing",
+        },
+      },
+      {
+        $unwind: {
+          path: "$listing",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          tags: 1,
+          listingXP: 1,
+          trending: 1,
+          type: 1,
+          visible: 1,
+          listing: {
+            name: 1,
+            slug: 1,
+            photo: 1,
+          },
+          startDate: 1,
+          endDate: 1,
+          createdAt: 1,
+          updated: 1,
+        },
+      },
+    ];
+
+    const remainingMissions = await User_Mission.aggregate(pipeline);
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: remainingMissions.length,
+      missions: remainingMissions,
+    });
+  } catch (error) {
+    console.log("getMissionsSuggeestedToMe: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 exports.getMyTrutsXP = async (req, res) => {
   try {
     const user = req.user;
@@ -2294,11 +2413,14 @@ exports.getUserLeaderboard_Public = async (req, res) => {
 
 exports.logout = (req, res) => {
   // Delete the prexisting cookie of user by sending a Stale cookie
-  res.cookie("token", null, {
-    expires: new Date(Date.now()),
+
+  const options = {
+    expires: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    domain: "truts.xyz",
     httpOnly: true,
-  });
-  res.status(200).json({
+  };
+
+  return res.cookie("token", null, options).status(200).json({
     success: true,
     message: "Logout success",
   });

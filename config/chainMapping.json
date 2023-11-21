@@ -62,7 +62,7 @@
   "cosmos": {
     "ticker": "ATOM",
     "icon": "https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png?1555657960",
-    "color": "#800080"
+    "color": "#9396f8"
   },
   "arweave": {
     "ticker": "AR",
@@ -92,7 +92,7 @@
   "metis": {
     "ticker": "METIS",
     "icon": "https://assets.coingecko.com/coins/images/15595/small/metis.jpeg?1660285312",
-    "color": "#0000FF"
+    "color": "#79abff"
   },
   "celo": {
     "ticker": "CELO",
@@ -107,7 +107,7 @@
   "bitcoin": {
     "ticker": "BTC",
     "icon": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png?1547033579",
-    "color": "#800000"
+    "color": "#f7dc90"
   },
   "cardano": {
     "ticker": "ADA",
@@ -152,7 +152,7 @@
   "aptos": {
     "ticker": "APT",
     "icon": "https://assets.coingecko.com/coins/images/26455/small/Aptos_mark_BLK.png?1658118095",
-    "color": "#800080"
+    "color": "#a3fbfd"
   },
   "polygon-pos": {
     "ticker": "MATIC",
