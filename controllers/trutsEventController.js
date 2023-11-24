@@ -192,7 +192,9 @@ exports.getSideEventsForTrutsEvent = async (req, res) => {
     const side_events = await TrutsEvent.find({
       main_event: main_event._id,
       type: "SIDE",
-    });
+    })
+      .populate("socials")
+      .populate("host", { name: 1, photo: 1, slug: 1 });
 
     return new HTTPResponse(res, true, 200, null, null, {
       count: side_events.length,
