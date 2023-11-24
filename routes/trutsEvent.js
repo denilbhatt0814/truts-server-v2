@@ -18,4 +18,9 @@ router
 // get truts event by id
 router.route("/truts-event/:id").get(trutsEventController.getTrutsEventById);
 
+// get side events for a main event
+router
+  .route("/truts-event/:id/side-events")
+  .get(trutsEventController.getSideEventsForTrutsEvent);
+
 module.exports = router;

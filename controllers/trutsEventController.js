@@ -172,6 +172,44 @@ exports.getTrutsEventById = async (req, res) => {
   }
 };
 
+exports.getSideEventsForTrutsEvent = async (req, res) => {
+  try {
+    const main_event_id = req.params.id;
+    const main_event = await TrutsEvent.findOne({
+      _id: mongoose.Types.ObjectId(main_event_id),
+      type: "MAIN",
+      visible: true,
+    });
+    if (!main_event) {
+      return new HTTPError(
+        res,
+        404,
+        `Main event with id: ${main_event_id} not found`,
+        "resource not found"
+      );
+    }
+
+    const side_events = await TrutsEvent.find({
+      main_event: main_event._id,
+      type: "SIDE",
+    });
+
+    return new HTTPResponse(res, true, 200, null, null, {
+      count: side_events.length,
+      side_events: side_events,
+    });
+  } catch (error) {
+    console.log("getSideEventsForTrutsEvent: ", error);
+    return new HTTPError(
+      res,
+      true,
+      500,
+      error.message,
+      "internal server error"
+    );
+  }
+};
+
 exports.getEventCountInATag = async (req, res) => {
   try {
     const agg = [
