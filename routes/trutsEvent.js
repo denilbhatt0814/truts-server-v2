@@ -15,6 +15,11 @@ router
   .route("/truts-event/category")
   .get(trutsEventController.getEventCountInACategory);
 
+// get locations
+router
+  .route("/truts-event/locations")
+  .get(trutsEventController.getEventCountInLocation);
+
 // get truts event by id
 router.route("/truts-event/:id").get(trutsEventController.getTrutsEventById);
 

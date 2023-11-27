@@ -42,7 +42,16 @@ const trutsEventSchema = new mongoose.Schema(
     host: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Listing",
-      required: [true, "Truts listing is a must for event listing"],
+    },
+    host_new: {
+      name: String,
+    },
+    host_listed: {
+      type: mongoose.Schema.Types.Boolean,
+      // required: [
+      //   true,
+      //   "Important to mention whether the host is listed on truts or not",
+      // ],
     },
     tags: {
       type: [String],
@@ -78,6 +87,10 @@ const trutsEventSchema = new mongoose.Schema(
       default: false,
     },
     verified: {
+      type: Boolean,
+      default: false,
+    },
+    trending: {
       type: Boolean,
       default: false,
     },

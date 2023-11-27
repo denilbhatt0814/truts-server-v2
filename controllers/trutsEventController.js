@@ -262,6 +262,51 @@ exports.getEventCountInATag = async (req, res) => {
   }
 };
 
+exports.getEventCountInLocation = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $group: {
+          _id: "$location",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          location: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          location: 1,
+        },
+      },
+    ];
+
+    const result = await TrutsEvent.aggregate(agg);
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+
+    // await redisClient.setEx(
+    //   req.originalUrl,
+    //   30 * 60, // 30mins
+    //   JSON.stringify(response.getResponse())
+    // );
+
+    return response;
+  } catch (error) {
+    console.log("getEventCountInATag: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 exports.getEventCountInACategory = async (req, res) => {
   try {
     const agg = [
