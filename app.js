@@ -39,6 +39,7 @@ const spinWheel = require("./routes/spinWheel");
 const admin = require("./routes/admin");
 const offering = require("./routes/offering");
 const search = require("./routes/search");
+const trutsEvent = require("./routes/trutsEvent");
 
 // routes middleware
 app.use("/api/v1", home);
@@ -51,6 +52,7 @@ app.use("/api/v1", spinWheel);
 app.use("/api/v1", admin);
 app.use("/api/v1", offering);
 app.use("/api/v1", search);
+app.use("/api/v1", trutsEvent);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");
