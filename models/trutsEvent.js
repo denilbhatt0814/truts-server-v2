@@ -14,7 +14,7 @@ const trutsEventSchema = new mongoose.Schema(
       id: { type: String },
       secure_url: {
         type: String,
-        default: "",
+        default: selectRandomPhoto,
       },
     },
     start_date: {
@@ -128,3 +128,18 @@ trutsEventSchema.virtual("socials", {
 module.exports = {
   TrutsEvent: mongoose.model("TrutsEvent", trutsEventSchema),
 };
+
+function selectRandomPhoto() {
+  let url = "https://truts-event.s3.ap-south-1.amazonaws.com/";
+  listOfPhotos = [
+    "event-random-1.webp",
+    "event-random-2.webp",
+    "event-random-3.webp",
+    "event-random-4.webp",
+    "event-random-5.webp",
+    "event-random-6.webp",
+  ];
+  let photo =
+    url + listOfPhotos[Math.floor(Math.random() * listOfPhotos.length)];
+  return photo;
+}
