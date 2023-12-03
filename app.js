@@ -36,7 +36,7 @@ const review = require("./routes/review");
 const listing = require("./routes/listing");
 const spinWheel = require("./routes/spinWheel");
 const search = require("./routes/search");
-
+const temp = require("./routes/temp");
 // routes middleware
 app.use("/api/v1", home);
 app.use("/api/v1", user);
@@ -46,6 +46,7 @@ app.use("/api/v1", review);
 app.use("/api/v1", listing);
 app.use("/api/v1", spinWheel);
 app.use("/api/v1", search);
+app.use("/api/v1", temp);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");
