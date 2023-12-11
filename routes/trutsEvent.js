@@ -22,11 +22,11 @@ router
 
 router
   .route("/truts-event/cities")
-  .get(trutsEventController.getEventCountInLocation);
+  .get(trutsEventController.getEventCountInCity);
 
 router
   .route("/truts-event/countries")
-  .get(trutsEventController.getEventCountInLocation);
+  .get(trutsEventController.getEventCountInCountry);
 
 // get truts event by id
 router.route("/truts-event/:id").get(trutsEventController.getTrutsEventById);
