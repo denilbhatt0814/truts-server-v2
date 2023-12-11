@@ -20,6 +20,14 @@ router
   .route("/truts-event/locations")
   .get(trutsEventController.getEventCountInLocation);
 
+router
+  .route("/truts-event/cities")
+  .get(trutsEventController.getEventCountInLocation);
+
+router
+  .route("/truts-event/countries")
+  .get(trutsEventController.getEventCountInLocation);
+
 // get truts event by id
 router.route("/truts-event/:id").get(trutsEventController.getTrutsEventById);
 

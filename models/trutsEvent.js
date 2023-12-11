@@ -34,6 +34,14 @@ const trutsEventSchema = new mongoose.Schema(
       required: [true, "Location is required"],
       maxLength: [500, "Length of location must be less than 500 char"],
     },
+    city: {
+      type: String,
+      maxLength: [200, "Length of city must be less than 200 char"],
+    },
+    country: {
+      type: String,
+      maxLength: [200, "Length of country must be less than 200 char"],
+    },
     description: {
       type: String,
       required: [true, "Description is required"],

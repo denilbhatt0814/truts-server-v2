@@ -307,6 +307,96 @@ exports.getEventCountInLocation = async (req, res) => {
   }
 };
 
+exports.getEventCountInCity = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $group: {
+          _id: "$city",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          city: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          city: 1,
+        },
+      },
+    ];
+
+    const result = await TrutsEvent.aggregate(agg);
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+
+    // await redisClient.setEx(
+    //   req.originalUrl,
+    //   30 * 60, // 30mins
+    //   JSON.stringify(response.getResponse())
+    // );
+
+    return response;
+  } catch (error) {
+    console.log("getEventCountInCity: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
+exports.getEventCountInCountry = async (req, res) => {
+  try {
+    const agg = [
+      {
+        $group: {
+          _id: "$country",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          country: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: {
+          country: 1,
+        },
+      },
+    ];
+
+    const result = await TrutsEvent.aggregate(agg);
+
+    const response = new HTTPResponse(res, true, 200, null, null, {
+      count: result.length,
+      result,
+    });
+
+    // await redisClient.setEx(
+    //   req.originalUrl,
+    //   30 * 60, // 30mins
+    //   JSON.stringify(response.getResponse())
+    // );
+
+    return response;
+  } catch (error) {
+    console.log("getEventCountInCountry: ", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 exports.getEventCountInACategory = async (req, res) => {
   try {
     const agg = [
