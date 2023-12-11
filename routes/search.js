@@ -100,6 +100,36 @@ const searchTrutsEvents = async (req, res) => {
                 boost: 1,
               },
             },
+            {
+              prefix: {
+                city: {
+                  value: term,
+                  boost: 1,
+                },
+              },
+            },
+            {
+              query_string: {
+                query: term,
+                default_field: "city",
+                boost: 1,
+              },
+            },
+            {
+              prefix: {
+                country: {
+                  value: term,
+                  boost: 1,
+                },
+              },
+            },
+            {
+              query_string: {
+                query: term,
+                default_field: "country",
+                boost: 1,
+              },
+            },
           ],
           filter: {
             term: {
@@ -114,6 +144,8 @@ const searchTrutsEvents = async (req, res) => {
           "logo",
           "banner",
           "location",
+          "city",
+          "country",
           "description",
           "tags",
           "category",
