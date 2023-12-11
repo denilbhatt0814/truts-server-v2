@@ -73,14 +73,14 @@ const searchTrutsEvents = async (req, res) => {
             {
               prefix: {
                 name: {
-                  value: "hong",
+                  value: term,
                   boost: 2,
                 },
               },
             },
             {
               query_string: {
-                query: "hong",
+                query: term,
                 default_field: "name",
                 boost: 2,
               },
@@ -88,14 +88,14 @@ const searchTrutsEvents = async (req, res) => {
             {
               prefix: {
                 location: {
-                  value: "hong",
+                  value: term,
                   boost: 1,
                 },
               },
             },
             {
               query_string: {
-                query: "hong",
+                query: term,
                 default_field: "location",
                 boost: 1,
               },
