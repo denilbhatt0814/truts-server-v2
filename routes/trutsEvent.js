@@ -9,6 +9,10 @@ router
   .get(paginateRequest(TrutsEvent, {}, []), trutsEventController.getTrutsEvents)
   .post(trutsEventController.createTrutsEvent);
 
+router
+  .route("/truts-event/tally-form")
+  .post(trutsEventController.tallyFormSubmission);
+
 // get tags
 router.route("/truts-event/tags").get(trutsEventController.getEventCountInATag);
 router

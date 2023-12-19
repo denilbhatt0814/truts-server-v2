@@ -7,6 +7,7 @@ const randomString = require("../utils/randomString");
 const sharp = require("sharp");
 const uploadToS3 = require("../utils/uploadToS3");
 const { TrutsEvent_Social } = require("../models/trutsEvent_social");
+const { publishEvent } = require("../utils/pubSub");
 
 exports.createTrutsEvent = async (req, res) => {
   const session = await mongoose.startSession();
@@ -110,6 +111,77 @@ exports.createTrutsEvent = async (req, res) => {
     console.log("createTrutsEvent:", error);
     await session.abortTransaction();
     await session.endSession();
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
+exports.tallyFormSubmission = async (req, res) => {
+  try {
+    const fields = req.body.data.fields;
+
+    console.log("INFO: truts-event: Tally form submisison!");
+
+    const event_name = fields.find(
+      (field) => field.label == "What is the name of your event?"
+    ).value;
+    const event_category_field = fields.find(
+      (field) => field.label == "Select Category of your event"
+    );
+
+    const event_category = event_category_field.options.find(
+      (category) => category.id == event_category_field.value[0]
+    ).text;
+
+    const event_start_date = fields.find(
+      (field) => field.label == "Starting date of event"
+    ).value;
+    const event_country_field = fields.find(
+      (field) => field.label == "In which country are you hosting the event"
+    );
+
+    const event_country = event_country_field.options.find(
+      (country) => country.id == event_country_field.value[0]
+    ).text;
+
+    const event_city = fields.find(
+      (field) => field.label == "In which city are you hosting the event"
+    ).value;
+    const event_host = fields.find(
+      (field) => field.label == "Who is the host of your event"
+    ).value;
+    const event_link = fields.find(
+      (field) => field.label == "Event Website"
+    ).value;
+    const event_submitter = fields.find(
+      (field) => field.label == "Submitter Contact Information"
+    ).value;
+
+    await publishEvent(
+      "truts-event:tallyform-submission",
+      JSON.stringify({
+        data: {
+          event_name,
+          event_category,
+          event_start_date,
+          event_country,
+          event_city,
+          event_host,
+          event_link,
+          event_submitter,
+        },
+      })
+    );
+
+    return new HTTPResponse(
+      res,
+      true,
+      200,
+      "Truts Event submission successful",
+      null,
+      null
+    );
+  } catch (error) {
+    console.log("tallyFormSubmission: ", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
