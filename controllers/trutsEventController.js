@@ -214,7 +214,35 @@ exports.getSideEventsForTrutsEvent = async (req, res) => {
 
 exports.getEventCountInATag = async (req, res) => {
   try {
+    const start_date = req.query.start_date;
+    const end_date = req.query.end_date;
+
+    let match_filter = {};
+
+    if (start_date && end_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else if (start_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+      };
+    } else if (end_date) {
+      match_filter = {
+        start_date: { $gte: new Date() },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else {
+      match_filter = {
+        end_date: { $gte: new Date() },
+      };
+    }
+
     const agg = [
+      {
+        $match: match_filter,
+      },
       {
         $unwind: {
           path: "$tags",
@@ -264,7 +292,35 @@ exports.getEventCountInATag = async (req, res) => {
 
 exports.getEventCountInLocation = async (req, res) => {
   try {
+    const start_date = req.query.start_date;
+    const end_date = req.query.end_date;
+
+    let match_filter = {};
+
+    if (start_date && end_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else if (start_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+      };
+    } else if (end_date) {
+      match_filter = {
+        start_date: { $gte: new Date() },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else {
+      match_filter = {
+        end_date: { $gte: new Date() },
+      };
+    }
+
     const agg = [
+      {
+        $match: match_filter,
+      },
       {
         $group: {
           _id: "$location",
@@ -309,7 +365,35 @@ exports.getEventCountInLocation = async (req, res) => {
 
 exports.getEventCountInCity = async (req, res) => {
   try {
+    const start_date = req.query.start_date;
+    const end_date = req.query.end_date;
+
+    let match_filter = {};
+
+    if (start_date && end_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else if (start_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+      };
+    } else if (end_date) {
+      match_filter = {
+        start_date: { $gte: new Date() },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else {
+      match_filter = {
+        end_date: { $gte: new Date() },
+      };
+    }
+
     const agg = [
+      {
+        $match: match_filter,
+      },
       {
         $group: {
           _id: "$city",
@@ -354,7 +438,35 @@ exports.getEventCountInCity = async (req, res) => {
 
 exports.getEventCountInCountry = async (req, res) => {
   try {
+    const start_date = req.query.start_date;
+    const end_date = req.query.end_date;
+
+    let match_filter = {};
+
+    if (start_date && end_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else if (start_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+      };
+    } else if (end_date) {
+      match_filter = {
+        start_date: { $gte: new Date() },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else {
+      match_filter = {
+        end_date: { $gte: new Date() },
+      };
+    }
+
     const agg = [
+      {
+        $match: match_filter,
+      },
       {
         $group: {
           _id: "$country",
@@ -399,7 +511,35 @@ exports.getEventCountInCountry = async (req, res) => {
 
 exports.getEventCountInACategory = async (req, res) => {
   try {
+    const start_date = req.query.start_date;
+    const end_date = req.query.end_date;
+
+    let match_filter = {};
+
+    if (start_date && end_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else if (start_date) {
+      match_filter = {
+        start_date: { $gte: new Date(start_date) },
+      };
+    } else if (end_date) {
+      match_filter = {
+        start_date: { $gte: new Date() },
+        end_date: { $lte: new Date(end_date) },
+      };
+    } else {
+      match_filter = {
+        end_date: { $gte: new Date() },
+      };
+    }
+
     const agg = [
+      {
+        $match: match_filter,
+      },
       {
         $group: {
           _id: "$category",
