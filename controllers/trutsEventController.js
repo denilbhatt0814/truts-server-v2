@@ -289,26 +289,18 @@ exports.getEventCountInATag = async (req, res) => {
     const start_date = req.query.start_date;
     const end_date = req.query.end_date;
 
-    let match_filter = {};
+    let match_filter = { visible: true };
 
     if (start_date && end_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else if (start_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
     } else if (end_date) {
-      match_filter = {
-        start_date: { $gte: new Date() },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date() };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else {
-      match_filter = {
-        end_date: { $gte: new Date() },
-      };
+      match_filter.end_date = { $gte: new Date() };
     }
 
     const agg = [
@@ -367,26 +359,18 @@ exports.getEventCountInLocation = async (req, res) => {
     const start_date = req.query.start_date;
     const end_date = req.query.end_date;
 
-    let match_filter = {};
+    let match_filter = { visible: true };
 
     if (start_date && end_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else if (start_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
     } else if (end_date) {
-      match_filter = {
-        start_date: { $gte: new Date() },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date() };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else {
-      match_filter = {
-        end_date: { $gte: new Date() },
-      };
+      match_filter.end_date = { $gte: new Date() };
     }
 
     const agg = [
@@ -440,26 +424,18 @@ exports.getEventCountInCity = async (req, res) => {
     const start_date = req.query.start_date;
     const end_date = req.query.end_date;
 
-    let match_filter = {};
+    let match_filter = { visible: true };
 
     if (start_date && end_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else if (start_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
     } else if (end_date) {
-      match_filter = {
-        start_date: { $gte: new Date() },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date() };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else {
-      match_filter = {
-        end_date: { $gte: new Date() },
-      };
+      match_filter.end_date = { $gte: new Date() };
     }
 
     const agg = [
@@ -513,26 +489,18 @@ exports.getEventCountInCountry = async (req, res) => {
     const start_date = req.query.start_date;
     const end_date = req.query.end_date;
 
-    let match_filter = {};
+    let match_filter = { visible: true };
 
     if (start_date && end_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else if (start_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
     } else if (end_date) {
-      match_filter = {
-        start_date: { $gte: new Date() },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date() };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else {
-      match_filter = {
-        end_date: { $gte: new Date() },
-      };
+      match_filter.end_date = { $gte: new Date() };
     }
 
     const agg = [
@@ -586,26 +554,18 @@ exports.getEventCountInACategory = async (req, res) => {
     const start_date = req.query.start_date;
     const end_date = req.query.end_date;
 
-    let match_filter = {};
+    let match_filter = { visible: true };
 
     if (start_date && end_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else if (start_date) {
-      match_filter = {
-        start_date: { $gte: new Date(start_date) },
-      };
+      match_filter.start_date = { $gte: new Date(start_date) };
     } else if (end_date) {
-      match_filter = {
-        start_date: { $gte: new Date() },
-        end_date: { $lte: new Date(end_date) },
-      };
+      match_filter.start_date = { $gte: new Date() };
+      match_filter.end_date = { $lte: new Date(end_date) };
     } else {
-      match_filter = {
-        end_date: { $gte: new Date() },
-      };
+      match_filter.end_date = { $gte: new Date() };
     }
 
     const agg = [
