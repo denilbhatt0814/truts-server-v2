@@ -80,7 +80,7 @@ exports.addQuestionToMission = async (req, res) => {
       return new HTTPError(
         res,
         400,
-        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[]}",
+        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[], SLIDE: -1}",
         "invalid input"
       );
     }
@@ -206,7 +206,7 @@ exports.updateQuestionInMission = async (req, res) => {
       return new HTTPError(
         res,
         400,
-        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[]}",
+        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[], SLIDE: -1}",
         "invalid input"
       );
     }
@@ -349,7 +349,7 @@ exports.answerToQuestion = async (req, res) => {
       return new HTTPError(
         res,
         400,
-        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[]}",
+        "Somthing wrong in format of answer. {TEXT: String, SCQ: Number, MCQ: Number[], SLIDE: -1}",
         "invalid input"
       );
     }
@@ -448,6 +448,9 @@ function verifyAnswer(question, answerByUser) {
     case "TEXT":
       return question.answer == answerByUser;
 
+    case "SLIDE":
+      return true;
+
     default:
       return false;
   }
@@ -505,6 +508,8 @@ function verifyAnswerFormat(type, answer, options) {
       return verifySCQAnswer(answer, options);
     case "MCQ":
       return verifyMCQAnswer(answer, options);
+    case "SLIDE":
+      return true;
 
     default:
       return false;

@@ -40,7 +40,7 @@ const streakRewardAllocators = {
         await session.commitTransaction();
         await session.endSession();
       } catch (error) {
-        console.log("", error);
+        console.log("XP_ALLOCATION", error);
       }
     },
   },

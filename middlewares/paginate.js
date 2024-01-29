@@ -46,7 +46,7 @@ const paginateRequest = (Model, lookupOptions, additionalToPipeline) => {
       let countResult = Model.aggregate(countPipeline);
 
       const promiseResolve = await Promise.all([countResult, result]);
-      totalCount = promiseResolve[0][0].totalCount;
+      totalCount = promiseResolve[0][0]?.totalCount ?? 0;
       result = promiseResolve[1];
 
       const totalPages = Math.ceil(totalCount / resultPerPage);
@@ -208,6 +208,26 @@ function parseQueryFilter(queryFilter) {
     // to avoid any exploits
     delete filterObject["verified"];
     delete filterObject["visible"];
+
+    function convStrToDate(fObj) {
+      let timestampRegex = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)$/;
+      for (const key in fObj) {
+        if (typeof fObj[key] === "object" && fObj[key] !== null) {
+          fObj[key] = convStrToDate(fObj[key]); // Recurse if the property is an object
+        } else {
+          if (
+            typeof fObj[key] === "string" &&
+            fObj[key] !== "" &&
+            timestampRegex.test(fObj[key])
+          ) {
+            fObj[key] = new Date(fObj[key]);
+          }
+        }
+      }
+      return fObj;
+    }
+
+    filterObject = convStrToDate(filterObject);
 
     console.log({ filterObject });
     // structure arrays for mongoQuery
