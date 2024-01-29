@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const { XpTxn } = require("../../models/xpTxn");
 const spinRewardAllocators = require("./spinRewardAllocators");
+const User = require("../../models/user");
 
 const streakRewardAllocators = {
   XP_ALLOCATION: {
