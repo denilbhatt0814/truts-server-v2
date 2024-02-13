@@ -40,7 +40,7 @@ const admin = require("./routes/admin");
 const offering = require("./routes/offering");
 const search = require("./routes/search");
 const trutsEvent = require("./routes/trutsEvent");
-
+const temp = require("./routes/temp");
 // routes middleware
 app.use("/api/v1", home);
 app.use("/api/v1", user);
@@ -53,6 +53,7 @@ app.use("/api/v1", admin);
 app.use("/api/v1", offering);
 app.use("/api/v1", search);
 app.use("/api/v1", trutsEvent);
+app.use("/api/v1", temp);
 
 app.get("/api/v1/status", (req, res) => {
   res.send("Running...");
