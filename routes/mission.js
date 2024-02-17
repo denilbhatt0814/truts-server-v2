@@ -20,6 +20,10 @@ const {
   reOrderQuiz,
 } = require("../controllers/quizController");
 const {
+  addReviewFormToMission,
+  addRatingsToReviewForm,
+} = require("../controllers/reviewFormController");
+const {
   performTask,
   checkTaskDependency,
   addOneTaskToMission,
@@ -69,6 +73,7 @@ router.get(
 
 router.route("/mission/:missionID/task").post(addOneTaskToMission);
 router.route("/mission/:missionID/quiz").post(addQuestionToMission);
+router.route("/mission/:missionID/review-form").post(addReviewFormToMission);
 
 // TEST : AKSHAY
 router.route("/mission/:missionID/task/reorder").patch(reOrderTask);
@@ -105,6 +110,11 @@ router.post(
   answerToQuestion
 );
 
+router.post(
+  "/mission/:missionID/rate-review-form",
+  isLoggedIn,
+  addRatingsToReviewForm
+);
 // dependency checking
 router.get(
   "/mission/:missionID/task-dependency-check/:taskID",

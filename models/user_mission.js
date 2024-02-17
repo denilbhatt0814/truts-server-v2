@@ -45,6 +45,10 @@ const user_missionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    reviews: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     trutsXP: {
       type: Number,
     },

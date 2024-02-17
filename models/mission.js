@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const { taskSchema } = require("./taskSchema");
 const { questionSchema } = require("./questionSchema");
+const { reviewFormSchema } = require("./reviewForm");
 
 const missionSchema = new mongoose.Schema(
   {
@@ -18,10 +19,10 @@ const missionSchema = new mongoose.Schema(
     // TODO: add visiblity field
     type: {
       type: String,
-      enum: ["TASKS", "QUIZ"],
+      enum: ["TASKS", "QUIZ", "REVIEW"],
       required: [
         true,
-        "Please mention the type of mission. eg: ['TASKS', 'QUIZ']",
+        "Please mention the type of mission. eg: ['TASKS', 'QUIZ', 'REVIEW']",
       ],
     },
     tags: [
@@ -44,6 +45,7 @@ const missionSchema = new mongoose.Schema(
       type: [questionSchema],
       default: undefined,
     },
+    reviews: { type: [reviewFormSchema], default: undefined },
     listingXP: {
       type: Number,
       // required: [true, "Please allocate listingXP to this mission"],

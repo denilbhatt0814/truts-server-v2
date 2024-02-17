@@ -411,6 +411,20 @@ exports.claimMissionCompletion = async (req, res) => {
       // TODO: MOD required when seperating trutsXP & listingXP
       attemptedMission.listingXP = trutsXP;
       attemptedMission.trutsXP = trutsXP;
+    } else if (mission.type == "REVIEW") {
+      if (
+        Object.keys(attemptedMission.reviews).length != mission.reviews.length
+      ) {
+        return new HTTPError(
+          res,
+          400,
+          `some reviews are unrated in mission[${missionID}]`,
+          "mission incomplete"
+        );
+      }
+
+      attemptedMission.listingXP = mission.listingXP;
+      attemptedMission.trutsXP = mission.listingXP;
     }
 
     // if no return -> All tasks completed
