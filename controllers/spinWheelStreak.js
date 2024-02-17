@@ -1,6 +1,7 @@
 const redisClient = require("../databases/redis-client");
 const { SpinStreakPeriod } = require("../models/spinStreakPeriod");
 const User = require("../models/user");
+const { XpTxn } = require("../models/xpTxn");
 const HTTPError = require("../utils/httpError");
 const {
   streakDayToRewardMapping,
@@ -75,6 +76,10 @@ async function checkEligibiltyAndRewardForStreak(userID) {
     const lastStreakRecord = await getLatestStreakPeriodByUserID(userID);
     const streakCount = lastStreakRecord.count;
 
+    //old streak allocation
+    await allocatePreviousStreakReward(userID);
+
+    //new streak allocation
     const streakDayToReward = streakDayToRewardMapping[streakCount];
     if (streakDayToReward) {
       const userStreaks = await User.findById(userID).select(
@@ -119,4 +124,44 @@ async function getLatestStreakPeriodByUserID(userID) {
   }
 
   return lastStreakRecord;
+}
+
+async function allocatePreviousStreakReward(userID) {
+  //get count from spinStreakPeriod collection for that user
+  const lastStreakRecord = await SpinStreakPeriod.findOne({ user: userID });
+  const streakCount = lastStreakRecord.count;
+  const streakDaysMap = Object.keys(streakDayToRewardMapping);
+
+  const previousTxn = await XpTxn.find({
+    user: userID,
+    "reason.tag": "streakReward",
+  });
+
+  // allocate xp based on count
+  for (let streakDay of streakDaysMap) {
+    if (previousTxn.some((txn) => parseInt(txn.reason.id) == streakDay)) {
+      continue;
+    } else {
+      if (streakDay <= streakCount) {
+        // for allocation just call allocate method from spinStreakRewardAllocator
+        const streakDayToReward = streakDayToRewardMapping[streakDay];
+        if (streakDayToReward) {
+          const userStreaks = await User.findById(userID).select(
+            "streakRewardClaims"
+          );
+
+          if (!userStreaks.streakRewardClaims) {
+            userStreaks.streakRewardClaims = {};
+          }
+          // check if already claimed:
+          if (!userStreaks.streakRewardClaims[streakCount]) {
+            // if not -> reward them now
+            await streakDayToReward.reward.allocate(userID);
+          }
+        }
+      }
+    }
+  }
+
+  return null;
 }
