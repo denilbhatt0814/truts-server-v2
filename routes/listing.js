@@ -22,6 +22,7 @@ const {
   updateSocialOfListing_ADMIN,
   getListing_ADMIN,
   getSocialsOfListing_ADMIN,
+  getMyListingXP,
 } = require("../controllers/listingController");
 const cacheRoute = require("../middlewares/cacheRoute");
 const paginateRequest = require("../middlewares/paginate");
@@ -88,6 +89,8 @@ router
 router
   .route("/public/listing/:listingID/leaderboard")
   .get(getLeaderboardOfListing_Public);
+
+router.route("/listing/:listingID/my-xps").get(isLoggedIn, getMyListingXP);
 
 // ADMIN ROUTES:
 router

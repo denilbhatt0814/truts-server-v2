@@ -909,6 +909,48 @@ exports.getLeaderboardOfListing_Public = async (req, res) => {
   }
 };
 
+exports.getMyListingXP = async (req, res) => {
+  try {
+    const listingID = req.params.listingID;
+    const userID = req.user._id;
+
+    const listing = await Listing.findById(listingID).select({ _id: 1 });
+    if (!listing) {
+      return new HTTPError(
+        res,
+        404,
+        `listing[${listingID}] does not exit`,
+        "listing not found"
+      );
+    }
+
+    const agg = [
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(userID),
+          listing: listing._id,
+          isCompleted: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$user",
+          totalListingXP: {
+            $sum: "$listingXP",
+          },
+        },
+      },
+    ];
+
+    const result = await User_Mission.aggregate(agg);
+    const totalListingXP = result[0]?.totalListingXP || 0;
+    return new HTTPResponse(res, true, 200, null, null, { totalListingXP });
+  } catch (error) {
+    console.log("getMyListingXP:", error);
+    return new HTTPError(res, 500, error.message, "internal server error");
+  }
+};
+
 // TEMP CODE:
 // THIS MUST BE REPLACED SOON:
 exports.getListingChainMapping = async (req, res) => {

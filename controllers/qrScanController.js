@@ -59,6 +59,7 @@ const attemptQRScan = async (req, res) => {
       { attemptedMission }
     );
   } catch (error) {
+    console.log("attemptQRScan:", error);
     return new HTTPError(res, 500, error.message, "internal server error");
   }
 };
