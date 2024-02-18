@@ -12,6 +12,7 @@ const {
   updateMission,
   updateMissionStatus,
 } = require("../controllers/missionController");
+const { attemptQRScan } = require("../controllers/qrScanController");
 const {
   answerToQuestion,
   addQuestionToMission,
@@ -115,6 +116,9 @@ router.post(
   isLoggedIn,
   addRatingsToReviewForm
 );
+
+router.post("/mission/:missionID/qr-scan", isLoggedIn, attemptQRScan);
+
 // dependency checking
 router.get(
   "/mission/:missionID/task-dependency-check/:taskID",

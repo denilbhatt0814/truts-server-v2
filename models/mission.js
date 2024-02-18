@@ -19,10 +19,10 @@ const missionSchema = new mongoose.Schema(
     // TODO: add visiblity field
     type: {
       type: String,
-      enum: ["TASKS", "QUIZ", "REVIEW"],
+      enum: ["TASKS", "QUIZ", "REVIEW", "QRSCAN"],
       required: [
         true,
-        "Please mention the type of mission. eg: ['TASKS', 'QUIZ', 'REVIEW']",
+        "Please mention the type of mission. eg: ['TASKS', 'QUIZ', 'REVIEW', 'QRSCAN']",
       ],
     },
     tags: [

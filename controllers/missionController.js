@@ -425,6 +425,11 @@ exports.claimMissionCompletion = async (req, res) => {
 
       attemptedMission.listingXP = mission.listingXP;
       attemptedMission.trutsXP = mission.listingXP;
+    } else if (mission.type == "QRSCAN") {
+      // do nothing just when on this mission
+      // go for claim directly
+      attemptedMission.listingXP = mission.listingXP;
+      attemptedMission.trutsXP = mission.listingXP;
     }
 
     // if no return -> All tasks completed
